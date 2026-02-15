@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Tech Digest Configuration Schema",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "definitions": {
     "source": {
       "type": "object",
