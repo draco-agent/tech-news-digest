@@ -1,7 +1,7 @@
 ---
 name: tech-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Four-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "2.1.1"
+version: "2.1.2"
 homepage: https://github.com/draco-agent/tech-digest
 source: https://github.com/draco-agent/tech-digest
 env:
@@ -333,6 +333,24 @@ The cron prompt should **NOT** hardcode the pipeline steps. Instead, reference `
 - **Portable**: Same skill on different OpenClaw instances, just change paths and channel IDs
 - **Maintainable**: Update the skill → all cron jobs pick up changes automatically
 - **Anti-pattern**: Do NOT copy pipeline steps into the cron prompt — it will drift out of sync
+
+#### Multi-Channel Delivery Limitation
+OpenClaw enforces **cross-provider isolation**: a single session can only send messages to one provider (e.g., Discord OR Telegram, not both). If you need to deliver digests to multiple platforms, create **separate cron jobs** for each provider:
+
+```
+# Job 1: Discord + Email
+- DISCORD_CHANNEL_ID = 1470806864412414071
+- EMAIL = user@example.com
+- TEMPLATE = discord
+
+# Job 2: Telegram DM
+- DISCORD_CHANNEL_ID = （无）
+- EMAIL = （无）
+- TEMPLATE = telegram
+```
+Replace `DISCORD_CHANNEL_ID` delivery with Telegram delivery in the second job's prompt (use `message` tool with `channel=telegram`).
+
+This is a security feature, not a bug — it prevents accidental cross-context data leakage.
 
 ## Support & Troubleshooting
 
