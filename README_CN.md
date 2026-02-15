@@ -36,7 +36,7 @@
 
 Bot 会自动 clone 仓库、配置数据源、创建定时任务、开始推送摘要——全程对话完成，无需手动操作。
 
-#### 方式二：通过 ClawHub（即将上线）
+#### 方式二：通过 ClawHub
 ```bash
 clawhub install tech-digest
 ```

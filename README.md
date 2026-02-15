@@ -34,7 +34,7 @@ Just tell your bot:
 
 Your bot will clone the repo, configure sources, create cron jobs, and start delivering digests — all through conversation. No manual setup needed.
 
-### Option 2: ClawHub (coming soon)
+### Option 2: ClawHub
 ```bash
 clawhub install tech-digest
 ```
