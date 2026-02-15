@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Four-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "2.4.1"
+version: "2.5.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 env:

@@ -107,7 +107,7 @@ Merges all sources, deduplicates (title similarity + domain), applies quality sc
 - Multi-source cross-reference: +5
 - Recency bonus: +2
 - High engagement: +1
-- Already in previous report: -3
+- Already in previous report: -5
 
 Output is grouped by topic with articles sorted by score.
 
@@ -148,6 +148,8 @@ At the end of the report, append a stats line showing raw data collected from ea
 
 ## Archive
 Save the report to `<WORKSPACE>/archive/tech-digest/<MODE>-YYYY-MM-DD.md`
+
+After saving, delete archive files older than 90 days to prevent unbounded growth.
 
 ## Delivery
 1. Send to Discord channel `<DISCORD_CHANNEL_ID>` via `message` tool

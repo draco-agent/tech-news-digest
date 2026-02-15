@@ -419,8 +419,26 @@ Examples:
         help="Bypass ETag/Last-Modified conditional request cache"
     )
     
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-fetch even if cached output exists"
+    )
+    
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
+    
+    # Resume support: skip if output exists, is valid JSON, and < 1 hour old
+    if args.output and args.output.exists() and not args.force:
+        try:
+            age_seconds = time.time() - args.output.stat().st_mtime
+            if age_seconds < 3600:
+                with open(args.output, 'r') as f:
+                    json.load(f)  # validate JSON
+                logger.info(f"Skipping (cached output exists): {args.output}")
+                return 0
+        except (json.JSONDecodeError, OSError):
+            pass
     
     # Auto-generate unique output path if not specified
     if not args.output:

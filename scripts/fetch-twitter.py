@@ -185,7 +185,7 @@ def fetch_user_tweets(source: Dict[str, Any], bearer_token: str, cutoff: datetim
             # Build request parameters
             params = {
                 "max_results": min(MAX_TWEETS_PER_USER, 100),  # API limit
-                "tweet.fields": "created_at,public_metrics,context_annotations",
+                "tweet.fields": "created_at,public_metrics,context_annotations,referenced_tweets",
                 "expansions": "author_id",
                 "user.fields": "verified,public_metrics"
             }
@@ -212,6 +212,9 @@ def fetch_user_tweets(source: Dict[str, Any], bearer_token: str, cutoff: datetim
                 "User-Agent": "TechDigest/2.0"
             }
             
+            # Rate limit: space out API calls
+            time.sleep(0.3)
+            
             # Then get user tweets
             tweets_url = f"{API_BASE}/users/{user_id}/tweets?{urlencode(params)}"
             req = Request(tweets_url, headers=headers)
@@ -228,7 +231,11 @@ def fetch_user_tweets(source: Dict[str, Any], bearer_token: str, cutoff: datetim
                         
                     # Filter out retweets and replies for cleaner feed
                     text = tweet.get('text', '')
-                    if text.startswith('RT @') or text.startswith('@'):
+                    if text.startswith('RT @'):
+                        continue
+                    # Skip replies (but not tweets that merely mention someone)
+                    referenced = tweet.get('referenced_tweets', [])
+                    if any(ref.get('type') == 'replied_to' for ref in referenced):
                         continue
                         
                     articles.append({
@@ -366,8 +373,26 @@ Examples:
         help="Bypass username→ID cache"
     )
     
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force re-fetch even if cached output exists"
+    )
+    
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
+    
+    # Resume support: skip if output exists, is valid JSON, and < 1 hour old
+    if args.output and args.output.exists() and not args.force:
+        try:
+            age_seconds = time.time() - args.output.stat().st_mtime
+            if age_seconds < 3600:
+                with open(args.output, 'r') as f:
+                    json.load(f)
+                logger.info(f"Skipping (cached output exists): {args.output}")
+                return 0
+        except (json.JSONDecodeError, OSError):
+            pass
     
     # Check for bearer token
     bearer_token = get_bearer_token()
@@ -416,9 +441,6 @@ Examples:
                     logger.debug(f"✅ @{result['handle']}: {result['count']} tweets")
                 else:
                     logger.debug(f"❌ @{result['handle']}: {result['error']}")
-                    
-                # Be nice to the API
-                time.sleep(0.5)
 
         # Sort: priority first, then by article count
         results.sort(key=lambda x: (not x.get("priority", False), -x.get("count", 0)))

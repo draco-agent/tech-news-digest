@@ -207,15 +207,3 @@ def load_merged_topics(defaults_dir: Path, config_dir: Optional[Path] = None) ->
     return result
 
 
-def load_sources_with_overlay(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
-    """
-    Backward compatibility wrapper for load_merged_sources.
-    """
-    return load_merged_sources(defaults_dir, config_dir)
-
-
-def load_topics_with_overlay(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
-    """
-    Backward compatibility wrapper for load_merged_topics.
-    """
-    return load_merged_topics(defaults_dir, config_dir)

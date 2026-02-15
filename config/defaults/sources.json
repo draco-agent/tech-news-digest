@@ -1,7 +1,7 @@
 {
   "_description": "Unified data sources configuration. RSS feeds, Twitter/X KOLs, and web search sources. Each source binds to topics and has enabled/priority fields.",
   "_updated": "2026-02-15",
-  "_version": "2.4.1",
+  "_version": "2.5.0",
   "sources": [
     {
       "id": "simonwillison-rss",

@@ -448,7 +448,12 @@ Examples:
                 article["source_type"] = "web"
                 article["source_name"] = "Web Search"
                 article["source_id"] = f"web-{topic_result.get('topic_id', '')}"
-                article["quality_score"] = 1.0  # Base score for web results
+                # Build a minimal source dict so web articles go through the same scoring
+                web_source = {
+                    "source_type": "web",
+                    "priority": False,
+                }
+                article["quality_score"] = calculate_base_score(article, web_source)
                 all_articles.append(article)
         
         # Process GitHub articles
@@ -480,8 +485,8 @@ Examples:
         # Group by topics
         topic_groups = group_by_topics(all_articles)
         
-        # Generate summary stats
-        total_final = sum(len(articles) for articles in topic_groups.values())
+        # Generate summary stats (use deduplicated count, not topic-grouped which double-counts)
+        total_final = len(all_articles)
         topic_counts = {topic: len(articles) for topic, articles in topic_groups.items()}
         
         output = {
