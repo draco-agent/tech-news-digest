@@ -16,7 +16,7 @@ env:
     description: GitHub personal access token for higher API rate limits
 ---
 
-# Tech News Digest v2.3
+# Tech News Digest
 
 Automated tech news digest system with unified data source model, quality scoring pipeline, and template-based output generation.
 
