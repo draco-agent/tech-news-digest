@@ -20,10 +20,13 @@ Unified template for both daily and weekly digests. Replace `<...>` placeholders
 | `<EMAIL>` | *(optional)* Recipient email | *(optional)* Recipient email |
 | `<LANGUAGE>` | `Chinese` (default) | `Chinese` (default) |
 | `<TEMPLATE>` | `discord` / `email` / `markdown` | `discord` / `email` / `markdown` |
+| `<DATE>` | Today's date in YYYY-MM-DD (caller provides) | Today's date in YYYY-MM-DD (caller provides) |
 
 ---
 
-Generate the <MODE> tech digest. Follow the steps below.
+Generate the <MODE> tech digest for **<DATE>**. Follow the steps below.
+
+**Important:** Use `<DATE>` as the report date in the title and archive filename. Do NOT infer the date yourself — always use the provided value.
 
 ## Configuration
 
@@ -122,8 +125,8 @@ Use sections defined in `topics.json`. Each topic has:
 - `search.must_include` / `search.exclude` for content filtering
 
 ### Fixed Sections (append after topic sections)
-- 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors — each entry must include the source tweet/post link)
-- 🔥 Twitter/X Trending
+- 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors — **each entry MUST include the source tweet/post URL**. Format: `• **@handle** — summary\n  <https://twitter.com/handle/status/ID>`)
+- 🔥 Twitter/X Trending (**each entry MUST include at least one reference link** — tweet URL, article URL, or web source. No link-free entries allowed.)
 - 📝 Blog Picks (<BLOG_PICKS_COUNT> high-quality deep articles from RSS)
 <EXTRA_SECTIONS>
 
