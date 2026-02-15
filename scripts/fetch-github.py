@@ -194,21 +194,22 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
                 }
 
 
-def load_sources(config_dir: Path) -> List[Dict[str, Any]]:
-    """Load GitHub sources from unified configuration."""
-    sources_path = config_dir / "sources.json"
-    
+def load_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Load GitHub sources from unified configuration with overlay support."""
     try:
-        with open(sources_path) as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Sources config not found: {sources_path}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in sources config: {e}")
+        from config_loader import load_merged_sources
+    except ImportError:
+        # Fallback for relative import
+        import sys
+        sys.path.append(str(Path(__file__).parent))
+        from config_loader import load_merged_sources
+    
+    # Load merged sources from defaults + optional user overlay
+    all_sources = load_merged_sources(defaults_dir, config_dir)
     
     # Filter GitHub sources that are enabled
     github_sources = []
-    for source in data.get("sources", []):
+    for source in all_sources:
         if source.get("type") == "github" and source.get("enabled", True):
             # Validate required fields
             if not source.get("repo"):
@@ -230,8 +231,8 @@ def main():
         epilog="""
 Examples:
     python3 fetch-github.py
-    python3 fetch-github.py --config workspace/config --hours 168 -o results.json
-    python3 fetch-github.py --verbose
+    python3 fetch-github.py --defaults config/defaults --config workspace/config --hours 168 -o results.json
+    python3 fetch-github.py --config workspace/config --verbose  # backward compatibility
     
 Environment Variables:
     GITHUB_TOKEN    GitHub personal access token (optional, improves rate limits)
@@ -239,10 +240,16 @@ Environment Variables:
     )
     
     parser.add_argument(
-        "--config",
+        "--defaults",
         type=Path,
         default=Path("config/defaults"),
-        help="Configuration directory (default: config/defaults)"
+        help="Default configuration directory with skill defaults (default: config/defaults)"
+    )
+    
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="User configuration directory for overlays (optional)"
     )
     
     parser.add_argument(
@@ -275,7 +282,13 @@ Environment Variables:
     
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=args.hours)
-        sources = load_sources(args.config)
+        
+        # Backward compatibility: if only --config provided, use old behavior
+        if args.config and args.defaults == Path("config/defaults") and not args.defaults.exists():
+            logger.debug("Backward compatibility mode: using --config as sole source")
+            sources = load_sources(args.config, None)
+        else:
+            sources = load_sources(args.defaults, args.config)
         
         if not sources:
             logger.warning("No GitHub sources found or all disabled")
@@ -312,7 +325,8 @@ Environment Variables:
         output = {
             "generated": datetime.now(timezone.utc).isoformat(),
             "source_type": "github",
-            "config_dir": str(args.config),
+            "defaults_dir": str(args.defaults),
+            "config_dir": str(args.config) if args.config else None,
             "hours": args.hours,
             "github_token_used": github_token is not None,
             "sources_total": len(results),

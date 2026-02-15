@@ -46,8 +46,8 @@ Read the most recent archive file from `<WORKSPACE>/archive/tech-digest/` (if an
 ### Step 1: RSS Feeds
 ```bash
 python3 <SKILL_DIR>/scripts/fetch-rss.py \
-  --config <WORKSPACE>/config \
   --defaults <SKILL_DIR>/config/defaults \
+  --config <WORKSPACE>/config \
   --hours <RSS_HOURS> \
   --output /tmp/td-rss.json \
   --verbose
@@ -59,8 +59,8 @@ If the script fails, fall back to manually fetching priority feeds via `web_fetc
 ### Step 2: Twitter/X KOL Monitoring
 ```bash
 python3 <SKILL_DIR>/scripts/fetch-twitter.py \
-  --config <WORKSPACE>/config \
   --defaults <SKILL_DIR>/config/defaults \
+  --config <WORKSPACE>/config \
   --hours <RSS_HOURS> \
   --output /tmp/td-twitter.json \
   --verbose
@@ -70,8 +70,8 @@ Reads `sources.json`, fetches all `type: "twitter"` sources. Requires `$X_BEARER
 ### Step 3: Web Search
 ```bash
 python3 <SKILL_DIR>/scripts/fetch-web.py \
-  --config <WORKSPACE>/config \
   --defaults <SKILL_DIR>/config/defaults \
+  --config <WORKSPACE>/config \
   --freshness <FRESHNESS> \
   --output /tmp/td-web.json \
   --verbose
@@ -83,8 +83,8 @@ Also search Twitter trending discussions using `web_search` with `freshness='<FR
 ### Step 4: GitHub Releases
 ```bash
 python3 <SKILL_DIR>/scripts/fetch-github.py \
-  --config <WORKSPACE>/config \
   --defaults <SKILL_DIR>/config/defaults \
+  --config <WORKSPACE>/config \
   --hours <RSS_HOURS> \
   --output /tmp/td-github.json \
   --verbose

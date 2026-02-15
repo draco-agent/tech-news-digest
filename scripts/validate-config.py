@@ -175,15 +175,22 @@ def main():
         epilog="""
 Examples:
     python3 validate-config.py
-    python3 validate-config.py --config-dir workspace/config --verbose
+    python3 validate-config.py --defaults config/defaults --config workspace/config --verbose
+    python3 validate-config.py --config workspace/config --verbose  # backward compatibility
     """
     )
     
     parser.add_argument(
-        "--config-dir",
+        "--defaults",
         type=Path,
         default=Path("config/defaults"),
-        help="Configuration directory (default: config/defaults)"
+        help="Default configuration directory with skill defaults (default: config/defaults)"
+    )
+    
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="User configuration directory for overlays (optional)"
     )
     
     parser.add_argument(
@@ -195,24 +202,46 @@ Examples:
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
     
+    # Load config_loader for merged configurations
+    try:
+        from config_loader import load_merged_sources, load_merged_topics
+    except ImportError:
+        # Fallback for relative import
+        import sys
+        sys.path.append(str(Path(__file__).parent))
+        from config_loader import load_merged_sources, load_merged_topics
+    
     # File paths
     schema_path = Path("config/schema.json")
-    sources_path = args.config_dir / "sources.json"
-    topics_path = args.config_dir / "topics.json"
     
-    logger.info(f"Validating configuration in: {args.config_dir}")
+    if args.config:
+        logger.info(f"Validating merged configuration: defaults={args.defaults}, config={args.config}")
+    else:
+        logger.info(f"Validating default configuration: {args.defaults}")
     
     try:
+        # Backward compatibility: if only --config provided, use old behavior
+        if args.config and args.defaults == Path("config/defaults") and not args.defaults.exists():
+            logger.debug("Backward compatibility mode: using --config as sole source")
+            defaults_dir = args.config
+            config_dir = None
+        else:
+            defaults_dir = args.defaults
+            config_dir = args.config
+        
         # Load schema
         schema = load_json_file(schema_path)
         logger.debug("Loaded schema.json")
         
-        # Load configuration files
-        sources_data = load_json_file(sources_path)
-        logger.debug(f"Loaded {sources_path}")
+        # Load merged configuration data
+        merged_sources = load_merged_sources(defaults_dir, config_dir)
+        merged_topics = load_merged_topics(defaults_dir, config_dir)
         
-        topics_data = load_json_file(topics_path)
-        logger.debug(f"Loaded {topics_path}")
+        # Convert to the format expected by validation functions
+        sources_data = {"sources": merged_sources}
+        topics_data = {"topics": merged_topics}
+        
+        logger.debug(f"Loaded {len(merged_sources)} merged sources, {len(merged_topics)} merged topics")
         
         # Perform validations
         all_valid = True

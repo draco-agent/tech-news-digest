@@ -264,21 +264,22 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime) -> Dict[str,
                 }
 
 
-def load_sources(config_dir: Path) -> List[Dict[str, Any]]:
-    """Load RSS sources from unified configuration."""
-    sources_path = config_dir / "sources.json"
-    
+def load_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Load RSS sources from unified configuration with overlay support."""
     try:
-        with open(sources_path) as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Sources config not found: {sources_path}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in sources config: {e}")
-        
+        from config_loader import load_merged_sources
+    except ImportError:
+        # Fallback for relative import
+        import sys
+        sys.path.append(str(Path(__file__).parent))
+        from config_loader import load_merged_sources
+    
+    # Load merged sources from defaults + optional user overlay
+    all_sources = load_merged_sources(defaults_dir, config_dir)
+    
     # Filter RSS sources that are enabled
     rss_sources = []
-    for source in data.get("sources", []):
+    for source in all_sources:
         if source.get("type") == "rss" and source.get("enabled", True):
             rss_sources.append(source)
             
@@ -296,16 +297,22 @@ def main():
         epilog="""
 Examples:
     python3 fetch-rss.py
-    python3 fetch-rss.py --config workspace/config --hours 48 -o results.json
-    python3 fetch-rss.py --verbose
+    python3 fetch-rss.py --defaults config/defaults --config workspace/config --hours 48 -o results.json
+    python3 fetch-rss.py --config workspace/config --verbose  # backward compatibility
         """
+    )
+    
+    parser.add_argument(
+        "--defaults",
+        type=Path,
+        default=Path("config/defaults"),
+        help="Default configuration directory with skill defaults (default: config/defaults)"
     )
     
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/defaults"),
-        help="Configuration directory (default: config/defaults)"
+        help="User configuration directory for overlays (optional)"
     )
     
     parser.add_argument(
@@ -338,7 +345,13 @@ Examples:
     
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=args.hours)
-        sources = load_sources(args.config)
+        
+        # Backward compatibility: if only --config provided, use old behavior
+        if args.config and args.defaults == Path("config/defaults") and not args.defaults.exists():
+            logger.debug("Backward compatibility mode: using --config as sole source")
+            sources = load_sources(args.config, None)
+        else:
+            sources = load_sources(args.defaults, args.config)
         
         if not sources:
             logger.warning("No RSS sources found or all disabled")
@@ -374,7 +387,8 @@ Examples:
         output = {
             "generated": datetime.now(timezone.utc).isoformat(),
             "source_type": "rss",
-            "config_dir": str(args.config),
+            "defaults_dir": str(args.defaults),
+            "config_dir": str(args.config) if args.config else None,
             "hours": args.hours,
             "feedparser_available": HAS_FEEDPARSER,
             "sources_total": len(results),

@@ -191,21 +191,22 @@ def fetch_user_tweets(source: Dict[str, Any], bearer_token: str, cutoff: datetim
         }
 
 
-def load_twitter_sources(config_dir: Path) -> List[Dict[str, Any]]:
-    """Load Twitter sources from unified configuration."""
-    sources_path = config_dir / "sources.json"
-    
+def load_twitter_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Load Twitter sources from unified configuration with overlay support."""
     try:
-        with open(sources_path) as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Sources config not found: {sources_path}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in sources config: {e}")
-        
+        from config_loader import load_merged_sources
+    except ImportError:
+        # Fallback for relative import
+        import sys
+        sys.path.append(str(Path(__file__).parent))
+        from config_loader import load_merged_sources
+    
+    # Load merged sources from defaults + optional user overlay
+    all_sources = load_merged_sources(defaults_dir, config_dir)
+    
     # Filter Twitter sources that are enabled
     twitter_sources = []
-    for source in data.get("sources", []):
+    for source in all_sources:
         if source.get("type") == "twitter" and source.get("enabled", True):
             if not source.get("handle"):
                 logging.warning(f"Twitter source {source.get('id')} missing handle, skipping")
@@ -226,16 +227,22 @@ def main():
 Examples:
     export X_BEARER_TOKEN="your_token_here"
     python3 fetch-twitter.py
-    python3 fetch-twitter.py --config workspace/config --hours 24 -o results.json
-    python3 fetch-twitter.py --verbose
+    python3 fetch-twitter.py --defaults config/defaults --config workspace/config --hours 24 -o results.json
+    python3 fetch-twitter.py --config workspace/config --verbose  # backward compatibility
         """
+    )
+    
+    parser.add_argument(
+        "--defaults",
+        type=Path,
+        default=Path("config/defaults"),
+        help="Default configuration directory with skill defaults (default: config/defaults)"
     )
     
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/defaults"),
-        help="Configuration directory (default: config/defaults)"
+        help="User configuration directory for overlays (optional)"
     )
     
     parser.add_argument(
@@ -274,7 +281,13 @@ Examples:
     
     try:
         cutoff = datetime.now(timezone.utc) - timedelta(hours=args.hours)
-        sources = load_twitter_sources(args.config)
+        
+        # Backward compatibility: if only --config provided, use old behavior
+        if args.config and args.defaults == Path("config/defaults") and not args.defaults.exists():
+            logger.debug("Backward compatibility mode: using --config as sole source")
+            sources = load_twitter_sources(args.config, None)
+        else:
+            sources = load_twitter_sources(args.defaults, args.config)
         
         if not sources:
             logger.warning("No Twitter sources found or all disabled")
@@ -307,7 +320,8 @@ Examples:
         output = {
             "generated": datetime.now(timezone.utc).isoformat(),
             "source_type": "twitter",
-            "config_dir": str(args.config),
+            "defaults_dir": str(args.defaults),
+            "config_dir": str(args.config) if args.config else None,
             "hours": args.hours,
             "sources_total": len(results),
             "sources_ok": ok_count,

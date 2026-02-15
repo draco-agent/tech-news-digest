@@ -192,19 +192,18 @@ def generate_search_interface(topic: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def load_topics(config_dir: Path) -> List[Dict[str, Any]]:
-    """Load topics from configuration."""
-    topics_path = config_dir / "topics.json"
-    
+def load_topics(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:
+    """Load topics from configuration with overlay support."""
     try:
-        with open(topics_path) as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        raise FileNotFoundError(f"Topics config not found: {topics_path}")
-    except json.JSONDecodeError as e:
-        raise ValueError(f"Invalid JSON in topics config: {e}")
-        
-    topics = data.get("topics", [])
+        from config_loader import load_merged_topics
+    except ImportError:
+        # Fallback for relative import
+        import sys
+        sys.path.append(str(Path(__file__).parent))
+        from config_loader import load_merged_topics
+    
+    # Load merged topics from defaults + optional user overlay
+    topics = load_merged_topics(defaults_dir, config_dir)
     logging.info(f"Loaded {len(topics)} topics for web search")
     return topics
 
@@ -231,18 +230,24 @@ def main():
 Examples:
     # With Brave API
     export BRAVE_API_KEY="your_key_here"
-    python3 fetch-web.py --freshness 24h
+    python3 fetch-web.py --defaults config/defaults --config workspace/config --freshness 24h
     
     # Without API (generates interface)
-    python3 fetch-web.py --output web-search-interface.json
+    python3 fetch-web.py --config workspace/config --output web-search-interface.json  # backward compatibility
         """
+    )
+    
+    parser.add_argument(
+        "--defaults",
+        type=Path,
+        default=Path("config/defaults"),
+        help="Default configuration directory with skill defaults (default: config/defaults)"
     )
     
     parser.add_argument(
         "--config",
         type=Path,
-        default=Path("config/defaults"),
-        help="Configuration directory (default: config/defaults)"
+        help="User configuration directory for overlays (optional)"
     )
     
     parser.add_argument(
@@ -273,7 +278,12 @@ Examples:
         args.output = Path(temp_path)
     
     try:
-        topics = load_topics(args.config)
+        # Backward compatibility: if only --config provided, use old behavior
+        if args.config and args.defaults == Path("config/defaults") and not args.defaults.exists():
+            logger.debug("Backward compatibility mode: using --config as sole source")
+            topics = load_topics(args.config, None)
+        else:
+            topics = load_topics(args.defaults, args.config)
         
         if not topics:
             logger.warning("No topics found")
@@ -304,7 +314,8 @@ Examples:
             output = {
                 "generated": datetime.now(timezone.utc).isoformat(),
                 "source_type": "web",
-                "config_dir": str(args.config),
+                "defaults_dir": str(args.defaults),
+                "config_dir": str(args.config) if args.config else None,
                 "freshness": args.freshness,
                 "api_used": "brave",
                 "topics_total": len(results),
@@ -329,7 +340,8 @@ Examples:
             output = {
                 "generated": datetime.now(timezone.utc).isoformat(),
                 "source_type": "web",
-                "config_dir": str(args.config),
+                "defaults_dir": str(args.defaults),
+                "config_dir": str(args.config) if args.config else None,
                 "freshness": args.freshness,
                 "api_used": "interface",
                 "topics_total": len(results),
