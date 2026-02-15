@@ -9,7 +9,7 @@
 
 Tell your [OpenClaw](https://openclaw.ai) AI assistant:
 
-> **"Install tech-digest and send a daily digest to #tech-news every morning at 9am"**
+> **"Install tech-news-digest and send a daily digest to #tech-news every morning at 9am"**
 
 That's it. Your bot handles installation, configuration, scheduling, and delivery — all through conversation.
 
@@ -17,13 +17,13 @@ More examples:
 
 > 🗣️ "Set up a weekly AI digest, only LLM and AI Agent topics, deliver to Discord #ai-weekly every Monday"
 
-> 🗣️ "Install tech-digest, add my RSS feeds, and send crypto news to Telegram"
+> 🗣️ "Install tech-news-digest, add my RSS feeds, and send crypto news to Telegram"
 
 > 🗣️ "Give me a tech digest right now, skip Twitter sources"
 
 Or install via CLI:
 ```bash
-clawhub install tech-digest
+clawhub install tech-news-digest
 ```
 
 ## 📊 What You Get
