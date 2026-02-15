@@ -134,7 +134,7 @@ Use sections defined in `topics.json`. Each topic has:
 
 ### Rules
 - **Only include news from the <TIME_WINDOW>**
-- **Append source link after each item** (wrap in `<link>` for Discord)
+- **Every item in every section must include the source link** — no exceptions. Discord: wrap in `<link>`; Email: `<a href>`; Telegram: `<a href>`; Markdown: `[title](link)`
 - **<ITEMS_PER_SECTION> items per section**
 - **Use bullet lists, no markdown tables** (Discord compatibility)
 
