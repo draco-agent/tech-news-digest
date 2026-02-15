@@ -322,7 +322,7 @@ python3 scripts/fetch-rss.py --verbose --hours 1
 
 ### 开发环境设置
 ```bash
-git clone https://github.com/draco-hoard/tech-digest
+git clone https://github.com/draco-agent/tech-digest
 cd tech-digest
 
 # 安装开发依赖

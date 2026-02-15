@@ -322,7 +322,7 @@ python3 scripts/fetch-rss.py --verbose --hours 1
 
 ### Development Setup
 ```bash
-git clone https://github.com/draco-hoard/tech-digest
+git clone https://github.com/draco-agent/tech-digest
 cd tech-digest
 
 # Install development dependencies  
