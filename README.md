@@ -28,14 +28,20 @@ Generate comprehensive tech digests by aggregating content from RSS feeds, Twitt
 
 ## 📦 Installation
 
-### Via ClawHub (coming soon)
+### Option 1: Chat with your OpenClaw bot (easiest)
+Just tell your bot:
+> Install tech-digest skill from https://github.com/draco-hoard/tech-digest and set up daily/weekly digests for me
+
+Your bot will clone the repo, configure sources, create cron jobs, and start delivering digests — all through conversation. No manual setup needed.
+
+### Option 2: ClawHub (coming soon)
 ```bash
 clawhub install tech-digest
 ```
 
-### Via GitHub (recommended before official release)
+### Option 3: Manual install via GitHub
 ```bash
-# OpenClaw skill install
+# Clone into OpenClaw skills directory
 cd ~/.openclaw/workspace/skills
 git clone https://github.com/draco-hoard/tech-digest.git
 

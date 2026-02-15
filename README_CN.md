@@ -30,14 +30,20 @@
 
 ### 安装
 
-#### 通过 ClawHub（即将上线）
+#### 方式一：和你的 OpenClaw bot 对话（最简单）
+直接告诉你的 bot：
+> 从 https://github.com/draco-hoard/tech-digest 安装 tech-digest skill，帮我配置每日/每周科技资讯摘要
+
+Bot 会自动 clone 仓库、配置数据源、创建定时任务、开始推送摘要——全程对话完成，无需手动操作。
+
+#### 方式二：通过 ClawHub（即将上线）
 ```bash
 clawhub install tech-digest
 ```
 
-#### 通过 GitHub（正式发布前推荐）
+#### 方式三：手动安装
 ```bash
-# OpenClaw skill 安装
+# Clone 到 OpenClaw skills 目录
 cd ~/.openclaw/workspace/skills
 git clone https://github.com/draco-hoard/tech-digest.git
 
