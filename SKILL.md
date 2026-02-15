@@ -20,16 +20,6 @@ env:
 
 Automated tech news digest system with unified data source model, quality scoring pipeline, and template-based output generation.
 
-## What's New in v2.1
-
-- **Unified Source Model**: Single `sources.json` for RSS, Twitter, and web sources
-- **Enhanced Topics**: Richer topic definitions with search queries and filters  
-- **Pipeline Scripts**: Modular fetch → merge → template workflow
-- **Quality Scoring**: Multi-source detection, deduplication, priority weighting
-- **Multiple Templates**: Discord, email, and markdown output formats
-- **Configuration Validation**: JSON schema validation and consistency checks
-- **User Customization**: Workspace config overrides for personalization
-
 ## Quick Start
 
 1. **Configuration Setup**: Default configs are in `config/defaults/`. Copy to workspace for customization:
