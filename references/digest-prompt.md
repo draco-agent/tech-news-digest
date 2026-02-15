@@ -98,7 +98,7 @@ python3 <SKILL_DIR>/scripts/merge-sources.py \
   --twitter /tmp/td-twitter.json \
   --web /tmp/td-web.json \
   --github /tmp/td-github.json \
-  --previous <WORKSPACE>/archive/tech-digest/ \
+  --archive-dir <WORKSPACE>/archive/tech-digest/ \
   --output /tmp/td-merged.json \
   --verbose
 ```
