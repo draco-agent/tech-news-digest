@@ -89,7 +89,7 @@
       "type": "rss",
       "name": "The Batch (Andrew Ng)",
       "url": "https://www.deeplearning.ai/feed/",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
@@ -348,7 +348,7 @@
       "type": "rss",
       "name": "rachelbythebay",
       "url": "https://rachelbythebay.com/w/atom.xml",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "frontier-tech"
@@ -438,7 +438,7 @@
       "type": "rss",
       "name": "极客公园",
       "url": "https://www.geekpark.net/rss",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "frontier-tech"
@@ -882,7 +882,7 @@
       "type": "rss",
       "name": "Ben's Bites",
       "url": "https://bensbites.beehiiv.com/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
@@ -895,7 +895,7 @@
       "type": "rss",
       "name": "The Rundown AI",
       "url": "https://www.therundown.ai/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
@@ -946,7 +946,7 @@
       "type": "rss",
       "name": "Stability AI Blog",
       "url": "https://stability.ai/blog?format=rss",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm"
@@ -984,7 +984,7 @@
       "type": "rss",
       "name": "Meta AI Blog",
       "url": "https://ai.meta.com/blog/rss/",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
@@ -1033,7 +1033,7 @@
       "type": "rss",
       "name": "Bankless",
       "url": "https://www.bankless.com/rss",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "crypto"
@@ -1045,7 +1045,7 @@
       "type": "rss",
       "name": "Rekt News",
       "url": "https://rekt.news/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "crypto"
