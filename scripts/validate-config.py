@@ -6,7 +6,7 @@ Validates sources.json and topics.json against JSON Schema and performs
 additional consistency checks.
 
 Usage:
-    python3 validate-config.py [--config-dir CONFIG_DIR] [--verbose]
+    python3 validate-config.py [--defaults DEFAULTS_DIR] [--config CONFIG_DIR] [--verbose]
 """
 
 import json

@@ -173,9 +173,6 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
             req = Request(api_url, headers=headers)
             try:
                 with urlopen(req, timeout=TIMEOUT) as resp:
-                    if resp.status != 200:
-                        raise HTTPError(resp.url, resp.status, f"HTTP {resp.status}", resp.headers, None)
-                    
                     # Update cache
                     etag = resp.headers.get("ETag")
                     last_mod = resp.headers.get("Last-Modified")

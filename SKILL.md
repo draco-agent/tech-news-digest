@@ -144,7 +144,7 @@ python3 scripts/merge-sources.py --rss rss.json --twitter twitter.json --web web
 
 ### 6. `validate-config.py` - Configuration Validator
 ```bash
-python3 scripts/validate-config.py [--config-dir CONFIG_DIR] [--verbose]
+python3 scripts/validate-config.py [--defaults DEFAULTS_DIR] [--config CONFIG_DIR] [--verbose]
 ```
 - **JSON Schema**: Validates structure and required fields
 - **Consistency**: Checks topic references, duplicate IDs
