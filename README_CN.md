@@ -1,127 +1,351 @@
-# Tech Digest 📰🐉
+# Tech Digest v2.0
 
-自动化科技新闻日报/周报系统，为 [OpenClaw](https://github.com/openclaw/openclaw) 打造的 Agent Skill。
+> **统一数据源模型的自动化科技资讯汇总系统，支持质量评分和多格式输出**
 
-三层数据采集，覆盖 AI/LLM、加密货币、前沿科技领域。
+通过聚合 RSS 订阅源、Twitter/X KOL 动态和网络搜索内容，提供智能去重、质量评分和模板化输出的综合科技资讯汇总，支持 Discord、邮件或 Markdown 格式。
 
-## 特性
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- **RSS 一手源** — 30+ 精选技术博客和新闻源（灵感来自 [Karpathy 推荐的 HN 顶级博客](https://github.com/vigorX777/ai-daily-digest)）
-- **Web Search** — 实时热点补充，支持时间窗口过滤
-- **Twitter/X KOL 监控** — 30+ 大V，覆盖 AI、Crypto（含华语 KOL）、科技
-- **多渠道发布** — Discord、Telegram、Email
-- **报告归档** — 自动保存到 workspace，方便回看
-- **完全可定制** — RSS 源、KOL 列表、话题、语言、发布渠道均可配置，且提供合理默认值
+## ✨ 主要特性
 
-## 默认话题
+### 🔄 统一数据管道
+- **多源数据收集**：RSS 订阅、Twitter/X API、网络搜索
+- **并行处理**：带重试机制的并发抓取
+- **质量评分**：多源检测、优先级权重、互动指标
+- **智能去重**：标题相似度检测和域名饱和度限制
 
-开箱即用，报告涵盖以下话题（可通过 `config/tech-digest-topics.json` 自定义）：
+### 📊 高级配置系统
+- **统一源模型**：所有数据源类型的单一配置
+- **增强主题定义**：包含搜索查询和内容过滤器的丰富主题
+- **用户自定义**：工作区级别的配置覆盖
+- **模式校验**：JSON Schema 校验和一致性检查
 
-- 🧠 **LLM / 大模型** — GPT、Claude、Gemini、开源模型、评测
-- 🤖 **AI Agent** — 自主智能体、框架、工具调用
-- 💰 **加密货币** — Bitcoin、Ethereum、DeFi、监管
-- 🔬 **前沿科技** — 突破性进展、机器人、量子、生物技术
+### 📝 多格式输出
+- **Discord**：移动端优化的项目符号列表，链接抑制
+- **邮件**：丰富元数据、技术统计和执行摘要
+- **Markdown**：GitHub 兼容的表格和可展开章节
 
-加上固定板块：
+## 🚀 快速开始
 
-- 📢 **KOL 动态** — Twitter 大V + 博客重要发文
-- 🔥 **Twitter/X 热议** — 病毒式传播讨论
-- 📝 **博客精选** — RSS 源深度文章
-- 📊 **本周趋势总结**（仅周报）
-
-## 快速开始
-
-### 通过 OpenClaw 安装
-
-最简单的方式 — 直接对你的 OpenClaw bot 说：
-
-> 从 ClawHub 安装 tech-digest skill 并配置好。日报和周报都在早上 7 点发到 Discord #news 频道。
-
-Bot 会自动完成安装、配置和 cron 任务创建。
-
-### 手动安装
-
-**第 1 步：安装 Skill**
-
+### 1. 安装
 ```bash
-# 通过 ClawHub
-clawhub install tech-digest
-
-# 或通过 Git
-git clone https://github.com/dracohoard/tech-digest.git ~/.openclaw/workspace/skills/tech-digest
+git clone https://github.com/your-org/tech-digest
+cd tech-digest
+pip install -r requirements.txt  # 可选：feedparser, jsonschema
 ```
 
-**第 2 步：复制配置到 workspace**
-
+### 2. 配置
 ```bash
-mkdir -p ~/.openclaw/workspace/config ~/.openclaw/workspace/archive/tech-digest
-cp ~/.openclaw/workspace/skills/tech-digest/config/tech-digest-*.json ~/.openclaw/workspace/config/
+# 复制默认配置到工作区进行自定义
+mkdir -p workspace/config
+cp config/defaults/sources.json workspace/config/
+cp config/defaults/topics.json workspace/config/
+
+# 设置 API 密钥（可选但推荐）
+export X_BEARER_TOKEN="你的_twitter_bearer_token"
+export BRAVE_API_KEY="你的_brave_search_api_key"
 ```
 
-**第 3 步：设置 Cron 任务**
-
-打开 `references/digest-prompt.md` — 这是日报和周报的统一模板。替换 `<...>` 占位符（文件内有对照表），然后用填好的 prompt 创建 cron 任务。
-
-默认时间：日报和周报均为早上 7:00。
-
-**第 4 步：（可选）Twitter/X API**
-
+### 3. 生成资讯汇总
 ```bash
-echo 'export X_BEARER_TOKEN="your-token"' >> ~/.zshenv
+# 从所有源抓取数据
+python3 scripts/fetch-rss.py --config workspace/config --hours 48
+python3 scripts/fetch-twitter.py --config workspace/config --hours 48
+python3 scripts/fetch-web.py --config workspace/config --freshness 48h
+
+# 合并并进行质量评分
+python3 scripts/merge-sources.py \
+  --rss tech-digest-rss-*.json \
+  --twitter tech-digest-twitter-*.json \
+  --web tech-digest-web-*.json \
+  --output digest.json
+
+# 应用模板（Discord 示例）
+# 使用 digest.json 配合 references/templates/discord.md
 ```
 
-**此步骤可选** — 不配置也能通过 web search 抓取 Twitter 热点。
-
-**第 5 步：（可选）邮件推送**
-
-需要 [gog CLI](https://github.com/panyq357/gog) 配合 Gmail。不需要邮件的话，从 prompt 模板中删除邮件相关行即可。
-
-**第 6 步：验证**
-
-对 bot 说"现在跑一次日报"，或手动触发：
-
+### 4. 配置校验
 ```bash
-openclaw cron list        # 查看任务 ID
-openclaw cron run <id>    # 触发执行
+python3 scripts/validate-config.py --config-dir workspace/config --verbose
 ```
 
-## 自定义
+## 📋 管道脚本
 
-所有配置都有合理默认值，按需修改：
+| 脚本 | 用途 | 主要特性 |
+|------|------|----------|
+| `fetch-rss.py` | RSS 订阅抓取器 | feedparser + 正则表达式回退，并行处理，重试逻辑 |
+| `fetch-twitter.py` | Twitter/X KOL 监控器 | API v2，速率限制处理，互动指标 |
+| `fetch-web.py` | 网络搜索引擎 | Brave API 或 agent 接口，内容过滤 |
+| `merge-sources.py` | 质量评分与去重 | 多源检测，标题相似度，主题分组 |
+| `validate-config.py` | 配置校验器 | JSON Schema，一致性检查，数据源校验 |
 
-| 内容 | 文件 | 说明 |
+## 🎯 默认数据源（共 65 个）
+
+### RSS 订阅源（32 个）
+- **AI/ML**：OpenAI、Anthropic、Hugging Face、Sebastian Raschka、Simon Willison
+- **加密货币**：Vitalik Buterin、CoinDesk、The Block、Decrypt
+- **科技资讯**：Hacker News、Ars Technica、TechCrunch、Paul Graham、antirez
+- **中文媒体**：36氪、机器之心、量子位、InfoQ、极客公园
+
+### Twitter/X KOL（29 个）
+- **AI 实验室**：@sama、@OpenAI、@AnthropicAI、@ylecun、@GoogleDeepMind
+- **AI 开发者**：@karpathy、@AndrewYNg、@jimfan_、@huggingface
+- **加密货币**：@VitalikButerin、@cz_binance、@saylor、@WuBlockchain
+- **科技领袖**：@elonmusk、@sundarpichai、@pmarca
+
+### 网络搜索主题（4 个）
+- **LLM / 大语言模型**：最新模型发布、基准测试、突破性进展
+- **AI 智能体**：自主代理、框架、智能体系统
+- **加密货币**：比特币、以太坊、DeFi、区块链发展
+- **前沿科技**：量子计算、生物技术、机器人技术、新兴技术
+
+## ⚙️ 配置说明
+
+### 数据源配置 (`sources.json`)
+```json
+{
+  "sources": [
+    {
+      "id": "openai-rss",
+      "type": "rss",
+      "name": "OpenAI Blog",
+      "url": "https://openai.com/blog/rss.xml",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "ai-agent"],
+      "note": "OpenAI 官方更新"
+    },
+    {
+      "id": "sama-twitter",
+      "type": "twitter",
+      "name": "Sam Altman",
+      "handle": "sama", 
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "frontier-tech"]
+    }
+  ]
+}
+```
+
+### 主题配置 (`topics.json`)
+```json
+{
+  "topics": [
+    {
+      "id": "llm",
+      "emoji": "🧠",
+      "label": "LLM / 大语言模型", 
+      "description": "大语言模型、基础模型、突破性进展",
+      "search": {
+        "queries": ["LLM最新动态", "大语言模型突破"],
+        "must_include": ["LLM", "大语言模型"],
+        "exclude": ["教程", "新手指南"]
+      },
+      "display": {
+        "max_items": 8,
+        "style": "detailed"
+      }
+    }
+  ]
+}
+```
+
+## 🏗️ 系统架构
+
+```mermaid
+graph TD
+    A[RSS 订阅源] --> D[fetch-rss.py]
+    B[Twitter API] --> E[fetch-twitter.py]  
+    C[网络搜索] --> F[fetch-web.py]
+    
+    D --> G[merge-sources.py]
+    E --> G
+    F --> G
+    
+    G --> H[质量评分]
+    H --> I[去重处理]
+    I --> J[主题分组]
+    
+    J --> K[Discord 模板]
+    J --> L[邮件模板]
+    J --> M[Markdown 模板]
+```
+
+## 🎨 模板与输出
+
+### Discord 格式
+- 使用 `<link>` 抑制的项目符号列表
+- 移动端优化的表情符号标题
+- 2000 字符限制感知
+
+### 邮件格式  
+- 带技术统计的执行摘要
+- 丰富的元数据和存档链接
+- 重点文章高亮显示
+
+### Markdown 格式
+- GitHub 兼容的表格
+- 可展开的技术详细信息
+- 交叉引用导航
+
+## 📊 质量评分系统
+
+| 因子 | 分数 | 描述 |
 |------|------|------|
-| **RSS 源** | `config/tech-digest-rss-feeds.json` | 按领域增删源，`"priority": true` 标记必抓源，默认 30+ 个 |
-| **Twitter KOL** | `config/tech-digest-kol-list.json` | 按分类增删 Twitter 账号，默认 30+ 个覆盖 AI、crypto（含华语）、科技 |
-| **话题和板块** | `config/tech-digest-topics.json` | 增删/排序话题，每个话题定义 emoji、标题、搜索关键词 |
-| **发布渠道** | `references/digest-prompt.md` | Discord + Telegram + Email，按需增删 |
-| **发送时间** | Cron 任务配置 | 默认：日报和周报均为早上 7:00 |
+| **多源文章** | +5 每个 | 文章在多个数据源中出现 |
+| **优先级源** | +3 | 来自高优先级 RSS/Twitter 源 |
+| **时效性** | +2 | 24 小时内发布 |
+| **互动度** | +1 | Twitter 高点赞/转发 |
+| **重复内容** | -10 | 与现有文章非常相似 |
+| **历史重复** | -5 | 已在近期资讯汇总中出现 |
 
-## 目录结构
+## 🔧 环境设置
 
-```
-tech-digest/
-├── SKILL.md                          # Skill 主文件（给 agent 读）
-├── README.md                         # English docs
-├── README_CN.md                      # 本文件
-├── LICENSE                           # MIT 许可证
-├── config/
-│   ├── tech-digest-rss-feeds.json    # RSS 源配置（需复制到 workspace）
-│   ├── tech-digest-kol-list.json     # Twitter KOL 配置（需复制到 workspace）
-│   └── tech-digest-topics.json       # 话题定义（需复制到 workspace）
-├── references/
-│   ├── digest-prompt.md              # 统一 prompt 模板（日报和周报共用）
-│   └── config-schema.md             # 配置文件字段说明
-└── scripts/
-    └── fetch-rss.py                  # 并行 RSS 抓取 + 归档清理
+### 必需环境变量
+```bash
+# Twitter API（推荐）
+export X_BEARER_TOKEN="你的_bearer_token"
+
+# Brave Search API（可选，回退到 agent）
+export BRAVE_API_KEY="你的_brave_api_key"
 ```
 
-## 致谢
+### Git 配置（用于自动提交）
+```bash
+git config user.name "你的姓名"
+git config user.email "你的邮箱@example.com"
+git config user.signingkey "你的_gpg_key_id"  # 可选
+git config commit.gpgsign true  # 可选
+```
 
-- [vigorX777/ai-daily-digest](https://github.com/vigorX777/ai-daily-digest) — RSS 源灵感来源
-- [Andrej Karpathy](https://x.com/karpathy) — HN 顶级博客推荐列表
-- [OpenClaw](https://github.com/openclaw/openclaw) — Agent 运行时框架
+## 🚦 使用示例
 
-## 许可证
+### 每日资讯汇总
+```bash
+#!/bin/bash
+# daily-digest.sh
+cd /path/to/tech-digest
 
-MIT
+# 抓取所有源
+python3 scripts/fetch-rss.py --config workspace/config --hours 24
+python3 scripts/fetch-twitter.py --config workspace/config --hours 24  
+python3 scripts/fetch-web.py --config workspace/config --freshness 24h
+
+# 合并和评分
+python3 scripts/merge-sources.py \
+  --rss tech-digest-rss-*.json \
+  --twitter tech-digest-twitter-*.json \
+  --web tech-digest-web-*.json \
+  --archive-dir workspace/archive/tech-digest \
+  --output merged-$(date +%Y%m%d).json
+
+# 应用模板并发送（具体实现相关）
+```
+
+### 自定义数据源配置
+```json
+// workspace/config/sources.json - 用户覆盖
+{
+  "sources": [
+    // 禁用嘈杂的默认源
+    {
+      "id": "reddit-ml-rss",
+      "enabled": false
+    },
+    // 添加自定义源
+    {
+      "id": "my-tech-blog",
+      "type": "rss", 
+      "name": "我的科技博客",
+      "url": "https://myblog.com/rss",
+      "enabled": true,
+      "priority": true,
+      "topics": ["frontier-tech"],
+      "note": "个人科技博客"
+    }
+  ]
+}
+```
+
+## 🔍 故障排除
+
+### 常见问题
+
+**RSS 订阅源失败**
+```bash
+python3 scripts/fetch-rss.py --verbose  # 查看详细日志
+python3 scripts/validate-config.py      # 校验 URL
+```
+
+**Twitter 速率限制**  
+```bash
+# 减少频率或数据源
+export X_BEARER_TOKEN="新_token"       # 尝试不同 token
+```
+
+**配置错误**
+```bash
+python3 scripts/validate-config.py --verbose  # 详细校验
+```
+
+**未找到文章**
+```bash
+# 检查时间窗口
+python3 scripts/fetch-rss.py --hours 168  # 尝试 1 周
+
+# 检查源启用状态
+grep '"enabled": false' workspace/config/sources.json
+```
+
+### 调试模式
+所有脚本都支持 `--verbose` 参数：
+```bash
+python3 scripts/fetch-rss.py --verbose --hours 1
+```
+
+## 🤝 贡献指南
+
+### 开发环境设置
+```bash
+git clone https://github.com/your-org/tech-digest
+cd tech-digest
+
+# 安装开发依赖
+pip install -r requirements.txt
+pip install pytest black flake8
+
+# 运行测试
+python3 -m pytest tests/
+
+# 格式化代码
+black scripts/ 
+```
+
+### 添加新数据源
+1. 添加到 `config/defaults/sources.json`
+2. 更新主题分配
+3. 运行 `python3 scripts/validate-config.py`
+4. 使用 `fetch-*.py --verbose` 测试
+
+### 添加新主题
+1. 添加到 `config/defaults/topics.json`
+2. 定义搜索查询和过滤器
+3. 更新现有数据源的主题分配
+4. 测试网络搜索集成
+
+## 📄 开源协议
+
+MIT License - 详见 [LICENSE](LICENSE)
+
+## 🙏 致谢
+
+- **RSS 数据源**：感谢所有优秀的科技博主和媒体
+- **API 提供商**：Twitter/X API、Brave Search API
+- **开源库**：feedparser、jsonschema（可选依赖）
+- **社区**：开源贡献者和反馈提供者
+
+---
+
+**Tech Digest v2.0** - 用 ❤️ 为科技社区打造

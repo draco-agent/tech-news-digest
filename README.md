@@ -1,127 +1,351 @@
-# Tech Digest 📰🐉
+# Tech Digest v2.0
 
-Automated daily & weekly tech news digest system, built as an [OpenClaw](https://github.com/openclaw/openclaw) Agent Skill.
+> **Automated tech news digest system with unified source model, quality scoring, and multi-format output.**
 
-Three-layer data collection covering AI/LLM, cryptocurrency, and frontier tech.
+Generate comprehensive tech digests by aggregating content from RSS feeds, Twitter/X KOLs, and web search, with intelligent deduplication, quality scoring, and template-based output for Discord, email, or markdown.
 
-## Features
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-- **RSS Primary Sources** — 30+ curated tech blogs and news feeds (inspired by [Karpathy's top HN blogs](https://github.com/vigorX777/ai-daily-digest))
-- **Web Search** — Real-time hot topic discovery with freshness filters
-- **Twitter/X KOL Monitoring** — 30+ KOLs across AI, crypto, and tech (including Chinese crypto KOLs)
-- **Multi-channel Delivery** — Discord, Telegram, and Email
-- **Report Archiving** — Auto-saved to workspace for future reference
-- **Fully Customizable** — RSS feeds, KOL list, topics, language, and delivery channels are all configurable with sensible defaults
+## ✨ Features
 
-## Default Topics
+### 🔄 Unified Data Pipeline
+- **Multi-Source Collection**: RSS feeds, Twitter/X API, web search
+- **Parallel Processing**: Concurrent fetching with retry mechanisms
+- **Quality Scoring**: Multi-source detection, priority weighting, engagement metrics
+- **Smart Deduplication**: Title similarity detection and domain saturation limits
 
-Out of the box, reports cover these topics (customizable via `config/tech-digest-topics.json`):
+### 📊 Advanced Configuration
+- **Unified Source Model**: Single configuration for all source types
+- **Enhanced Topics**: Rich topic definitions with search queries and content filters
+- **User Customization**: Workspace-level config overrides
+- **Schema Validation**: JSON schema validation with consistency checks
 
-- 🧠 **LLM / Large Models** — GPT, Claude, Gemini, open-source models, benchmarks
-- 🤖 **AI Agent** — autonomous agents, frameworks, tool use
-- 💰 **Cryptocurrency** — Bitcoin, Ethereum, DeFi, regulation
-- 🔬 **Frontier Tech** — breakthroughs, robotics, quantum, biotech
+### 📝 Multi-Format Output
+- **Discord**: Mobile-optimized bullet lists with link suppression
+- **Email**: Rich metadata, technical stats, and executive summaries
+- **Markdown**: GitHub-compatible tables and expandable sections
 
-Plus these fixed sections:
+## 🚀 Quick Start
 
-- 📢 **KOL Updates** — Twitter KOLs + notable blog posts
-- 🔥 **Twitter/X Trending** — viral discussions
-- 📝 **Blog Picks** — deep articles from RSS sources
-- 📊 **Weekly Trend Summary** (weekly only)
-
-## Quick Start
-
-### Install via OpenClaw
-
-The easiest way — just tell your OpenClaw bot:
-
-> Install the tech-digest skill from ClawHub and set it up. Send daily and weekly reports at 7:00 AM to Discord channel #news.
-
-Your bot will handle installation, config, and cron job creation automatically.
-
-### Install Manually
-
-**Step 1: Install the skill**
-
+### 1. Installation
 ```bash
-# Via ClawHub
-clawhub install tech-digest
-
-# Or via Git
-git clone https://github.com/dracohoard/tech-digest.git ~/.openclaw/workspace/skills/tech-digest
+git clone https://github.com/your-org/tech-digest
+cd tech-digest
+pip install -r requirements.txt  # Optional: feedparser, jsonschema
 ```
 
-**Step 2: Copy config to workspace**
-
+### 2. Configuration
 ```bash
-mkdir -p ~/.openclaw/workspace/config ~/.openclaw/workspace/archive/tech-digest
-cp ~/.openclaw/workspace/skills/tech-digest/config/tech-digest-*.json ~/.openclaw/workspace/config/
+# Copy default configs to workspace for customization
+mkdir -p workspace/config
+cp config/defaults/sources.json workspace/config/
+cp config/defaults/topics.json workspace/config/
+
+# Set API keys (optional but recommended)
+export X_BEARER_TOKEN="your_twitter_bearer_token"
+export BRAVE_API_KEY="your_brave_search_api_key"
 ```
 
-**Step 3: Set up cron jobs**
-
-Open `references/digest-prompt.md` — it's a unified template for both daily and weekly digests. Replace the `<...>` placeholders (see the table in the file), then create cron jobs with the filled-in prompt.
-
-Default schedule: daily & weekly both at 7:00 AM.
-
-**Step 4: (Optional) Twitter/X API**
-
+### 3. Generate Digest
 ```bash
-echo 'export X_BEARER_TOKEN="your-token"' >> ~/.zshenv
+# Fetch from all sources
+python3 scripts/fetch-rss.py --config workspace/config --hours 48
+python3 scripts/fetch-twitter.py --config workspace/config --hours 48
+python3 scripts/fetch-web.py --config workspace/config --freshness 48h
+
+# Merge with quality scoring
+python3 scripts/merge-sources.py \
+  --rss tech-digest-rss-*.json \
+  --twitter tech-digest-twitter-*.json \
+  --web tech-digest-web-*.json \
+  --output digest.json
+
+# Apply template (Discord example)
+# Use digest.json with references/templates/discord.md
 ```
 
-**This is optional** — without it, the skill still discovers Twitter trends via web search.
-
-**Step 5: (Optional) Email delivery**
-
-Requires [gog CLI](https://github.com/panyq357/gog) configured with Gmail. Remove the email line from the prompt if not needed.
-
-**Step 6: Verify**
-
-Tell your bot "Run the daily tech digest now", or:
-
+### 4. Validate Configuration
 ```bash
-openclaw cron list        # find job ID
-openclaw cron run <id>    # trigger it
+python3 scripts/validate-config.py --config-dir workspace/config --verbose
 ```
 
-## Customization
+## 📋 Pipeline Scripts
 
-All configs ship with sensible defaults. Edit as needed:
+| Script | Purpose | Key Features |
+|--------|---------|--------------|
+| `fetch-rss.py` | RSS feed fetcher | feedparser + regex fallback, parallel processing, retry logic |
+| `fetch-twitter.py` | Twitter/X KOL monitor | API v2, rate limit handling, engagement metrics |
+| `fetch-web.py` | Web search engine | Brave API or agent interface, content filtering |
+| `merge-sources.py` | Quality scoring & deduplication | Multi-source detection, title similarity, topic grouping |
+| `validate-config.py` | Configuration validator | JSON schema, consistency checks, source validation |
 
-| What | File | Description |
-|------|------|-------------|
-| **RSS Feeds** | `config/tech-digest-rss-feeds.json` | Add/remove feeds by domain. Set `"priority": true` for must-fetch sources. 30+ defaults. |
-| **Twitter KOLs** | `config/tech-digest-kol-list.json` | Add/remove Twitter accounts by category. 30+ defaults across AI, crypto (global + CN), and tech. |
-| **Topics & Sections** | `config/tech-digest-topics.json` | Add/remove/reorder topics. Each topic defines emoji, label, and search keywords. |
-| **Delivery** | `references/digest-prompt.md` | Discord + Telegram + Email. Add/remove delivery lines as needed. |
-| **Schedule** | Cron job config | Default: daily & weekly at 7:00 AM |
+## 🎯 Default Sources (65 total)
 
-## Directory Structure
+### RSS Feeds (32)
+- **AI/ML**: OpenAI, Anthropic, Hugging Face, Sebastian Raschka, Simon Willison
+- **Crypto**: Vitalik Buterin, CoinDesk, The Block, Decrypt
+- **Tech**: Hacker News, Ars Technica, TechCrunch, Paul Graham, antirez
+- **Chinese**: 36氪, 机器之心, 量子位, InfoQ, 极客公园
 
+### Twitter/X KOLs (29)
+- **AI Labs**: @sama, @OpenAI, @AnthropicAI, @ylecun, @GoogleDeepMind
+- **AI Builders**: @karpathy, @AndrewYNg, @jimfan_, @huggingface
+- **Crypto**: @VitalikButerin, @cz_binance, @saylor, @WuBlockchain
+- **Tech Leaders**: @elonmusk, @sundarpichai, @pmarca
+
+### Web Search Topics (4)
+- **LLM / Large Models**: Latest model releases, benchmarks, breakthroughs
+- **AI Agent**: Autonomous agents, frameworks, agentic systems
+- **Cryptocurrency**: Bitcoin, Ethereum, DeFi, blockchain developments  
+- **Frontier Tech**: Quantum, biotech, robotics, emerging technologies
+
+## ⚙️ Configuration
+
+### Sources Configuration (`sources.json`)
+```json
+{
+  "sources": [
+    {
+      "id": "openai-rss",
+      "type": "rss",
+      "name": "OpenAI Blog",
+      "url": "https://openai.com/blog/rss.xml",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "ai-agent"],
+      "note": "Official OpenAI updates"
+    },
+    {
+      "id": "sama-twitter",
+      "type": "twitter",
+      "name": "Sam Altman",
+      "handle": "sama", 
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "frontier-tech"]
+    }
+  ]
+}
 ```
-tech-digest/
-├── SKILL.md                          # Skill entry point (for agents)
-├── README.md                         # This file
-├── README_CN.md                      # 中文文档
-├── LICENSE                           # MIT License
-├── config/
-│   ├── tech-digest-rss-feeds.json    # RSS feed config (copy to workspace)
-│   ├── tech-digest-kol-list.json     # Twitter KOL config (copy to workspace)
-│   └── tech-digest-topics.json       # Topic definitions (copy to workspace)
-├── references/
-│   ├── digest-prompt.md              # Unified prompt template (daily & weekly)
-│   └── config-schema.md             # Config file field definitions
-└── scripts/
-    └── fetch-rss.py                  # Parallel RSS fetcher + archive cleanup
+
+### Topics Configuration (`topics.json`)
+```json
+{
+  "topics": [
+    {
+      "id": "llm",
+      "emoji": "🧠",
+      "label": "LLM / Large Models", 
+      "description": "Large Language Models, foundation models, breakthroughs",
+      "search": {
+        "queries": ["LLM latest news", "large language model breakthroughs"],
+        "must_include": ["LLM", "large language model"],
+        "exclude": ["tutorial", "beginner guide"]
+      },
+      "display": {
+        "max_items": 8,
+        "style": "detailed"
+      }
+    }
+  ]
+}
 ```
 
-## Credits
+## 🏗️ Architecture
 
-- [vigorX777/ai-daily-digest](https://github.com/vigorX777/ai-daily-digest) — RSS feed inspiration
-- [Andrej Karpathy](https://x.com/karpathy) — Top HN blog recommendations
-- [OpenClaw](https://github.com/openclaw/openclaw) — Agent runtime framework
+```mermaid
+graph TD
+    A[RSS Feeds] --> D[fetch-rss.py]
+    B[Twitter API] --> E[fetch-twitter.py]  
+    C[Web Search] --> F[fetch-web.py]
+    
+    D --> G[merge-sources.py]
+    E --> G
+    F --> G
+    
+    G --> H[Quality Scoring]
+    H --> I[Deduplication]
+    I --> J[Topic Grouping]
+    
+    J --> K[Discord Template]
+    J --> L[Email Template]
+    J --> M[Markdown Template]
+```
 
-## License
+## 🎨 Templates & Output
 
-MIT
+### Discord Format
+- Bullet lists with `<link>` suppression
+- Mobile-optimized emoji headers
+- 2000 character awareness
+
+### Email Format  
+- Executive summary with technical stats
+- Rich metadata and archive links
+- Top articles highlighting
+
+### Markdown Format
+- GitHub-compatible tables
+- Expandable technical details
+- Cross-reference navigation
+
+## 📊 Quality Scoring System
+
+| Factor | Points | Description |
+|--------|--------|-------------|
+| **Multi-Source** | +5 each | Article appears in multiple sources |
+| **Priority Source** | +3 | From high-priority RSS/Twitter source |
+| **Recency** | +2 | Published within last 24 hours |
+| **Engagement** | +1 | High Twitter likes/retweets |
+| **Duplicate** | -10 | Very similar to existing article |
+| **Previous Digest** | -5 | Already appeared in recent digest |
+
+## 🔧 Environment Setup
+
+### Required Environment Variables
+```bash
+# Twitter API (recommended)
+export X_BEARER_TOKEN="your_bearer_token_here"
+
+# Brave Search API (optional, fallback to agent)
+export BRAVE_API_KEY="your_brave_api_key"
+```
+
+### Git Configuration (for auto-commit)
+```bash
+git config user.name "Your Name"
+git config user.email "your.email@example.com"
+git config user.signingkey "your_gpg_key_id"  # Optional
+git config commit.gpgsign true  # Optional
+```
+
+## 🚦 Usage Examples
+
+### Daily Digest
+```bash
+#!/bin/bash
+# daily-digest.sh
+cd /path/to/tech-digest
+
+# Fetch all sources
+python3 scripts/fetch-rss.py --config workspace/config --hours 24
+python3 scripts/fetch-twitter.py --config workspace/config --hours 24  
+python3 scripts/fetch-web.py --config workspace/config --freshness 24h
+
+# Merge and score
+python3 scripts/merge-sources.py \
+  --rss tech-digest-rss-*.json \
+  --twitter tech-digest-twitter-*.json \
+  --web tech-digest-web-*.json \
+  --archive-dir workspace/archive/tech-digest \
+  --output merged-$(date +%Y%m%d).json
+
+# Apply template and deliver (implementation specific)
+```
+
+### Custom Source Configuration
+```json
+// workspace/config/sources.json - User overrides
+{
+  "sources": [
+    // Disable noisy default source
+    {
+      "id": "reddit-ml-rss",
+      "enabled": false
+    },
+    // Add custom source
+    {
+      "id": "my-tech-blog",
+      "type": "rss", 
+      "name": "My Tech Blog",
+      "url": "https://myblog.com/rss",
+      "enabled": true,
+      "priority": true,
+      "topics": ["frontier-tech"],
+      "note": "Personal tech blog"
+    }
+  ]
+}
+```
+
+## 🔍 Troubleshooting
+
+### Common Issues
+
+**RSS Feeds Failing**
+```bash
+python3 scripts/fetch-rss.py --verbose  # Check detailed logs
+python3 scripts/validate-config.py      # Validate URLs
+```
+
+**Twitter Rate Limits**  
+```bash
+# Reduce frequency or sources
+export X_BEARER_TOKEN="new_token"       # Try different token
+```
+
+**Configuration Errors**
+```bash
+python3 scripts/validate-config.py --verbose  # Detailed validation
+```
+
+**No Articles Found**
+```bash
+# Check time window
+python3 scripts/fetch-rss.py --hours 168  # Try 1 week
+
+# Check source enablement
+grep '"enabled": false' workspace/config/sources.json
+```
+
+### Debug Mode
+All scripts support `--verbose` flag:
+```bash
+python3 scripts/fetch-rss.py --verbose --hours 1
+```
+
+## 🤝 Contributing
+
+### Development Setup
+```bash
+git clone https://github.com/your-org/tech-digest
+cd tech-digest
+
+# Install development dependencies  
+pip install -r requirements.txt
+pip install pytest black flake8
+
+# Run tests
+python3 -m pytest tests/
+
+# Format code
+black scripts/ 
+```
+
+### Adding New Sources
+1. Add to `config/defaults/sources.json`
+2. Update topic assignments
+3. Run `python3 scripts/validate-config.py`
+4. Test with `fetch-*.py --verbose`
+
+### Adding New Topics
+1. Add to `config/defaults/topics.json`
+2. Define search queries and filters
+3. Update existing sources' topic assignments
+4. Test web search integration
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## 🙏 Acknowledgments
+
+- **RSS Sources**: Thanks to all the amazing tech bloggers and publications
+- **API Providers**: Twitter/X API, Brave Search API
+- **Libraries**: feedparser, jsonschema (optional dependencies)
+- **Community**: Open source contributors and feedback providers
+
+---
+
+**Tech Digest v2.0** - Built with ❤️ for the tech community

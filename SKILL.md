@@ -1,69 +1,284 @@
 ---
 name: tech-digest
-description: Generate daily and weekly tech news digests covering AI/LLM, crypto, and frontier tech. Three-layer data collection from RSS feeds, web search, and Twitter/X KOLs. Outputs to Discord, Telegram, email, or other channels. Use when setting up automated tech news reports, configuring RSS-based monitoring, or generating on-demand tech summaries.
+description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Three-layer data collection from RSS feeds, Twitter/X KOLs, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
+version: "2.0.0"
 ---
 
-# Tech Digest
+# Tech Digest v2.0
 
-Automated tech news digest with three-layer data collection: RSS primary sources, web search, and Twitter/X KOL monitoring.
+Automated tech news digest system with unified data source model, quality scoring pipeline, and template-based output generation.
 
-## Setup
+## What's New in v2.0
 
-1. Copy config files to workspace:
+- **Unified Source Model**: Single `sources.json` for RSS, Twitter, and web sources
+- **Enhanced Topics**: Richer topic definitions with search queries and filters  
+- **Pipeline Scripts**: Modular fetch → merge → template workflow
+- **Quality Scoring**: Multi-source detection, deduplication, priority weighting
+- **Multiple Templates**: Discord, email, and markdown output formats
+- **Configuration Validation**: JSON schema validation and consistency checks
+- **User Customization**: Workspace config overrides for personalization
+
+## Quick Start
+
+1. **Configuration Setup**: Default configs are in `config/defaults/`. Copy to workspace for customization:
+   ```bash
+   mkdir -p workspace/config
+   cp config/defaults/sources.json workspace/config/
+   cp config/defaults/topics.json workspace/config/
    ```
-   config/tech-digest-rss-feeds.json  → <WORKSPACE>/config/
-   config/tech-digest-kol-list.json   → <WORKSPACE>/config/
-   config/tech-digest-topics.json     → <WORKSPACE>/config/
+
+2. **Environment Variables**: 
+   - `X_BEARER_TOKEN` - Twitter API bearer token (optional)
+   - `BRAVE_API_KEY` - Brave Search API key (optional)
+
+3. **Generate Digest**:
+   ```bash
+   # Full pipeline
+   python3 scripts/fetch-rss.py --config workspace/config
+   python3 scripts/fetch-twitter.py --config workspace/config  
+   python3 scripts/fetch-web.py --config workspace/config
+   python3 scripts/merge-sources.py --rss rss.json --twitter twitter.json --web web.json
    ```
 
-2. Read `references/digest-prompt.md` for the unified prompt template. Ask the user for their preferred report language (default: Chinese). Fill in placeholders for daily or weekly mode, then create cron jobs:
-   - Daily: `schedule: "0 7 * * *"` (7:00 AM daily)
-   - Weekly: `schedule: "0 7 * * 1"` (7:00 AM Monday)
+4. **Use Templates**: Apply Discord, email, or markdown templates to merged output
 
-3. (Optional) Set `X_BEARER_TOKEN` env var for Twitter API. Works without it via web search fallback.
+## Configuration Files
 
-4. (Optional) Configure `gog` CLI for email delivery. Remove email line from prompt if not needed.
+### `sources.json` - Unified Data Sources
+```json
+{
+  "sources": [
+    {
+      "id": "openai-rss",
+      "type": "rss",
+      "name": "OpenAI Blog",
+      "url": "https://openai.com/blog/rss.xml",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "ai-agent"],
+      "note": "Official OpenAI updates"
+    },
+    {
+      "id": "sama-twitter",
+      "type": "twitter", 
+      "name": "Sam Altman",
+      "handle": "sama",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "frontier-tech"],
+      "note": "OpenAI CEO"
+    }
+  ]
+}
+```
 
-## Config Files
+### `topics.json` - Enhanced Topic Definitions
+```json
+{
+  "topics": [
+    {
+      "id": "llm",
+      "emoji": "🧠",
+      "label": "LLM / Large Models",
+      "description": "Large Language Models, foundation models, breakthroughs",
+      "search": {
+        "queries": ["LLM latest news", "large language model breakthroughs"],
+        "must_include": ["LLM", "large language model", "foundation model"],
+        "exclude": ["tutorial", "beginner guide"]
+      },
+      "display": {
+        "max_items": 8,
+        "style": "detailed"
+      }
+    }
+  ]
+}
+```
 
-Both live in `<WORKSPACE>/config/` for easy editing without modifying prompts:
+## Scripts Pipeline
 
-- **`tech-digest-rss-feeds.json`** — RSS feeds by domain. Feeds with `"priority": true` are fetched first. 30+ defaults.
-- **`tech-digest-kol-list.json`** — Twitter KOL accounts by domain. 30+ defaults including AI labs, builders, crypto (global + CN), tech leaders.
-- **`tech-digest-topics.json`** — Topic definitions: report sections, search keywords, emojis. Drives both data collection and report structure.
+### 1. `fetch-rss.py` - RSS Feed Fetcher
+```bash
+python3 scripts/fetch-rss.py [--config CONFIG_DIR] [--hours 48] [--output FILE] [--verbose]
+```
+- **Features**: Parallel fetching, retry mechanism, feedparser + regex fallback
+- **Output**: Structured JSON with articles tagged by topics
+- **Timeout**: 15s per feed with exponential backoff retry
 
-See `references/config-schema.md` for field definitions and validation rules.
+### 2. `fetch-twitter.py` - Twitter/X KOL Monitor  
+```bash
+python3 scripts/fetch-twitter.py [--config CONFIG_DIR] [--hours 48] [--output FILE]
+```
+- **Requirements**: `X_BEARER_TOKEN` environment variable
+- **Features**: Rate limit handling, engagement metrics, reply filtering
+- **API**: Twitter API v2 with app-only authentication
 
-## Scripts
+### 3. `fetch-web.py` - Web Search Engine
+```bash
+python3 scripts/fetch-web.py [--config CONFIG_DIR] [--freshness 48h] [--output FILE]
+```
+- **With Brave API**: Automated search execution (requires `BRAVE_API_KEY`)
+- **Without API**: Generates search interface for agents to execute
+- **Filtering**: Content-based inclusion/exclusion rules
 
-- **`scripts/fetch-rss.py`** — Parallel RSS fetcher. Pre-fetches all feeds and outputs structured JSON. Used by the digest prompt to avoid slow sequential web_fetch calls.
-  ```bash
-  python3 scripts/fetch-rss.py config.json --hours 48 --clean-archive ./archive/tech-digest
-  ```
+### 4. `merge-sources.py` - Quality Scoring & Deduplication
+```bash
+python3 scripts/merge-sources.py --rss rss.json --twitter twitter.json --web web.json
+```
+- **Quality Scoring**: Priority sources (+3), multi-source (+5), recency (+2), engagement (+1)
+- **Deduplication**: Title similarity detection (85% threshold), domain saturation limits
+- **Previous Digest Penalty**: Avoids repeating articles from recent digests
+- **Output**: Topic-grouped articles with quality scores
 
-## Minimal Setup
+### 5. `validate-config.py` - Configuration Validator
+```bash
+python3 scripts/validate-config.py [--config-dir CONFIG_DIR] [--verbose]
+```
+- **JSON Schema**: Validates structure and required fields
+- **Consistency**: Checks topic references, duplicate IDs
+- **Source Types**: Validates RSS URLs, Twitter handles
 
-Only 3 placeholders are required. Everything else has sensible defaults:
+## User Customization
 
-| Required | Example |
-|----------|---------|
-| `<WORKSPACE>` | `/Users/bot/.openclaw/workspace` |
-| `<SKILL_DIR>` | `/Users/bot/.openclaw/workspace/skills/tech-digest` |
-| `<DISCORD_CHANNEL_ID>` | `1470806864412414071` |
+### Workspace Configuration Override
+Place custom configs in `workspace/config/` to override defaults:
 
-Optional: `<EMAIL>`, `<TELEGRAM_CHAT_ID>`, `<LANGUAGE>` (default: Chinese).
+- **Sources**: Append new sources, disable defaults with `"enabled": false`
+- **Topics**: Override topic definitions, search queries, display settings
+- **Merge Logic**: 
+  - Sources with same `id` → user version takes precedence
+  - Sources with new `id` → appended to defaults
+  - Topics with same `id` → user version completely replaces default
 
-All other placeholders (`<MODE>`, `<FRESHNESS>`, etc.) have fixed daily/weekly values — see the placeholder table in `references/digest-prompt.md`.
+### Example Workspace Override
+```json
+// workspace/config/sources.json
+{
+  "sources": [
+    {
+      "id": "simonwillison-rss",
+      "enabled": false,
+      "note": "Disabled: too noisy for my use case"
+    },
+    {
+      "id": "my-custom-blog", 
+      "type": "rss",
+      "name": "My Custom Tech Blog",
+      "url": "https://myblog.com/rss",
+      "enabled": true,
+      "priority": true,
+      "topics": ["frontier-tech"]
+    }
+  ]
+}
+```
 
-## On-Demand Usage
+## Templates & Output
 
-Tell the agent: "Generate today's tech digest now" or trigger via `cron run <jobId>`.
+### Discord Template (`references/templates/discord.md`)
+- Bullet list format with link suppression (`<link>`)
+- Mobile-optimized, emoji headers
+- 2000 character limit awareness
 
-## Customization
+### Email Template (`references/templates/email.md`) 
+- Rich metadata, technical stats, archive links
+- Executive summary, top articles section
+- HTML-compatible formatting
 
-- **Topics/sections**: Edit `tech-digest-topics.json` to add/remove/reorder topics and search keywords
-- **RSS feeds**: Edit `tech-digest-rss-feeds.json` (add/remove, toggle priority)
-- **KOLs**: Edit `tech-digest-kol-list.json` (add/remove by category)
-- **Language**: Change `<LANGUAGE>` placeholder (default: Chinese)
-- **Delivery**: Discord, Telegram, email — add/remove delivery lines in prompt
-- **Archive**: Reports saved to `<WORKSPACE>/archive/tech-digest/`
+### Markdown Template (`references/templates/markdown.md`)
+- GitHub-compatible tables and formatting
+- Technical details section
+- Expandable sections support
+
+## Default Sources (65 total)
+
+- **RSS Feeds (32)**: AI labs, tech blogs, crypto news, Chinese tech media
+- **Twitter/X KOLs (29)**: AI researchers, crypto leaders, tech executives  
+- **Web Search (4 topics)**: LLM, AI Agent, Crypto, Frontier Tech
+
+All sources pre-configured with appropriate topic tags and priority levels.
+
+## Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+**Optional but Recommended**:
+- `feedparser>=6.0.0` - Better RSS parsing (fallback to regex if unavailable)
+- `jsonschema>=4.0.0` - Configuration validation
+
+**All scripts work with Python 3.8+ standard library only.**
+
+## Migration from v1.x
+
+1. **Config Migration**: Old config files are automatically migrated to new structure
+2. **Script Updates**: New command-line interfaces with better error handling
+3. **Template System**: Replace old prompt-based generation with template system
+4. **Quality Scoring**: New scoring system affects article ranking
+
+## Monitoring & Operations
+
+### Health Checks
+```bash
+# Validate configuration
+python3 scripts/validate-config.py --verbose
+
+# Test RSS feeds
+python3 scripts/fetch-rss.py --hours 1 --verbose
+
+# Check Twitter API
+python3 scripts/fetch-twitter.py --hours 1 --verbose
+```
+
+### Archive Management
+- Digests automatically archived to `workspace/archive/tech-digest/`
+- Previous digest titles used for duplicate detection
+- Old archives cleaned automatically (30+ days)
+
+### Error Handling
+- **Network Failures**: Retry with exponential backoff
+- **Rate Limits**: Automatic retry with appropriate delays
+- **Invalid Content**: Graceful degradation, detailed logging
+- **Configuration Errors**: Schema validation with helpful messages
+
+## API Keys & Environment
+
+Set in `~/.zshenv` or similar:
+```bash
+export X_BEARER_TOKEN="your_twitter_bearer_token"
+export BRAVE_API_KEY="your_brave_search_api_key"  # Optional
+```
+
+- **Twitter**: Read-only bearer token, pay-per-use pricing
+- **Brave Search**: Optional, fallback to agent web_search if unavailable
+
+## Cron Integration
+
+Daily digest example:
+```bash
+# Run at 7:00 AM daily
+0 7 * * * cd /path/to/tech-digest && ./scripts/daily-digest.sh
+```
+
+Weekly digest example:
+```bash
+# Run at 7:00 AM every Monday
+0 7 * * 1 cd /path/to/tech-digest && ./scripts/weekly-digest.sh
+```
+
+## Support & Troubleshooting
+
+### Common Issues
+1. **RSS feeds failing**: Check network connectivity, use `--verbose` for details
+2. **Twitter rate limits**: Reduce sources or increase interval
+3. **Configuration errors**: Run `validate-config.py` for specific issues
+4. **No articles found**: Check time window (`--hours`) and source enablement
+
+### Debug Mode
+All scripts support `--verbose` flag for detailed logging and troubleshooting.
+
+### Performance Tuning
+- **Parallel Workers**: Adjust `MAX_WORKERS` in scripts for your system
+- **Timeout Settings**: Increase `TIMEOUT` for slow networks
+- **Article Limits**: Adjust `MAX_ARTICLES_PER_FEED` based on needs

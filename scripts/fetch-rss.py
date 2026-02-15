@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """
-Fetch RSS feeds in parallel and output structured JSON.
-Usage: python3 fetch-rss.py <config.json> [--hours 48] [--output result.json]
+Fetch RSS feeds from unified sources configuration.
+
+Reads sources.json, filters RSS sources, fetches feeds in parallel with retry
+mechanism, and outputs structured JSON with articles tagged by topics.
+
+Usage:
+    python3 fetch-rss.py [--config CONFIG_DIR] [--hours 48] [--output FILE] [--verbose]
 """
 
 import json
@@ -9,60 +14,95 @@ import re
 import sys
 import os
 import argparse
+import logging
+import time
+import tempfile
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import urlopen, Request
 from urllib.error import URLError
 from urllib.parse import urljoin
+from pathlib import Path
+from typing import Dict, List, Any, Optional
+
+# Try to import feedparser, fall back to regex parsing
+try:
+    import feedparser
+    HAS_FEEDPARSER = True
+except ImportError:
+    HAS_FEEDPARSER = False
 
 TIMEOUT = 15
-MAX_WORKERS = 10
+MAX_WORKERS = 10  
 MAX_ARTICLES_PER_FEED = 20
+RETRY_COUNT = 1
+RETRY_DELAY = 2.0  # seconds
 
 
-def parse_date(s):
+def setup_logging(verbose: bool) -> logging.Logger:
+    """Setup logging configuration."""
+    level = logging.DEBUG if verbose else logging.INFO
+    logging.basicConfig(
+        level=level,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
+    return logging.getLogger(__name__)
+
+
+def parse_date_regex(s: str) -> Optional[datetime]:
+    """Parse date string using regex patterns (fallback method)."""
     if not s:
         return None
     s = s.strip()
-    for fmt in [
+    
+    # Common date formats
+    formats = [
         "%a, %d %b %Y %H:%M:%S %z",
-        "%a, %d %b %Y %H:%M:%S %Z",
+        "%a, %d %b %Y %H:%M:%S %Z", 
         "%Y-%m-%dT%H:%M:%S%z",
         "%Y-%m-%dT%H:%M:%SZ",
         "%Y-%m-%d %H:%M:%S",
         "%Y-%m-%d",
-    ]:
+    ]
+    
+    for fmt in formats:
         try:
             dt = datetime.strptime(s, fmt)
             if dt.tzinfo is None:
                 dt = dt.replace(tzinfo=timezone.utc)
             return dt
         except ValueError:
-            pass
+            continue
+            
     # ISO fallback
     try:
         dt = datetime.fromisoformat(s.replace("Z", "+00:00"))
         return dt
     except (ValueError, AttributeError):
         pass
+        
     return None
 
 
-def extract_cdata(text):
+def extract_cdata(text: str) -> str:
+    """Extract content from CDATA sections."""
     m = re.search(r"<!\[CDATA\[(.*?)\]\]>", text, re.DOTALL)
     return m.group(1) if m else text
 
 
-def strip_tags(html):
+def strip_tags(html: str) -> str:
+    """Remove HTML tags from text."""
     return re.sub(r"<[^>]+>", "", html).strip()
 
 
-def get_tag(xml, tag):
+def get_tag(xml: str, tag: str) -> str:
+    """Extract content from XML tag using regex."""
     m = re.search(rf"<{tag}[^>]*>(.*?)</{tag}>", xml, re.DOTALL | re.IGNORECASE)
     return extract_cdata(m.group(1)).strip() if m else ""
 
 
-def resolve_link(link, base_url):
+def resolve_link(link: str, base_url: str) -> str:
     """Resolve relative links against the feed URL."""
     if not link:
         return link
@@ -71,7 +111,50 @@ def resolve_link(link, base_url):
     return urljoin(base_url, link)
 
 
-def parse_feed(content, cutoff, feed_url):
+def parse_feed_feedparser(content: str, cutoff: datetime, feed_url: str) -> List[Dict[str, Any]]:
+    """Parse feed using feedparser library."""
+    articles = []
+    
+    try:
+        feed = feedparser.parse(content)
+        
+        for entry in feed.entries[:MAX_ARTICLES_PER_FEED]:
+            title = entry.get('title', '').strip()
+            link = entry.get('link', '').strip()
+            
+            # Try multiple date fields
+            pub_date = None
+            for date_field in ['published_parsed', 'updated_parsed']:
+                if hasattr(entry, date_field) and getattr(entry, date_field):
+                    try:
+                        pub_date = datetime(*getattr(entry, date_field)[:6], tzinfo=timezone.utc)
+                        break
+                    except (TypeError, ValueError):
+                        continue
+                        
+            # Fallback to string parsing
+            if pub_date is None:
+                for date_field in ['published', 'updated']:
+                    if hasattr(entry, date_field) and getattr(entry, date_field):
+                        pub_date = parse_date_regex(getattr(entry, date_field))
+                        if pub_date:
+                            break
+                            
+            if title and link and pub_date and pub_date >= cutoff:
+                articles.append({
+                    "title": title[:200],
+                    "link": resolve_link(link, feed_url),
+                    "date": pub_date.isoformat(),
+                })
+                
+    except Exception as e:
+        logging.debug(f"feedparser parsing failed: {e}")
+        
+    return articles
+
+
+def parse_feed_regex(content: str, cutoff: datetime, feed_url: str) -> List[Dict[str, Any]]:
+    """Parse feed using regex patterns (fallback method)."""
     articles = []
 
     # RSS 2.0 items
@@ -80,17 +163,14 @@ def parse_feed(content, cutoff, feed_url):
         title = strip_tags(get_tag(block, "title"))
         link = resolve_link(get_tag(block, "link"), feed_url)
         date_str = get_tag(block, "pubDate") or get_tag(block, "dc:date")
-        pub = parse_date(date_str)
+        pub = parse_date_regex(date_str)
 
-        if title and link:
-            # Require a valid date — skip articles with no parseable date
-            # to avoid including undated old content
-            if pub is not None and pub >= cutoff:
-                articles.append({
-                    "title": title[:200],
-                    "link": link,
-                    "date": pub.isoformat(),
-                })
+        if title and link and pub and pub >= cutoff:
+            articles.append({
+                "title": title[:200],
+                "link": link,
+                "date": pub.isoformat(),
+            })
 
     # Atom entries fallback
     if not articles:
@@ -104,152 +184,219 @@ def parse_feed(content, cutoff, feed_url):
                 link = link_m.group(1)
             link = resolve_link(link, feed_url)
             date_str = get_tag(block, "updated") or get_tag(block, "published")
-            pub = parse_date(date_str)
+            pub = parse_date_regex(date_str)
 
-            if title and link:
-                if pub is not None and pub >= cutoff:
-                    articles.append({
-                        "title": title[:200],
-                        "link": link,
-                        "date": pub.isoformat(),
-                    })
+            if title and link and pub and pub >= cutoff:
+                articles.append({
+                    "title": title[:200],
+                    "link": link,
+                    "date": pub.isoformat(),
+                })
 
     return articles[:MAX_ARTICLES_PER_FEED]
 
 
-def fetch_feed(feed_info, cutoff):
-    name = feed_info["name"]
-    url = feed_info["url"]
-    priority = feed_info["priority"]
-    category = feed_info["category"]
+def parse_feed(content: str, cutoff: datetime, feed_url: str) -> List[Dict[str, Any]]:
+    """Parse feed using best available method."""
+    if HAS_FEEDPARSER:
+        articles = parse_feed_feedparser(content, cutoff, feed_url)
+        if articles:
+            return articles
+        logging.debug("feedparser returned no articles, trying regex fallback")
+        
+    return parse_feed_regex(content, cutoff, feed_url)
 
+
+def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
+    """Fetch RSS feed with retry mechanism."""
+    source_id = source["id"]
+    name = source["name"]
+    url = source["url"]
+    priority = source["priority"]
+    topics = source["topics"]
+    
+    for attempt in range(RETRY_COUNT + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "TechDigest/2.0"})
+            with urlopen(req, timeout=TIMEOUT) as resp:
+                final_url = resp.url if hasattr(resp, 'url') else url
+                content = resp.read().decode("utf-8", errors="replace")
+                
+            articles = parse_feed(content, cutoff, final_url)
+            
+            # Tag articles with topics
+            for article in articles:
+                article["topics"] = topics[:]
+            
+            return {
+                "source_id": source_id,
+                "source_type": "rss",
+                "name": name,
+                "url": url,
+                "priority": priority,
+                "topics": topics,
+                "status": "ok",
+                "attempts": attempt + 1,
+                "count": len(articles),
+                "articles": articles,
+            }
+            
+        except Exception as e:
+            error_msg = str(e)[:100]
+            logging.debug(f"Attempt {attempt + 1} failed for {name}: {error_msg}")
+            
+            if attempt < RETRY_COUNT:
+                time.sleep(RETRY_DELAY * (2 ** attempt))  # Exponential backoff
+                continue
+            else:
+                return {
+                    "source_id": source_id,
+                    "source_type": "rss",
+                    "name": name,
+                    "url": url,
+                    "priority": priority,
+                    "topics": topics,
+                    "status": "error",
+                    "attempts": attempt + 1,
+                    "error": error_msg,
+                    "count": 0,
+                    "articles": [],
+                }
+
+
+def load_sources(config_dir: Path) -> List[Dict[str, Any]]:
+    """Load RSS sources from unified configuration."""
+    sources_path = config_dir / "sources.json"
+    
     try:
-        req = Request(url, headers={"User-Agent": "TechDigest/1.0"})
-        with urlopen(req, timeout=TIMEOUT) as resp:
-            final_url = resp.url if hasattr(resp, 'url') else url
-            content = resp.read().decode("utf-8", errors="replace")
-        articles = parse_feed(content, cutoff, final_url)
-        return {
-            "name": name,
-            "url": url,
-            "category": category,
-            "priority": priority,
-            "status": "ok",
-            "count": len(articles),
-            "articles": articles,
-        }
-    except Exception as e:
-        return {
-            "name": name,
-            "url": url,
-            "category": category,
-            "priority": priority,
-            "status": "error",
-            "error": str(e)[:100],
-            "count": 0,
-            "articles": [],
-        }
-
-
-def load_feeds(config_path):
-    with open(config_path) as f:
-        data = json.load(f)
-
-    feeds = []
-    for cat, items in data.items():
-        if cat.startswith("_") or not isinstance(items, list):
-            continue
-        for item in items:
-            if "rss" in item:
-                feeds.append({
-                    "name": item.get("name", ""),
-                    "url": item["rss"],
-                    "priority": bool(item.get("priority")),
-                    "category": cat,
-                })
-    return feeds
-
-
-def clean_archive(archive_dir, keep_days=30):
-    """Remove archive files older than keep_days."""
-    if not os.path.isdir(archive_dir):
-        return 0
-    cutoff = datetime.now() - timedelta(days=keep_days)
-    removed = 0
-    for f in os.listdir(archive_dir):
-        if not f.endswith(".md"):
-            continue
-        # Extract date from filename: daily-YYYY-MM-DD.md or weekly-YYYY-MM-DD.md
-        m = re.search(r"(\d{4}-\d{2}-\d{2})", f)
-        if m:
-            try:
-                file_date = datetime.strptime(m.group(1), "%Y-%m-%d")
-                if file_date < cutoff:
-                    os.remove(os.path.join(archive_dir, f))
-                    removed += 1
-            except ValueError:
-                pass
-    return removed
+        with open(sources_path) as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"Sources config not found: {sources_path}")
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in sources config: {e}")
+        
+    # Filter RSS sources that are enabled
+    rss_sources = []
+    for source in data.get("sources", []):
+        if source.get("type") == "rss" and source.get("enabled", True):
+            rss_sources.append(source)
+            
+    logging.info(f"Loaded {len(rss_sources)} enabled RSS sources")
+    return rss_sources
 
 
 def main():
+    """Main RSS fetching function."""
     parser = argparse.ArgumentParser(
-        description="Parallel RSS/Atom feed fetcher for tech-digest skill. "
-                    "Fetches all feeds from a config JSON, filters by time window, "
-                    "and outputs structured article data as JSON.",
-        epilog="Example: python3 fetch-rss.py config.json --hours 48 -o results.json"
+        description="Parallel RSS/Atom feed fetcher for tech-digest. "
+                   "Fetches enabled RSS sources from unified configuration, "
+                   "filters by time window, and outputs structured article data.",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    python3 fetch-rss.py
+    python3 fetch-rss.py --config workspace/config --hours 48 -o results.json
+    python3 fetch-rss.py --verbose
+        """
     )
-    parser.add_argument("config", help="Path to tech-digest-rss-feeds.json config file")
-    parser.add_argument("--hours", type=int, default=48, help="Time window in hours (default: 48)")
-    parser.add_argument("--output", "-o", default=None, help="Output JSON path (default: auto-generated temp file)")
-    parser.add_argument("--clean-archive", default=None, metavar="DIR", help="Clean archive files older than 30 days from DIR")
+    
+    parser.add_argument(
+        "--config",
+        type=Path,
+        default=Path("config/defaults"),
+        help="Configuration directory (default: config/defaults)"
+    )
+    
+    parser.add_argument(
+        "--hours",
+        type=int,
+        default=48,
+        help="Time window in hours for articles (default: 48)"
+    )
+    
+    parser.add_argument(
+        "--output", "-o",
+        type=Path,
+        help="Output JSON path (default: auto-generated temp file)"
+    )
+    
+    parser.add_argument(
+        "--verbose", "-v",
+        action="store_true",
+        help="Enable verbose logging"
+    )
+    
     args = parser.parse_args()
-
-    # Clean archive if requested
-    if args.clean_archive:
-        removed = clean_archive(args.clean_archive)
-        if removed:
-            print(f"Cleaned {removed} old archive files", file=sys.stderr)
-
-    cutoff = datetime.now(timezone.utc) - timedelta(hours=args.hours)
-    feeds = load_feeds(args.config)
-
+    logger = setup_logging(args.verbose)
+    
     # Auto-generate unique output path if not specified
     if not args.output:
-        import tempfile
-        fd, args.output = tempfile.mkstemp(prefix="tech-digest-rss-", suffix=".json")
+        fd, temp_path = tempfile.mkstemp(prefix="tech-digest-rss-", suffix=".json")
         os.close(fd)
+        args.output = Path(temp_path)
+    
+    try:
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=args.hours)
+        sources = load_sources(args.config)
+        
+        if not sources:
+            logger.warning("No RSS sources found or all disabled")
+            
+        logger.info(f"Fetching {len(sources)} RSS feeds (window: {args.hours}h)")
+        
+        # Check feedparser availability
+        if HAS_FEEDPARSER:
+            logger.debug("Using feedparser library for parsing")
+        else:
+            logger.info("feedparser not available, using regex parsing")
+        
+        results = []
+        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
+            futures = {pool.submit(fetch_feed_with_retry, source, cutoff): source 
+                      for source in sources}
+            
+            for future in as_completed(futures):
+                result = future.result()
+                results.append(result)
+                
+                if result["status"] == "ok":
+                    logger.debug(f"✅ {result['name']}: {result['count']} articles")
+                else:
+                    logger.debug(f"❌ {result['name']}: {result['error']}")
 
-    print(f"Fetching {len(feeds)} RSS feeds (window: {args.hours}h)...", file=sys.stderr)
+        # Sort: priority first, then by article count
+        results.sort(key=lambda x: (not x.get("priority", False), -x.get("count", 0)))
 
-    results = []
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-        futures = {pool.submit(fetch_feed, f, cutoff): f for f in feeds}
-        for future in as_completed(futures):
-            results.append(future.result())
+        ok_count = sum(1 for r in results if r["status"] == "ok")
+        total_articles = sum(r.get("count", 0) for r in results)
 
-    # Sort: priority first, then by article count
-    results.sort(key=lambda x: (not x.get("priority"), -x.get("count", 0)))
+        output = {
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "source_type": "rss",
+            "config_dir": str(args.config),
+            "hours": args.hours,
+            "feedparser_available": HAS_FEEDPARSER,
+            "sources_total": len(results),
+            "sources_ok": ok_count,
+            "total_articles": total_articles,
+            "sources": results,
+        }
 
-    ok = sum(1 for r in results if r["status"] == "ok")
-    total_articles = sum(r.get("count", 0) for r in results)
+        # Write output
+        json_str = json.dumps(output, ensure_ascii=False, indent=2)
+        with open(args.output, "w", encoding='utf-8') as f:
+            f.write(json_str)
 
-    output = {
-        "generated": datetime.now(timezone.utc).isoformat(),
-        "hours": args.hours,
-        "feeds_total": len(results),
-        "feeds_ok": ok,
-        "total_articles": total_articles,
-        "feeds": results,
-    }
-
-    json_str = json.dumps(output, ensure_ascii=False, indent=2)
-
-    with open(args.output, "w") as f:
-        f.write(json_str)
-
-    print(f"Done: {ok}/{len(results)} feeds ok, {total_articles} articles → {args.output}", file=sys.stderr)
+        logger.info(f"✅ Done: {ok_count}/{len(results)} feeds ok, "
+                   f"{total_articles} articles → {args.output}")
+        
+        return 0
+        
+    except Exception as e:
+        logger.error(f"💥 RSS fetch failed: {e}")
+        return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
