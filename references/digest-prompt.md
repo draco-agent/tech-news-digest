@@ -13,7 +13,7 @@ Unified template for both daily and weekly digests. Replace `<...>` placeholders
 | `<ITEMS_PER_SECTION>` | `3-5` | `5-8` |
 | `<BLOG_PICKS_COUNT>` | `2-3` | `3-5` |
 | `<EXTRA_SECTIONS>` | *(remove line)* | `- 📊 Weekly Trend Summary (2-3 sentences summarizing macro trends)` |
-| `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
+| `<SUBJECT>` | `Daily Tech News Digest - YYYY-MM-DD` | `Weekly Tech News Digest - YYYY-MM-DD` |
 | `<WORKSPACE>` | Your workspace path | Your workspace path |
 | `<SKILL_DIR>` | Path to the installed skill directory | Path to the installed skill directory |
 | `<DISCORD_CHANNEL_ID>` | Target channel ID | Target channel ID |
@@ -122,7 +122,7 @@ Use sections defined in `topics.json`. Each topic has:
 - `search.must_include` / `search.exclude` for content filtering
 
 ### Fixed Sections (append after topic sections)
-- 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors)
+- 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors — each entry must include the source tweet/post link)
 - 🔥 Twitter/X Trending
 - 📝 Blog Picks (<BLOG_PICKS_COUNT> high-quality deep articles from RSS)
 <EXTRA_SECTIONS>
