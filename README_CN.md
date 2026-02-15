@@ -36,19 +36,9 @@
 
 Bot 会自动 clone 仓库、配置数据源、创建定时任务、开始推送摘要——全程对话完成，无需手动操作。
 
-#### 方式二：通过 ClawHub
+#### 方式二：ClawHub CLI
 ```bash
 clawhub install tech-digest
-```
-
-#### 方式三：手动安装
-```bash
-# Clone 到 OpenClaw skills 目录
-cd ~/.openclaw/workspace/skills
-git clone https://github.com/draco-hoard/tech-digest.git
-
-# 可选 Python 依赖
-pip install -r tech-digest/requirements.txt
 ```
 
 ### 1. 配置

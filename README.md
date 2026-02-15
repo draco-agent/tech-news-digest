@@ -34,19 +34,9 @@ Just tell your bot:
 
 Your bot will clone the repo, configure sources, create cron jobs, and start delivering digests — all through conversation. No manual setup needed.
 
-### Option 2: ClawHub
+### Option 2: ClawHub CLI
 ```bash
 clawhub install tech-digest
-```
-
-### Option 3: Manual install via GitHub
-```bash
-# Clone into OpenClaw skills directory
-cd ~/.openclaw/workspace/skills
-git clone https://github.com/draco-hoard/tech-digest.git
-
-# Optional Python dependencies
-pip install -r tech-digest/requirements.txt
 ```
 
 ## 🚀 Quick Start
