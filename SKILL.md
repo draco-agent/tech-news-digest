@@ -1,7 +1,19 @@
 ---
 name: tech-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Four-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "2.1.0"
+version: "2.1.1"
+homepage: https://github.com/draco-agent/tech-digest
+source: https://github.com/draco-agent/tech-digest
+env:
+  - name: X_BEARER_TOKEN
+    required: false
+    description: Twitter/X API bearer token for KOL monitoring
+  - name: BRAVE_API_KEY
+    required: false
+    description: Brave Search API key for web search layer
+  - name: GITHUB_TOKEN
+    required: false
+    description: GitHub personal access token for higher API rate limits
 ---
 
 # Tech Digest v2.1
