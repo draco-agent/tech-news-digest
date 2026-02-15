@@ -195,7 +195,6 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     
     for i, article in enumerate(articles):
         if i in duplicate_indices:
-            article["quality_score"] = article.get("quality_score", 0) + PENALTY_DUPLICATE
             continue
         
         title = article.get("title", "")

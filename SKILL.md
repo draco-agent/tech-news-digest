@@ -247,7 +247,7 @@ python3 scripts/fetch-twitter.py --hours 1 --verbose
 ### Archive Management
 - Digests automatically archived to `workspace/archive/tech-digest/`
 - Previous digest titles used for duplicate detection
-- Old archives cleaned automatically (30+ days)
+- Old archives cleaned automatically (90+ days)
 
 ### Error Handling
 - **Network Failures**: Retry with exponential backoff
