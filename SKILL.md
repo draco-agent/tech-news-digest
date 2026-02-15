@@ -4,11 +4,11 @@ description: Generate tech news digests with unified source model, quality scori
 version: "2.1.0"
 ---
 
-# Tech Digest v2.0
+# Tech Digest v2.1
 
 Automated tech news digest system with unified data source model, quality scoring pipeline, and template-based output generation.
 
-## What's New in v2.0
+## What's New in v2.1
 
 - **Unified Source Model**: Single `sources.json` for RSS, Twitter, and web sources
 - **Enhanced Topics**: Richer topic definitions with search queries and filters  
@@ -200,9 +200,9 @@ Place custom configs in `workspace/config/` to override defaults:
 - Technical details section
 - Expandable sections support
 
-## Default Sources (118 total)
+## Default Sources (109 total)
 
-- **RSS Feeds (55, 46 enabled)**: AI labs, tech blogs, crypto news, Chinese tech media
+- **RSS Feeds (46)**: AI labs, tech blogs, crypto news, Chinese tech media
 - **Twitter/X KOLs (44)**: AI researchers, crypto leaders, tech executives
 - **GitHub Repos (19)**: Major open-source projects (LangChain, vLLM, Foundry, etc.)
 - **Web Search (4 topics)**: LLM, AI Agent, Crypto, Frontier Tech
@@ -321,15 +321,6 @@ The cron prompt should **NOT** hardcode the pipeline steps. Instead, reference `
 - **Portable**: Same skill on different OpenClaw instances, just change paths and channel IDs
 - **Maintainable**: Update the skill → all cron jobs pick up changes automatically
 - **Anti-pattern**: Do NOT copy pipeline steps into the cron prompt — it will drift out of sync
-
-### Shell Cron (Alternative)
-```bash
-# Daily at 7:00 AM
-0 7 * * * cd /path/to/tech-digest && ./scripts/daily-digest.sh
-
-# Weekly at 7:00 AM every Monday
-0 7 * * 1 cd /path/to/tech-digest && ./scripts/weekly-digest.sh
-```
 
 ## Support & Troubleshooting
 

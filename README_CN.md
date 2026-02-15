@@ -1,13 +1,13 @@
 # Tech Digest
 
-> 自动化科技资讯汇总 — 118 个数据源，4 层管道，一句话安装。
+> 自动化科技资讯汇总 — 109 个数据源，4 层管道，一句话安装。
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## 💬 一句话安装
 
-跟你的 [OpenClaw](https://openclaw.com) AI 助手说：
+跟你的 [OpenClaw](https://openclaw.ai) AI 助手说：
 
 > **"安装 tech-digest，每天早上 9 点发科技日报到 #tech-news 频道"**
 
@@ -28,7 +28,7 @@ clawhub install tech-digest
 
 ## 📊 你会得到什么
 
-基于 **118 个数据源** 的质量评分、去重科技日报：
+基于 **109 个数据源** 的质量评分、去重科技日报：
 
 | 层级 | 数量 | 内容 |
 |------|------|------|
@@ -36,7 +36,6 @@ clawhub install tech-digest
 | 🐦 Twitter/X | 44 个 KOL | @karpathy、@VitalikButerin、@sama… |
 | 🔍 Web 搜索 | 4 个主题 | Brave Search API + 时效过滤 |
 | 🐙 GitHub | 19 个仓库 | 关键项目的 Release 跟踪 |
-| *(+ 9 个已禁用)* | | 随时可启用 |
 
 ### 数据管道
 
@@ -54,7 +53,7 @@ RSS + Twitter + Web + GitHub
 
 ## ⚙️ 配置
 
-- `config/defaults/sources.json` — 118 个内置数据源
+- `config/defaults/sources.json` — 109 个内置数据源
 - `config/defaults/topics.json` — 4 个主题，含搜索查询和 Twitter 查询
 - 用户自定义配置放 `workspace/config/`，优先级更高
 

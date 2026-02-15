@@ -1,7 +1,7 @@
 {
   "_description": "Unified data sources configuration. RSS feeds, Twitter/X KOLs, and web search sources. Each source binds to topics and has enabled/priority fields.",
   "_updated": "2026-02-15",
-  "_version": "2.0.0",
+  "_version": "2.1.0",
   "sources": [
     {
       "id": "simonwillison-rss",
@@ -83,19 +83,6 @@
         "frontier-tech"
       ],
       "note": "LLM research and tutorials"
-    },
-    {
-      "id": "batch-rss",
-      "type": "rss",
-      "name": "The Batch (Andrew Ng)",
-      "url": "https://www.deeplearning.ai/feed/",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "llm",
-        "ai-agent"
-      ],
-      "note": "Weekly AI newsletter"
     },
     {
       "id": "lilian-rss",
@@ -344,18 +331,6 @@
       "note": "Ghostty, infrastructure"
     },
     {
-      "id": "rachel-rss",
-      "type": "rss",
-      "name": "rachelbythebay",
-      "url": "https://rachelbythebay.com/w/atom.xml",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "frontier-tech"
-      ],
-      "note": "Systems engineering (may be flaky)"
-    },
-    {
       "id": "geohot-rss",
       "type": "rss",
       "name": "Geohot",
@@ -432,18 +407,6 @@
         "frontier-tech"
       ],
       "note": "技术社区"
-    },
-    {
-      "id": "geekpark-rss",
-      "type": "rss",
-      "name": "极客公园",
-      "url": "https://www.geekpark.net/rss",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "frontier-tech"
-      ],
-      "note": "科技创业媒体"
     },
     {
       "id": "sama-twitter",
@@ -878,33 +841,6 @@
       "note": "AI industry news"
     },
     {
-      "id": "bensbites-rss",
-      "type": "rss",
-      "name": "Ben's Bites",
-      "url": "https://bensbites.beehiiv.com/feed",
-      "enabled": false,
-      "priority": true,
-      "topics": [
-        "llm",
-        "ai-agent"
-      ],
-      "note": "Top AI newsletter, daily updates"
-    },
-    {
-      "id": "rundown-ai-rss",
-      "type": "rss",
-      "name": "The Rundown AI",
-      "url": "https://www.therundown.ai/feed",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "llm",
-        "ai-agent",
-        "frontier-tech"
-      ],
-      "note": "Million-subscriber AI newsletter"
-    },
-    {
       "id": "404media-rss",
       "type": "rss",
       "name": "404 Media",
@@ -942,18 +878,6 @@
       "note": "System design + engineering by Alex Xu"
     },
     {
-      "id": "stability-rss",
-      "type": "rss",
-      "name": "Stability AI Blog",
-      "url": "https://stability.ai/blog?format=rss",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "llm"
-      ],
-      "note": "Open-source AI models"
-    },
-    {
       "id": "nvidia-ai-rss",
       "type": "rss",
       "name": "NVIDIA AI Blog",
@@ -978,19 +902,6 @@
         "frontier-tech"
       ],
       "note": "Frontier AI research"
-    },
-    {
-      "id": "meta-ai-rss",
-      "type": "rss",
-      "name": "Meta AI Blog",
-      "url": "https://ai.meta.com/blog/rss/",
-      "enabled": false,
-      "priority": true,
-      "topics": [
-        "llm",
-        "ai-agent"
-      ],
-      "note": "Llama series + open source"
     },
     {
       "id": "producthunt-rss",
@@ -1027,30 +938,6 @@
         "crypto"
       ],
       "note": "DeFi professional media"
-    },
-    {
-      "id": "bankless-rss",
-      "type": "rss",
-      "name": "Bankless",
-      "url": "https://www.bankless.com/rss",
-      "enabled": false,
-      "priority": true,
-      "topics": [
-        "crypto"
-      ],
-      "note": "Top Web3 newsletter"
-    },
-    {
-      "id": "rekt-rss",
-      "type": "rss",
-      "name": "Rekt News",
-      "url": "https://rekt.news/feed",
-      "enabled": false,
-      "priority": false,
-      "topics": [
-        "crypto"
-      ],
-      "note": "Security incident analysis"
     },
     {
       "id": "ifanr-rss",

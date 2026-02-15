@@ -1,13 +1,13 @@
 # Tech Digest
 
-> Automated tech news digest — 118 sources, 4-layer pipeline, one chat message to install.
+> Automated tech news digest — 109 sources, 4-layer pipeline, one chat message to install.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## 💬 Install in One Message
 
-Tell your [OpenClaw](https://openclaw.com) AI assistant:
+Tell your [OpenClaw](https://openclaw.ai) AI assistant:
 
 > **"Install tech-digest and send a daily digest to #tech-news every morning at 9am"**
 
@@ -28,7 +28,7 @@ clawhub install tech-digest
 
 ## 📊 What You Get
 
-A quality-scored, deduplicated tech digest built from **118 sources**:
+A quality-scored, deduplicated tech digest built from **109 sources**:
 
 | Layer | Sources | What |
 |-------|---------|------|
@@ -36,7 +36,6 @@ A quality-scored, deduplicated tech digest built from **118 sources**:
 | 🐦 Twitter/X | 44 KOLs | @karpathy, @VitalikButerin, @sama… |
 | 🔍 Web Search | 4 topics | Brave Search API with freshness filters |
 | 🐙 GitHub | 19 repos | Releases from key projects |
-| *(+ 9 disabled)* | | Ready to enable |
 
 ### Pipeline
 
@@ -54,7 +53,7 @@ RSS + Twitter + Web + GitHub
 
 ## ⚙️ Configuration
 
-- `config/defaults/sources.json` — 118 built-in sources
+- `config/defaults/sources.json` — 109 built-in sources
 - `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
 - User overrides in `workspace/config/` take priority
 
