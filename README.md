@@ -32,7 +32,14 @@ Generate comprehensive tech digests by aggregating content from RSS feeds, Twitt
 Just tell your bot:
 > Install tech-digest skill and set up daily/weekly tech digests for me
 
-Your bot will install from ClawHub, configure sources, create cron jobs, and start delivering digests — all through conversation. No manual setup needed.
+More examples:
+> Set up a daily tech digest and send it to my Discord #news channel every morning at 9am
+
+> I want a weekly AI digest every Monday, deliver via Telegram DM
+
+> Install tech-digest, only enable AI and crypto topics, send to Discord #tech-news
+
+Your bot will install from ClawHub, configure sources, create cron jobs, and start delivering digests — all through conversation. By default digests are sent via DM; you can specify any Discord channel or Telegram chat as the delivery target.
 
 ### Option 2: ClawHub CLI
 ```bash

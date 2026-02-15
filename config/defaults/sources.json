@@ -992,6 +992,186 @@
       "priority": false,
       "topics": ["crypto"],
       "note": "The Block research director"
+    },
+    {
+      "id": "pytorch-github",
+      "type": "github",
+      "name": "PyTorch",
+      "repo": "pytorch/pytorch",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm", "frontier-tech"],
+      "note": "Leading deep learning framework from Meta"
+    },
+    {
+      "id": "transformers-github",
+      "type": "github",
+      "name": "Hugging Face Transformers",
+      "repo": "huggingface/transformers",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm"],
+      "note": "State-of-the-art transformer models library"
+    },
+    {
+      "id": "langchain-github",
+      "type": "github",
+      "name": "LangChain",
+      "repo": "langchain-ai/langchain",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent"],
+      "note": "Framework for building LLM applications"
+    },
+    {
+      "id": "llamaindex-github",
+      "type": "github",
+      "name": "LlamaIndex",
+      "repo": "run-llama/llama_index",
+      "enabled": true,
+      "priority": false,
+      "topics": ["ai-agent"],
+      "note": "Data framework for LLM applications"
+    },
+    {
+      "id": "ollama-github",
+      "type": "github",
+      "name": "Ollama",
+      "repo": "ollama/ollama",
+      "enabled": true,
+      "priority": true,
+      "topics": ["llm"],
+      "note": "Run LLMs locally with ease"
+    },
+    {
+      "id": "vllm-github",
+      "type": "github",
+      "name": "vLLM",
+      "repo": "vllm-project/vllm",
+      "enabled": true,
+      "priority": false,
+      "topics": ["llm"],
+      "note": "High-throughput LLM inference engine"
+    },
+    {
+      "id": "openai-python-github",
+      "type": "github",
+      "name": "OpenAI Python SDK",
+      "repo": "openai/openai-python",
+      "enabled": true,
+      "priority": false,
+      "topics": ["llm"],
+      "note": "Official OpenAI Python client library"
+    },
+    {
+      "id": "anthropic-sdk-github",
+      "type": "github",
+      "name": "Anthropic SDK",
+      "repo": "anthropics/anthropic-sdk-python",
+      "enabled": true,
+      "priority": false,
+      "topics": ["llm"],
+      "note": "Official Anthropic Python SDK"
+    },
+    {
+      "id": "crewai-github",
+      "type": "github",
+      "name": "CrewAI",
+      "repo": "crewAIInc/crewAI",
+      "enabled": true,
+      "priority": false,
+      "topics": ["ai-agent"],
+      "note": "Multi-agent AI collaboration framework"
+    },
+    {
+      "id": "autogen-github",
+      "type": "github",
+      "name": "AutoGen",
+      "repo": "microsoft/autogen",
+      "enabled": true,
+      "priority": false,
+      "topics": ["ai-agent"],
+      "note": "Multi-agent conversation framework from Microsoft"
+    },
+    {
+      "id": "dify-github",
+      "type": "github",
+      "name": "Dify",
+      "repo": "langgenius/dify",
+      "enabled": true,
+      "priority": false,
+      "topics": ["ai-agent"],
+      "note": "LLM app development platform"
+    },
+    {
+      "id": "openclaw-github",
+      "type": "github",
+      "name": "OpenClaw",
+      "repo": "openclaw/openclaw",
+      "enabled": true,
+      "priority": true,
+      "topics": ["ai-agent"],
+      "note": "Open source AI assistant platform"
+    },
+    {
+      "id": "go-ethereum-github",
+      "type": "github",
+      "name": "go-ethereum (Geth)",
+      "repo": "ethereum/go-ethereum",
+      "enabled": true,
+      "priority": true,
+      "topics": ["crypto"],
+      "note": "Official Go implementation of Ethereum"
+    },
+    {
+      "id": "solidity-github",
+      "type": "github",
+      "name": "Solidity",
+      "repo": "ethereum/solidity",
+      "enabled": true,
+      "priority": false,
+      "topics": ["crypto"],
+      "note": "Ethereum smart contract programming language"
+    },
+    {
+      "id": "foundry-github",
+      "type": "github",
+      "name": "Foundry",
+      "repo": "foundry-rs/foundry",
+      "enabled": true,
+      "priority": false,
+      "topics": ["crypto"],
+      "note": "Fast, portable and modular Ethereum toolkit"
+    },
+    {
+      "id": "eips-github",
+      "type": "github",
+      "name": "Ethereum EIPs",
+      "repo": "ethereum/EIPs",
+      "enabled": true,
+      "priority": true,
+      "topics": ["crypto"],
+      "note": "Ethereum Improvement Proposals repository"
+    },
+    {
+      "id": "linux-github",
+      "type": "github",
+      "name": "Linux Kernel",
+      "repo": "torvalds/linux",
+      "enabled": true,
+      "priority": false,
+      "topics": ["frontier-tech"],
+      "note": "Linux kernel source code maintained by Linus Torvalds"
+    },
+    {
+      "id": "rust-github",
+      "type": "github",
+      "name": "Rust",
+      "repo": "rust-lang/rust",
+      "enabled": true,
+      "priority": false,
+      "topics": ["frontier-tech"],
+      "note": "The Rust programming language compiler and standard library"
     }
   ]
 }

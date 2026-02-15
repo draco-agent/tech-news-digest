@@ -1,6 +1,6 @@
 ---
 name: tech-digest
-description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Three-layer data collection from RSS feeds, Twitter/X KOLs, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
+description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Four-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
 version: "2.0.0"
 ---
 
@@ -121,16 +121,24 @@ python3 scripts/fetch-web.py [--config CONFIG_DIR] [--freshness 48h] [--output F
 - **Without API**: Generates search interface for agents to execute
 - **Filtering**: Content-based inclusion/exclusion rules
 
-### 4. `merge-sources.py` - Quality Scoring & Deduplication
+### 4. `fetch-github.py` - GitHub Releases Monitor
 ```bash
-python3 scripts/merge-sources.py --rss rss.json --twitter twitter.json --web web.json
+python3 scripts/fetch-github.py [--config CONFIG_DIR] [--hours 168] [--output FILE]
+```
+- **Features**: Parallel repository monitoring, release filtering, markdown stripping
+- **Authentication**: Optional `GITHUB_TOKEN` for higher rate limits
+- **Output**: Structured JSON with releases tagged by topics
+
+### 5. `merge-sources.py` - Quality Scoring & Deduplication
+```bash
+python3 scripts/merge-sources.py --rss rss.json --twitter twitter.json --web web.json --github github.json
 ```
 - **Quality Scoring**: Priority sources (+3), multi-source (+5), recency (+2), engagement (+1)
 - **Deduplication**: Title similarity detection (85% threshold), domain saturation limits
 - **Previous Digest Penalty**: Avoids repeating articles from recent digests
 - **Output**: Topic-grouped articles with quality scores
 
-### 5. `validate-config.py` - Configuration Validator
+### 6. `validate-config.py` - Configuration Validator
 ```bash
 python3 scripts/validate-config.py [--config-dir CONFIG_DIR] [--verbose]
 ```

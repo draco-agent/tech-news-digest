@@ -13,7 +13,7 @@
         },
         "type": {
           "type": "string",
-          "enum": ["rss", "twitter", "web"],
+          "enum": ["rss", "twitter", "web", "github"],
           "description": "Source type"
         },
         "name": {
@@ -47,6 +47,11 @@
         "handle": {
           "type": "string",
           "description": "Twitter handle without @ (required for type=twitter)"
+        },
+        "repo": {
+          "type": "string",
+          "pattern": "^[a-zA-Z0-9._-]+/[a-zA-Z0-9._-]+$",
+          "description": "GitHub repository in owner/repo format (required for type=github)"
         }
       },
       "allOf": [
@@ -64,6 +69,14 @@
           },
           "then": {
             "required": ["handle"]
+          }
+        },
+        {
+          "if": {
+            "properties": { "type": { "const": "github" } }
+          },
+          "then": {
+            "required": ["repo"]
           }
         }
       ]

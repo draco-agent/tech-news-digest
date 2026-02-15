@@ -320,6 +320,12 @@ Examples:
     )
     
     parser.add_argument(
+        "--github",
+        type=Path,
+        help="GitHub releases results JSON file"
+    )
+    
+    parser.add_argument(
         "--output", "-o",
         type=Path,
         help="Output JSON path (default: auto-generated temp file)"
@@ -351,10 +357,12 @@ Examples:
         rss_data = load_source_data(args.rss)
         twitter_data = load_source_data(args.twitter)
         web_data = load_source_data(args.web)
+        github_data = load_source_data(args.github)
         
         logger.info(f"Loaded sources - RSS: {rss_data.get('total_articles', 0)}, "
                    f"Twitter: {twitter_data.get('total_articles', 0)}, "
-                   f"Web: {web_data.get('total_articles', 0)}")
+                   f"Web: {web_data.get('total_articles', 0)}, "
+                   f"GitHub: {github_data.get('total_articles', 0)}")
         
         # Collect all articles with source context
         all_articles = []
@@ -384,6 +392,15 @@ Examples:
                 article["source_name"] = "Web Search"
                 article["source_id"] = f"web-{topic_result.get('topic_id', '')}"
                 article["quality_score"] = 1.0  # Base score for web results
+                all_articles.append(article)
+        
+        # Process GitHub articles
+        for source in github_data.get("sources", []):
+            for article in source.get("articles", []):
+                article["source_type"] = "github"
+                article["source_name"] = source.get("name", "")
+                article["source_id"] = source.get("source_id", "")
+                article["quality_score"] = calculate_base_score(article, source)
                 all_articles.append(article)
         
         logger.info(f"Total articles collected: {len(all_articles)}")
@@ -416,6 +433,7 @@ Examples:
                 "rss_articles": rss_data.get("total_articles", 0),
                 "twitter_articles": twitter_data.get("total_articles", 0),
                 "web_articles": web_data.get("total_articles", 0),
+                "github_articles": github_data.get("total_articles", 0),
                 "total_input": len(all_articles)
             },
             "processing": {

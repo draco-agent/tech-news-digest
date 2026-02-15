@@ -80,12 +80,24 @@ Reads `topics.json` search queries. Uses Brave Search API if `$BRAVE_API_KEY` is
 
 Also search Twitter trending discussions using `web_search` with `freshness='<FRESHNESS>'` and the `twitter_queries` from topics.
 
-### Step 4: Merge & Score
+### Step 4: GitHub Releases
+```bash
+python3 <SKILL_DIR>/scripts/fetch-github.py \
+  --config <WORKSPACE>/config \
+  --defaults <SKILL_DIR>/config/defaults \
+  --hours <RSS_HOURS> \
+  --output /tmp/td-github.json \
+  --verbose
+```
+Reads `sources.json`, fetches all `type: "github"` sources with `enabled: true`. Fetches recent releases from GitHub API (optional `$GITHUB_TOKEN` for higher rate limits). Outputs structured JSON with releases tagged by topics.
+
+### Step 5: Merge & Score
 ```bash
 python3 <SKILL_DIR>/scripts/merge-sources.py \
   --rss /tmp/td-rss.json \
   --twitter /tmp/td-twitter.json \
   --web /tmp/td-web.json \
+  --github /tmp/td-github.json \
   --previous <WORKSPACE>/archive/tech-digest/ \
   --output /tmp/td-merged.json \
   --verbose

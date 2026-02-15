@@ -34,7 +34,14 @@
 直接告诉你的 bot：
 > 安装 tech-digest skill，帮我配置每日/每周科技资讯摘要
 
-Bot 会自动从 ClawHub 安装、配置数据源、创建定时任务、开始推送摘要——全程对话完成，无需手动操作。
+更多示例：
+> 每天早上 9 点发一份科技日报到 Discord #news 频道
+
+> 每周一发一份 AI 周报，通过 Telegram 私信发给我
+
+> 安装 tech-digest，只开启 AI 和加密货币板块，发到 Discord #tech-news
+
+Bot 会自动从 ClawHub 安装、配置数据源、创建定时任务、开始推送摘要——全程对话完成，无需手动操作。默认通过私信发送，也可以指定任意 Discord 频道或 Telegram 群组作为投递目标。
 
 #### 方式二：ClawHub CLI
 ```bash
