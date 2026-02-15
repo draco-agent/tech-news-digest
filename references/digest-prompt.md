@@ -15,68 +15,114 @@ Unified template for both daily and weekly digests. Replace `<...>` placeholders
 | `<EXTRA_SECTIONS>` | *(remove line)* | `- 📊 Weekly Trend Summary (2-3 sentences summarizing macro trends)` |
 | `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
 | `<WORKSPACE>` | Your workspace path | Your workspace path |
+| `<SKILL_DIR>` | Path to the installed skill directory | Path to the installed skill directory |
 | `<DISCORD_CHANNEL_ID>` | Target channel ID | Target channel ID |
-| `<TELEGRAM_CHAT_ID>` | *(optional)* Target Telegram chat | *(optional)* Target Telegram chat |
 | `<EMAIL>` | *(optional)* Recipient email | *(optional)* Recipient email |
 | `<LANGUAGE>` | `Chinese` (default) | `Chinese` (default) |
-| `<SKILL_DIR>` | Path to the installed skill directory | Path to the installed skill directory |
+| `<TEMPLATE>` | `discord` / `email` / `markdown` | `discord` / `email` / `markdown` |
 
 ---
 
 Generate the <MODE> tech digest. Follow the steps below.
 
-## Topics
-Read `<WORKSPACE>/config/tech-digest-topics.json` for the list of topics, their search keywords, and report section definitions. Use these to drive both data collection queries and report structure.
+## Configuration
+
+Read configuration files (user workspace overrides take priority over defaults):
+
+1. **Sources**: `<WORKSPACE>/config/sources.json` → fallback `<SKILL_DIR>/config/defaults/sources.json`
+2. **Topics**: `<WORKSPACE>/config/topics.json` → fallback `<SKILL_DIR>/config/defaults/topics.json`
+
+Merge logic: user sources append to defaults (same `id` → user wins); user topics override by `id`.
 
 ## Context: Previous Report
-Read the most recent archive file from `<WORKSPACE>/archive/tech-digest/` (if any exist). Use it to:
-- **Avoid repeating** news that was already covered
+
+Read the most recent archive file from `<WORKSPACE>/archive/tech-digest/` (if any). Use it to:
+- **Avoid repeating** news already covered
 - **Follow up** on developing stories with new information only
 - If no previous report exists, skip this step.
 
-## Data Collection (three layers)
+## Data Collection Pipeline
 
-### Layer 1: RSS Primary Sources (via script)
-Run the RSS fetch script to get pre-parsed article data:
+### Step 1: RSS Feeds
 ```bash
-python3 <SKILL_DIR>/scripts/fetch-rss.py <WORKSPACE>/config/tech-digest-rss-feeds.json --hours <RSS_HOURS> --clean-archive <WORKSPACE>/archive/tech-digest
+python3 <SKILL_DIR>/scripts/fetch-rss.py \
+  --config <WORKSPACE>/config \
+  --defaults <SKILL_DIR>/config/defaults \
+  --hours <RSS_HOURS> \
+  --output /tmp/td-rss.json \
+  --verbose
 ```
-The script prints the output file path to stderr. Read that JSON file. It contains structured article data (title, link, date) per feed, sorted by priority. Focus on feeds with articles; skip empty ones. The script also auto-cleans archive files older than 30 days.
+Reads `sources.json`, fetches all `type: "rss"` sources with `enabled: true`. Outputs structured JSON with articles tagged by topics. Includes retry mechanism and parallel fetching.
 
 If the script fails, fall back to manually fetching priority feeds via `web_fetch`.
 
-### Layer 2: Web Search
-Use `web_search` with `freshness='<FRESHNESS>'` to find breaking news from the <TIME_WINDOW>. Run the search queries defined in each topic's `keywords` field from `tech-digest-topics.json`.
+### Step 2: Twitter/X KOL Monitoring
+```bash
+python3 <SKILL_DIR>/scripts/fetch-twitter.py \
+  --config <WORKSPACE>/config \
+  --defaults <SKILL_DIR>/config/defaults \
+  --hours <RSS_HOURS> \
+  --output /tmp/td-twitter.json \
+  --verbose
+```
+Reads `sources.json`, fetches all `type: "twitter"` sources. Requires `$X_BEARER_TOKEN` env var. If unavailable, skip this step.
 
-### Layer 3: Twitter/X KOL Monitoring
-Use `web_search` with `freshness='<FRESHNESS>'` for trending Twitter discussions. Run the `twitter_queries` defined for each topic in `tech-digest-topics.json`.
+### Step 3: Web Search
+```bash
+python3 <SKILL_DIR>/scripts/fetch-web.py \
+  --config <WORKSPACE>/config \
+  --defaults <SKILL_DIR>/config/defaults \
+  --freshness <FRESHNESS> \
+  --output /tmp/td-web.json \
+  --verbose
+```
+Reads `topics.json` search queries. Uses Brave Search API if `$BRAVE_API_KEY` is set; otherwise generates queries for agent to execute via `web_search`.
 
-Also query the Twitter API for KOL tweets (if `$X_BEARER_TOKEN` is available in the environment):
-- Read `<WORKSPACE>/config/tech-digest-kol-list.json` for the KOL account list
-- Ensure `$X_BEARER_TOKEN` is set (e.g. `source ~/.zshenv` or however the user configured it)
-- Endpoint: `curl https://api.x.com/2/tweets/search/recent`
-- Header: `"Authorization: Bearer $X_BEARER_TOKEN"`
-- Params: `tweet.fields=created_at,author_id,public_metrics,entities&expansions=author_id&user.fields=username&max_results=20`
-- Build `from:` queries by grouping handles from each category in the JSON (join with ` OR `), run one query per category
-- If the API call fails or token is not set, skip and rely on web search results
-- Keep only substantive tweets
-- Tweet links: `https://x.com/{username}/status/{tweet_id}`
+Also search Twitter trending discussions using `web_search` with `freshness='<FRESHNESS>'` and the `twitter_queries` from topics.
 
-## Report Requirements
-Merge and deduplicate all sources. Write a summary report. Use the sections defined in `tech-digest-topics.json` for topic categories, plus these fixed sections:
+### Step 4: Merge & Score
+```bash
+python3 <SKILL_DIR>/scripts/merge-sources.py \
+  --rss /tmp/td-rss.json \
+  --twitter /tmp/td-twitter.json \
+  --web /tmp/td-web.json \
+  --previous <WORKSPACE>/archive/tech-digest/ \
+  --output /tmp/td-merged.json \
+  --verbose
+```
+Merges all sources, deduplicates (title similarity + domain), applies quality scoring:
+- Priority source: +3
+- Multi-source cross-reference: +5
+- Recency bonus: +2
+- High engagement: +1
+- Already in previous report: -3
+
+Output is grouped by topic with articles sorted by score.
+
+## Report Generation
+
+Use the merged output and the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report.
+
+### Topic Sections
+Use sections defined in `topics.json`. Each topic has:
+- `emoji` + `label` for headers
+- `display.max_items` for item count (override with <ITEMS_PER_SECTION>)
+- `search.must_include` / `search.exclude` for content filtering
+
+### Fixed Sections (append after topic sections)
 - 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors)
 - 🔥 Twitter/X Trending
-- 📝 Blog Picks (<BLOG_PICKS_COUNT> high-quality deep articles discovered from RSS)
+- 📝 Blog Picks (<BLOG_PICKS_COUNT> high-quality deep articles from RSS)
 <EXTRA_SECTIONS>
 
 ### Deduplication Rules
 - Same event from multiple sources → keep only the most authoritative source link
-- If an event was already covered in the previous report → only include if there is significant new development
-- Prefer primary sources (official blogs, first-party announcements) over media re-reporting
+- If covered in previous report → only include if significant new development
+- Prefer primary sources (official blogs, announcements) over re-reporting
 
 ### Rules
 - **Only include news from the <TIME_WINDOW>**
-- **Append source link after each item** (wrap in `<link>` to suppress Discord previews)
+- **Append source link after each item** (wrap in `<link>` for Discord)
 - **<ITEMS_PER_SECTION> items per section**
 - **Use bullet lists, no markdown tables** (Discord compatibility)
 
@@ -85,9 +131,17 @@ Save the report to `<WORKSPACE>/archive/tech-digest/<MODE>-YYYY-MM-DD.md`
 
 ## Delivery
 1. Send to Discord channel `<DISCORD_CHANNEL_ID>` via `message` tool
-2. *(Optional)* Send to Telegram chat `<TELEGRAM_CHAT_ID>` via `message` tool (channel=telegram)
-3. *(Optional)* Send email to `<EMAIL>` via `gog` CLI, subject: "<SUBJECT>"
+2. *(Optional)* Send email to `<EMAIL>` via `gog` CLI, subject: "<SUBJECT>"
 
-If any delivery channel fails, log the error but continue with remaining channels. Do not retry failed deliveries.
+If any delivery fails, log the error but continue with remaining channels.
 
 Write the report in <LANGUAGE>.
+
+## Validation
+Before running the pipeline, optionally validate configuration:
+```bash
+python3 <SKILL_DIR>/scripts/validate-config.py \
+  --config-dir <WORKSPACE>/config \
+  --defaults-dir <SKILL_DIR>/config/defaults \
+  --verbose
+```

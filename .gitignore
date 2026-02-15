@@ -2,3 +2,19 @@
 *.swp
 *.swo
 *~
+__pycache__/
+*.pyc
+*.pyo
+
+# Script output (temp files)
+/output/
+tech-digest-rss-*.json
+tech-digest-twitter-*.json
+tech-digest-web-*.json
+tech-digest-merged-*.json
+
+# Archive reports (generated)
+/archive/
+
+# User workspace config (override layer)
+/workspace/
