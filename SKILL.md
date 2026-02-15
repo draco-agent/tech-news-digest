@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Four-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "2.2.0"
+version: "2.2.1"
 homepage: https://github.com/draco-agent/tech-digest
 source: https://github.com/draco-agent/tech-digest
 env:
@@ -351,6 +351,26 @@ OpenClaw enforces **cross-provider isolation**: a single session can only send m
 Replace `DISCORD_CHANNEL_ID` delivery with Telegram delivery in the second job's prompt (use `message` tool with `channel=telegram`).
 
 This is a security feature, not a bug — it prevents accidental cross-context data leakage.
+
+## Security Notes
+
+### Execution Model
+This skill uses a **prompt template pattern**: the agent reads `digest-prompt.md` and follows its instructions. This is the standard OpenClaw skill execution model — the agent interprets structured instructions from skill-provided files. All instructions are shipped with the skill bundle and can be audited before installation.
+
+### Network Access
+The Python scripts make outbound requests to:
+- RSS feed URLs (configured in `sources.json`)
+- Twitter/X API (`api.x.com`)
+- Brave Search API (`api.search.brave.com`)
+- GitHub API (`api.github.com`)
+
+No data is sent to any other endpoints. All API keys are read from environment variables declared in the skill metadata.
+
+### Shell Safety
+Email delivery uses the `gog` CLI with hardcoded subject formats (`Daily Tech Digest - YYYY-MM-DD`). The prompt template explicitly prohibits interpolating untrusted content into shell arguments.
+
+### File Access
+Scripts read from `config/` and write to `workspace/archive/`. No files outside the workspace are accessed.
 
 ## Support & Troubleshooting
 
