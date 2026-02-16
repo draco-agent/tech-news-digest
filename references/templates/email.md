@@ -43,7 +43,7 @@ The agent should generate an HTML email body. Use inline styles (email clients s
   <ul style="padding-left:20px">
     <li style="margin-bottom:10px">
       <strong>@{{handle}}</strong> — {{summary}}
-      <span style="font-size:12px;color:#888">（views {{views}} · replies {{replies}} · RTs {{retweets}} · likes {{likes}}）</span>
+      <code style="font-size:12px;color:#888;background:#f4f4f4;padding:2px 6px;border-radius:3px">👁 {{views}} | 💬 {{replies}} | 🔁 {{retweets}} | ❤️ {{likes}}</code>
       <br><a href="{{tweet_link}}" style="color:#0969da;font-size:13px">{{tweet_link}}</a>
     </li>
   </ul>
