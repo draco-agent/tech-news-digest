@@ -129,7 +129,7 @@ Output is grouped by topic with articles sorted by score.
 
 ## Report Generation
 
-Use the merged output and the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report.
+Use the merged output (`/tmp/td-merged.json`) and the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report. The merged JSON contains articles from **all 5 sources** (RSS, Twitter, Web, GitHub, Reddit) grouped by topic and sorted by `quality_score`. **Select articles purely by score regardless of source type** — Reddit posts with high scores should appear alongside RSS/Web articles in topic sections. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*` after the title.
 
 ### Topic Sections
 Use sections defined in `topics.json`. Each topic has:
@@ -140,6 +140,7 @@ Use sections defined in `topics.json`. Each topic has:
 ### Fixed Sections (append after topic sections)
 - 📢 KOL Updates (Twitter KOLs + notable blog posts from RSS authors — **each entry MUST include the source tweet/post URL and engagement metrics read from the merged JSON data**. The Twitter data in `/tmp/td-twitter.json` and `/tmp/td-merged.json` contains a `metrics` field per tweet with `impression_count`, `reply_count`, `retweet_count`, `like_count`. **You MUST read these actual values from the JSON data — do NOT default to 0 unless the field is genuinely missing.** Format: ``• **@handle** — summary `👁 12.3K | 💬 45 | 🔁 230 | ❤️ 1.2K`\n  <https://twitter.com/handle/status/ID>``. Mapping: impression_count → 👁, reply_count → 💬, retweet_count → 🔁, like_count → ❤️. **Rules: Always show all 4 metrics in the same order (👁|💬|🔁|❤️). Wrap metrics in backticks (inline code) to prevent emoji enlargement on Discord. Use K for thousands (1.2K), M for millions (4.1M). One tweet per line — if a KOL has multiple notable tweets, list each as a separate bullet with its own metrics and URL.**)
 - 🔥 Twitter/X Trending (**each entry MUST include at least one reference link** — tweet URL, article URL, or web source. No link-free entries allowed.)
+- 🗣️ Reddit Hot Discussions (top 3-5 Reddit self-posts/discussions by score from the merged data where `source_type == "reddit"` and `is_self == true`. Format: `• **r/subreddit** — title `{{score}}↑ · {{num_comments}} comments`\n  <{{reddit_url}}>`. Read metrics from the article's `metrics` field.)
 - 📝 Blog Picks (<BLOG_PICKS_COUNT> high-quality deep articles from RSS)
 <EXTRA_SECTIONS>
 
