@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.3.0"
+version: "3.3.1"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 env:
@@ -202,7 +202,7 @@ Place custom configs in `workspace/config/` to override defaults:
 - Technical details section
 - Expandable sections support
 
-## Default Sources (132 total)
+## Default Sources (131 total)
 
 - **RSS Feeds (50)**: AI labs, tech blogs, crypto news, Chinese tech media
 - **Twitter/X KOLs (47)**: AI researchers, crypto leaders, tech executives
@@ -382,9 +382,6 @@ All scripts support `--verbose` flag for detailed logging and troubleshooting.
 
 ### Shell Execution
 The digest prompt instructs agents to run Python scripts via shell commands. All script paths and arguments are skill-defined constants — no user input is interpolated into commands. Scripts themselves contain no subprocess/os.system calls. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation of fetched content. Email subjects are static format strings only.
-
-### Third-Party RSS Sources
-One RSS source (`anthropic-rss`) uses a community-maintained GitHub mirror since Anthropic has no official RSS feed. Mitigations: source is annotated in `sources.json`; `expected_domains` field restricts accepted article links to `anthropic.com` only — articles with unexpected domains are rejected and logged.
 
 ### Input Sanitization
 - URL resolution rejects non-HTTP(S) schemes (javascript:, data:, etc.)

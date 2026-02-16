@@ -1,6 +1,6 @@
 # Tech News Digest
 
-> Automated tech news digest — 132 sources, 5-layer pipeline, one chat message to install.
+> Automated tech news digest — 131 sources, 5-layer pipeline, one chat message to install.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -28,7 +28,7 @@ clawhub install tech-news-digest
 
 ## 📊 What You Get
 
-A quality-scored, deduplicated tech digest built from **132 sources**:
+A quality-scored, deduplicated tech digest built from **131 sources**:
 
 | Layer | Sources | What |
 |-------|---------|------|

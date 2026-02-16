@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.3.1
+
+- **Remove anthropic-rss mirror**: Removed third-party community RSS mirror (`anthropic-rss`) to eliminate supply chain risk flagged by VirusTotal Code Insights. Anthropic coverage remains via Twitter KOL, GitHub releases, and Reddit sources.
+- **Remove Third-Party RSS Sources section** from SKILL.md security docs (no longer applicable)
+
 ## v3.3.0
 
 - **RSS Domain Validation**: New `expected_domains` field in sources.json rejects articles from unexpected origins (applied to anthropic-rss mirror)

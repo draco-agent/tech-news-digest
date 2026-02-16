@@ -58,21 +58,6 @@
       "note": "Official OpenAI updates"
     },
     {
-      "id": "anthropic-rss",
-      "type": "rss",
-      "name": "Anthropic Blog",
-      "url": "https://raw.githubusercontent.com/Olshansk/rss-feeds/refs/heads/main/feeds/feed_anthropic.xml",
-      "note": "Official Anthropic updates (via community RSS mirror)",
-      "expected_domains": ["anthropic.com", "www.anthropic.com"],
-      "enabled": true,
-      "priority": true,
-      "topics": [
-        "llm",
-        "ai-agent",
-        "frontier-tech"
-      ]
-    },
-    {
       "id": "sebas-rss",
       "type": "rss",
       "name": "Sebastian Raschka",
