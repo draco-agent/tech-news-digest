@@ -1552,6 +1552,80 @@
       "topics": [
         "crypto"
       ]
+    },
+    {
+      "id": "reddit-chatgpt",
+      "type": "reddit",
+      "name": "r/ChatGPT",
+      "subreddit": "ChatGPT",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "reddit-singularity",
+      "type": "reddit",
+      "name": "r/singularity",
+      "subreddit": "singularity",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ]
+    },
+    {
+      "id": "reddit-openai",
+      "type": "reddit",
+      "name": "r/OpenAI",
+      "subreddit": "OpenAI",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "reddit-bitcoin",
+      "type": "reddit",
+      "name": "r/Bitcoin",
+      "subreddit": "Bitcoin",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "reddit-programming",
+      "type": "reddit",
+      "name": "r/programming",
+      "subreddit": "programming",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent",
+        "crypto"
+      ]
     }
   ]
 }
