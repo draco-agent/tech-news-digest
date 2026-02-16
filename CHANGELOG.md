@@ -1,5 +1,13 @@
 # Changelog
 
+## v2.6.0
+
+- **Date Timezone Fix**: Added `<DATE>` placeholder to digest prompt — report date now explicitly provided by caller, preventing UTC/local timezone mismatch
+- **Mandatory Links in KOL/Trending**: KOL Updates and Twitter/X Trending sections now require source URLs for every entry (no link-free entries allowed)
+- **URL Sanitization**: `resolve_link()` in fetch-rss.py rejects non-HTTP(S) schemes (javascript:, data:, etc.)
+- **Third-Party Source Annotation**: Community-maintained RSS mirrors (e.g. anthropic-rss) are annotated with notes in sources.json
+- **Security Documentation**: Added Security Considerations section to SKILL.md covering shell execution model, input sanitization, and network access
+
 ## v2.5.0
 
 - **Twitter Reply Filter Fix**: Use `referenced_tweets` field instead of text prefix to distinguish replies from mentions
