@@ -1480,6 +1480,78 @@
       "topics": [
         "llm"
       ]
+    },
+    {
+      "id": "reddit-machinelearning",
+      "type": "reddit",
+      "name": "r/MachineLearning",
+      "subreddit": "MachineLearning",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "reddit-localllama",
+      "type": "reddit",
+      "name": "r/LocalLLaMA",
+      "subreddit": "LocalLLaMA",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 30,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ]
+    },
+    {
+      "id": "reddit-cryptocurrency",
+      "type": "reddit",
+      "name": "r/CryptoCurrency",
+      "subreddit": "CryptoCurrency",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "reddit-artificial",
+      "type": "reddit",
+      "name": "r/artificial",
+      "subreddit": "artificial",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 30,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "reddit-ethereum",
+      "type": "reddit",
+      "name": "r/ethereum",
+      "subreddit": "ethereum",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 30,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ]
     }
   ]
 }

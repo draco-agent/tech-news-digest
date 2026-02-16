@@ -154,6 +154,9 @@ def validate_source_types(sources_data: Dict[str, Any]) -> bool:
         elif source_type == "github":
             if not source.get("repo"):
                 errors.append(f"GitHub source '{source_id}' missing required 'repo' field")
+        elif source_type == "reddit":
+            if not source.get("subreddit"):
+                errors.append(f"Reddit source '{source_id}' missing required 'subreddit' field")
         elif source_type == "web":
             # Web sources are handled by topics, no specific validation needed
             pass

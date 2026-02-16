@@ -382,6 +382,12 @@ Examples:
     )
     
     parser.add_argument(
+        "--reddit",
+        type=Path,
+        help="Reddit posts results JSON file"
+    )
+    
+    parser.add_argument(
         "--output", "-o",
         type=Path,
         help="Output JSON path (default: auto-generated temp file)"
@@ -414,11 +420,13 @@ Examples:
         twitter_data = load_source_data(args.twitter)
         web_data = load_source_data(args.web)
         github_data = load_source_data(args.github)
+        reddit_data = load_source_data(getattr(args, 'reddit', None))
         
         logger.info(f"Loaded sources - RSS: {rss_data.get('total_articles', 0)}, "
                    f"Twitter: {twitter_data.get('total_articles', 0)}, "
                    f"Web: {web_data.get('total_articles', 0)}, "
-                   f"GitHub: {github_data.get('total_articles', 0)}")
+                   f"GitHub: {github_data.get('total_articles', 0)}, "
+                   f"Reddit: {reddit_data.get('total_posts', 0)}")
         
         # Collect all articles with source context
         all_articles = []
@@ -464,6 +472,27 @@ Examples:
                 article["quality_score"] = calculate_base_score(article, source)
                 all_articles.append(article)
         
+        # Process Reddit articles
+        for source in reddit_data.get("subreddits", []):
+            for article in source.get("articles", []):
+                article["source_type"] = "reddit"
+                article["source_name"] = f"r/{source.get('subreddit', '')}"
+                article["source_id"] = source.get("source_id", "")
+                reddit_source = {
+                    "source_type": "reddit",
+                    "priority": source.get("priority", False),
+                }
+                article["quality_score"] = calculate_base_score(article, reddit_source)
+                # Reddit score bonus
+                score = article.get("score", 0)
+                if score > 500:
+                    article["quality_score"] += 5
+                elif score > 200:
+                    article["quality_score"] += 3
+                elif score > 100:
+                    article["quality_score"] += 1
+                all_articles.append(article)
+        
         total_collected = len(all_articles)
         logger.info(f"Total articles collected: {total_collected}")
         
@@ -496,6 +525,7 @@ Examples:
                 "twitter_articles": twitter_data.get("total_articles", 0),
                 "web_articles": web_data.get("total_articles", 0),
                 "github_articles": github_data.get("total_articles", 0),
+                "reddit_posts": reddit_data.get("total_posts", 0),
                 "total_input": total_collected
             },
             "processing": {

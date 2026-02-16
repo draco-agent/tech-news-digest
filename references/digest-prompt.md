@@ -94,13 +94,25 @@ python3 <SKILL_DIR>/scripts/fetch-github.py \
 ```
 Reads `sources.json`, fetches all `type: "github"` sources with `enabled: true`. Fetches recent releases from GitHub API (optional `$GITHUB_TOKEN` for higher rate limits). Outputs structured JSON with releases tagged by topics.
 
-### Step 5: Merge & Score
+### Step 5: Reddit
+```bash
+python3 <SKILL_DIR>/scripts/fetch-reddit.py \
+  --defaults <SKILL_DIR>/config/defaults \
+  --config <WORKSPACE>/config \
+  --hours <RSS_HOURS> \
+  --output /tmp/td-reddit.json \
+  --verbose
+```
+Reads `sources.json`, fetches all `type: "reddit"` sources with `enabled: true`. Uses Reddit's public JSON API (no authentication required). Filters by `min_score` and time window. Outputs structured JSON with posts tagged by topics.
+
+### Step 6: Merge & Score
 ```bash
 python3 <SKILL_DIR>/scripts/merge-sources.py \
   --rss /tmp/td-rss.json \
   --twitter /tmp/td-twitter.json \
   --web /tmp/td-web.json \
   --github /tmp/td-github.json \
+  --reddit /tmp/td-reddit.json \
   --archive-dir <WORKSPACE>/archive/tech-digest/ \
   --output /tmp/td-merged.json \
   --verbose
@@ -110,6 +122,7 @@ Merges all sources, deduplicates (title similarity + domain), applies quality sc
 - Multi-source cross-reference: +5
 - Recency bonus: +2
 - High engagement: +1
+- Reddit score > 500: +5, > 200: +3, > 100: +1
 - Already in previous report: -5
 
 Output is grouped by topic with articles sorted by score.
@@ -146,7 +159,7 @@ At the end of the report, append a stats line showing raw data collected from ea
 
 ```
 ---
-📊 数据源统计：RSS {{rss_count}} 篇 | Twitter {{twitter_count}} 条 | Web {{web_count}} 篇 | GitHub {{github_count}} 个 release | 合并去重后 {{merged_count}} 篇
+📊 数据源统计：RSS {{rss_count}} 篇 | Twitter {{twitter_count}} 条 | Reddit {{reddit_count}} 帖 | Web {{web_count}} 篇 | GitHub {{github_count}} 个 release | 合并去重后 {{merged_count}} 篇
 ```
 
 ## Archive
