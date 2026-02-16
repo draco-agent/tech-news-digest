@@ -1626,6 +1626,50 @@
         "ai-agent",
         "crypto"
       ]
+    },
+    {
+      "id": "reddit-anthropic",
+      "type": "reddit",
+      "name": "r/Anthropic",
+      "subreddit": "Anthropic",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 30,
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "reddit-defi",
+      "type": "reddit",
+      "name": "r/defi",
+      "subreddit": "defi",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 30,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "reddit-experienceddevs",
+      "type": "reddit",
+      "name": "r/ExperiencedDevs",
+      "subreddit": "ExperiencedDevs",
+      "sort": "hot",
+      "limit": 25,
+      "min_score": 50,
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
     }
   ]
 }
