@@ -132,6 +132,11 @@ Output is grouped by topic with articles sorted by score.
 
 Use the merged output (`/tmp/td-merged.json`) and the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report. The merged JSON contains articles from **all 5 sources** (RSS, Twitter, Web, GitHub, Reddit) grouped by topic and sorted by `quality_score`. **Select articles purely by score regardless of source type** — Reddit posts with high scores should appear alongside RSS/Web articles in topic sections. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*` after the title.
 
+### Executive Summary (开头第一段)
+在标题之后、topic 板块之前，写一段 **2-4 句话的摘要**，概括今天最重要的 3-5 条新闻。从 merged JSON 中选 quality_score 最高的文章提炼。风格：简洁有力，像新闻播报的开场白。不需要链接，不需要详细描述，只点出核心事件。
+
+Discord 格式：用 `> ` 引用块。Email 格式：用灰色背景段落。Telegram 格式：用 `<i>` 斜体。
+
 ### Topic Sections
 Use sections defined in `topics.json`. Each topic has:
 - `emoji` + `label` for headers
