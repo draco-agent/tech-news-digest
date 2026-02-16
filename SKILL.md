@@ -1,9 +1,14 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.3.1"
+version: "3.3.2"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
+metadata:
+  openclaw:
+    requires:
+      bins: ["python3"]
+    optionalBins: ["gog"]
 env:
   - name: X_BEARER_TOKEN
     required: false
@@ -14,6 +19,19 @@ env:
   - name: GITHUB_TOKEN
     required: false
     description: GitHub personal access token for higher API rate limits
+tools:
+  - python3: Required. Runs data collection and merge scripts.
+  - gog: Optional. Gmail CLI for email delivery (skip if not installed).
+files:
+  read:
+    - config/defaults/: Default source and topic configurations
+    - references/: Prompt templates and output templates
+    - scripts/: Python pipeline scripts
+    - workspace/archive/tech-digest/: Previous digests for dedup
+  write:
+    - /tmp/td-*.json: Temporary pipeline intermediate outputs
+    - /tmp/td-email.html: Temporary email HTML body
+    - workspace/archive/tech-digest/: Saved digest archives
 ---
 
 # Tech News Digest

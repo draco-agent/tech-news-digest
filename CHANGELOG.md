@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.3.2
+
+- **Declare tools and file access**: Added `tools` (python3 required, gog optional) and `files` (read/write paths) to SKILL.md metadata, addressing VirusTotal "undeclared tools/binaries" and "modify workspace files" audit findings
+- **Added `metadata.openclaw.requires`**: Declares `python3` binary dependency
+
 ## v3.3.1
 
 - **Remove anthropic-rss mirror**: Removed third-party community RSS mirror (`anthropic-rss`) to eliminate supply chain risk flagged by VirusTotal Code Insights. Anthropic coverage remains via Twitter KOL, GitHub releases, and Reddit sources.
