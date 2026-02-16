@@ -1,5 +1,9 @@
 # Changelog
 
+## v2.6.1
+
+- **Graceful Twitter Degradation**: Missing `X_BEARER_TOKEN` now outputs empty JSON and exits 0 instead of failing with exit code 1, allowing the pipeline to continue without Twitter data
+
 ## v2.6.0
 
 - **Date Timezone Fix**: Added `<DATE>` placeholder to digest prompt — report date now explicitly provided by caller, preventing UTC/local timezone mismatch
