@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.1.0
+
+- **Executive Summary**: 2-4 sentence overview of top stories at the beginning of each digest
+- **Community Buzz Section**: Merged Twitter/X Trending and Reddit Hot Discussions into unified 🔥 社区热议
+- **Reddit in Topic Sections**: Reddit posts now selected by quality_score alongside other sources
+- **Digest Footer Branding**: Shows skill version and OpenClaw link
+- **Prompt Fix**: Agent explicitly instructed to read Reddit data from merged JSON
+
 ## v3.0.0
 
 - **Reddit Data Source**: New `fetch-reddit.py` script — 5th data layer using Reddit's public JSON API (no auth required). 13 subreddits: r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency, r/artificial, r/ethereum, r/ChatGPT, r/singularity, r/OpenAI, r/Bitcoin, r/programming, r/Anthropic, r/defi, r/ExperiencedDevs
