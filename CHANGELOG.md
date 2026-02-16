@@ -1,5 +1,10 @@
 # Changelog
 
+## v2.8.1
+
+- **Metrics Data Fix**: Agent now required to read actual `metrics` values from Twitter JSON data instead of defaulting to 0
+- **Email Template Enhancement**: Added KOL metrics and Twitter/X Trending section to email template
+
 ## v2.8.0
 
 - **Tweet Metrics Display**: KOL entries show `👁|💬|🔁|❤️` engagement stats wrapped in inline code to prevent emoji enlargement on Discord
