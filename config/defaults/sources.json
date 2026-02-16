@@ -62,15 +62,14 @@
       "type": "rss",
       "name": "Anthropic Blog",
       "url": "https://raw.githubusercontent.com/Olshansk/rss-feeds/refs/heads/main/feeds/feed_anthropic.xml",
-      "note": "Community-maintained mirror (Anthropic has no official RSS). Verify content against anthropic.com.",
+      "note": "Official Anthropic updates (via community RSS mirror)",
       "enabled": true,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent",
         "frontier-tech"
-      ],
-      "note": "Official Anthropic updates (via community RSS mirror)"
+      ]
     },
     {
       "id": "sebas-rss",
@@ -1366,6 +1365,121 @@
         "ai-agent"
       ],
       "note": "Lightweight AI agent framework"
+    },
+    {
+      "id": "bensbites-rss",
+      "type": "rss",
+      "name": "Ben's Bites",
+      "url": "https://www.bensbites.com/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "the-decoder-rss",
+      "type": "rss",
+      "name": "The Decoder",
+      "url": "https://the-decoder.com/feed/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "a16zcrypto-rss",
+      "type": "rss",
+      "name": "a16z Crypto",
+      "url": "https://a16zcrypto.substack.com/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "bankless-rss",
+      "type": "rss",
+      "name": "Bankless",
+      "url": "https://newsletter.banklesshq.com/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "crypto"
+      ]
+    },
+    {
+      "id": "twitter-clementdelangue",
+      "type": "twitter",
+      "name": "Clement Delangue",
+      "handle": "ClementDelangue",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "twitter-gaborhm",
+      "type": "twitter",
+      "name": "Greg Brockman",
+      "handle": "GregBrockman",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "twitter-zuck",
+      "type": "twitter",
+      "name": "Mark Zuckerberg",
+      "handle": "zuck",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "github-mcp-servers",
+      "type": "github",
+      "name": "MCP Servers",
+      "repo": "modelcontextprotocol/servers",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ]
+    },
+    {
+      "id": "github-deepseek-v3",
+      "type": "github",
+      "name": "DeepSeek V3",
+      "repo": "deepseek-ai/DeepSeek-V3",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ]
+    },
+    {
+      "id": "github-meta-llama",
+      "type": "github",
+      "name": "Meta Llama",
+      "repo": "meta-llama/llama-models",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ]
     }
   ]
 }
