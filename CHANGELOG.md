@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.4.6
+
+- Add `reddit` to config/schema.json source type enum (was missing, caused validation mismatch)
+- Rename all archive paths `tech-digest/` → `tech-news-digest/` for consistency
+- Fix Discord template: default delivery is channel (via DISCORD_CHANNEL_ID), not DM
+- GH_APP_TOKEN_SCRIPT: add trust warning in code and env var description
+- Path placeholders: SKILL.md uses `<workspace>/` consistently with digest-prompt.md
+
 ## v3.4.5
 
 - Fix source count inconsistencies across docs (131/132 → 133: 49 RSS + 49 Twitter + 22 GitHub + 13 Reddit)
