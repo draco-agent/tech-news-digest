@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration overlay loader for tech-digest.
+Configuration overlay loader for tech-news-digest.
 
 Handles loading and merging of default configurations with optional user overlays.
 Supports sources.json and topics.json with overlay logic for customization.

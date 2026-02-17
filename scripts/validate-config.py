@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Configuration validation script for tech-digest.
+Configuration validation script for tech-news-digest.
 
 Validates sources.json and topics.json against JSON Schema and performs
 additional consistency checks.
@@ -176,7 +176,7 @@ def validate_source_types(sources_data: Dict[str, Any]) -> bool:
 def main():
     """Main validation function."""
     parser = argparse.ArgumentParser(
-        description="Validate tech-digest configuration files",
+        description="Validate tech-news-digest configuration files",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:

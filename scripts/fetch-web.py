@@ -347,7 +347,7 @@ Examples:
     
     # Auto-generate unique output path if not specified
     if not args.output:
-        fd, temp_path = tempfile.mkstemp(prefix="tech-digest-web-", suffix=".json")
+        fd, temp_path = tempfile.mkstemp(prefix="tech-news-digest-web-", suffix=".json")
         os.close(fd)
         args.output = Path(temp_path)
     

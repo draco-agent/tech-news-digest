@@ -33,7 +33,7 @@ MAX_WORKERS = 5  # Lower for API rate limits
 RETRY_COUNT = 1
 RETRY_DELAY = 2.0
 MAX_TWEETS_PER_USER = 10
-ID_CACHE_PATH = "/tmp/tech-digest-twitter-id-cache.json"
+ID_CACHE_PATH = "/tmp/tech-news-digest-twitter-id-cache.json"
 ID_CACHE_TTL_DAYS = 7
 
 # Twitter API v2 endpoints
@@ -406,7 +406,7 @@ Examples:
     
     # Auto-generate unique output path if not specified
     if not args.output:
-        fd, temp_path = tempfile.mkstemp(prefix="tech-digest-twitter-", suffix=".json")
+        fd, temp_path = tempfile.mkstemp(prefix="tech-news-digest-twitter-", suffix=".json")
         os.close(fd)
         args.output = Path(temp_path)
     

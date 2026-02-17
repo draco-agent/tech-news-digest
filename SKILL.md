@@ -247,10 +247,10 @@ Place custom configs in `workspace/config/` to override defaults:
 - Technical details section
 - Expandable sections support
 
-## Default Sources (131 total)
+## Default Sources (133 total)
 
-- **RSS Feeds (50)**: AI labs, tech blogs, crypto news, Chinese tech media
-- **Twitter/X KOLs (47)**: AI researchers, crypto leaders, tech executives
+- **RSS Feeds (49)**: AI labs, tech blogs, crypto news, Chinese tech media
+- **Twitter/X KOLs (49)**: AI researchers, crypto leaders, tech executives
 - **GitHub Repos (22)**: Major open-source projects (LangChain, vLLM, DeepSeek, Llama, etc.)
 - **Reddit (13)**: r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency, r/ChatGPT, r/OpenAI, etc.
 - **Web Search (4 topics)**: LLM, AI Agent, Crypto, Frontier Tech

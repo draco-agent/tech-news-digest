@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Source health monitoring for tech-digest pipeline.
+Source health monitoring for tech-news-digest pipeline.
 
 Tracks per-source success/failure history and reports unhealthy sources.
 
@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
-HEALTH_FILE = "/tmp/tech-digest-source-health.json"
+HEALTH_FILE = "/tmp/tech-news-digest-source-health.json"
 HISTORY_DAYS = 7
 FAILURE_THRESHOLD = 0.5  # >50% failure rate triggers warning
 
@@ -82,7 +82,7 @@ def report_unhealthy(health: Dict[str, Any], logger: logging.Logger) -> int:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Track source health for tech-digest pipeline.")
+    parser = argparse.ArgumentParser(description="Track source health for tech-news-digest pipeline.")
     parser.add_argument("--rss", type=Path, help="RSS output JSON")
     parser.add_argument("--twitter", type=Path, help="Twitter output JSON")
     parser.add_argument("--github", type=Path, help="GitHub output JSON")
