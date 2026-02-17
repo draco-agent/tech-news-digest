@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.4.3
+
+- **Audit compliance**: Address all ClawHub Code Insights findings:
+  - Declare `gh` as optional binary in SKILL.md metadata
+  - Document credential access cascade and file access scope in security section
+  - Add "Dependency Installation" section clarifying skill never runs `pip install`
+  - Explicitly state scripts do not read `~/.config/`, `~/.ssh/`, or arbitrary credential files
+
 ## v3.4.2
 
 - **Remove hardcoded GitHub App credentials**: App ID, install ID, key file path, and token script path now read exclusively from env vars (`GH_APP_ID`, `GH_APP_INSTALL_ID`, `GH_APP_KEY_FILE`, `GH_APP_TOKEN_SCRIPT`). No defaults — if not set, this auth method is silently skipped.

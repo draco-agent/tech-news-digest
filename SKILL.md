@@ -1,14 +1,14 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.4.2"
+version: "3.4.3"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
   openclaw:
     requires:
       bins: ["python3"]
-    optionalBins: ["gog"]
+    optionalBins: ["gog", "gh"]
 env:
   - name: X_BEARER_TOKEN
     required: false
@@ -426,7 +426,25 @@ All scripts support `--verbose` flag for detailed logging and troubleshooting.
 ## Security Considerations
 
 ### Shell Execution
-The digest prompt instructs agents to run Python scripts via shell commands. All script paths and arguments are skill-defined constants — no user input is interpolated into commands. Two scripts use `subprocess.run()`: `run-pipeline.py` orchestrates child fetch scripts, and `fetch-github.py` optionally invokes an external token generation script (path from `$GH_APP_TOKEN_SCRIPT` env var) and `gh auth token` CLI for GitHub authentication fallback. No user-supplied or fetched content is ever interpolated into subprocess arguments. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation. Email subjects are static format strings only.
+The digest prompt instructs agents to run Python scripts via shell commands. All script paths and arguments are skill-defined constants — no user input is interpolated into commands. Two scripts use `subprocess.run()`:
+- `run-pipeline.py` orchestrates child fetch scripts (all within `scripts/` directory)
+- `fetch-github.py` has two optional subprocess calls for GitHub authentication fallback:
+  1. An external token generation script (path from `$GH_APP_TOKEN_SCRIPT` env var — only runs if all 4 `GH_APP_*` env vars are set and the script file exists)
+  2. `gh auth token` CLI (only runs if `gh` is installed — reads from gh's own credential store, not from arbitrary files)
+
+No user-supplied or fetched content is ever interpolated into subprocess arguments. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation. Email subjects are static format strings only.
+
+### Credential & File Access
+Scripts do **not** directly read `~/.config/`, `~/.ssh/`, or any credential files. All API tokens are read from environment variables declared in the skill metadata. The GitHub auth cascade is:
+1. `$GITHUB_TOKEN` env var (you control what to provide)
+2. GitHub App token generation (only if you explicitly set `GH_APP_*` env vars pointing to your own credentials)
+3. `gh auth token` CLI (delegates to gh's own secure credential store)
+4. Unauthenticated (60 req/hr, safe fallback)
+
+If you prefer no automatic credential discovery, simply set `$GITHUB_TOKEN` and the script will use it directly without attempting steps 2-3.
+
+### Dependency Installation
+This skill does **not** install any packages. `requirements.txt` lists optional dependencies (`feedparser`, `jsonschema`) for reference only. All scripts work with Python 3.8+ standard library. Users should install optional deps in a virtualenv if desired — the skill never runs `pip install`.
 
 ### Input Sanitization
 - URL resolution rejects non-HTTP(S) schemes (javascript:, data:, etc.)
