@@ -1656,6 +1656,31 @@
         "llm",
         "ai-agent"
       ]
+    },
+    {
+      "id": "openclaw-twitter",
+      "type": "twitter",
+      "name": "OpenClaw",
+      "handle": "OpenClawAI",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Official OpenClaw account"
+    },
+    {
+      "id": "steipete-twitter",
+      "type": "twitter",
+      "name": "Peter Steinberger",
+      "handle": "steipete",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent",
+        "frontier-tech"
+      ],
+      "note": "OpenClaw creator, now at OpenAI"
     }
   ]
 }
