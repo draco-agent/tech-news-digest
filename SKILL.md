@@ -8,7 +8,7 @@ metadata:
   openclaw:
     requires:
       bins: ["python3"]
-    optionalBins: ["gog", "gh"]
+    optionalBins: ["gog", "gh", "openssl"]
 env:
   - name: X_BEARER_TOKEN
     required: false
