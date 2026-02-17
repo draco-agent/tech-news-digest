@@ -445,6 +445,7 @@ Examples:
             for article in source.get("articles", []):
                 article["source_type"] = "twitter"
                 article["source_name"] = f"@{source.get('handle', '')}"
+                article["display_name"] = source.get("name", "")
                 article["source_id"] = source.get("source_id", "")
                 article["quality_score"] = calculate_base_score(article, source)
                 all_articles.append(article)
