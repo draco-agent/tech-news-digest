@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.4.1
+
+- **KOL Display Names**: KOL Updates section now shows "Sam Altman (@sama)" instead of bare "@sama" across all templates (Discord, Email, Telegram)
+- **`display_name` in Merged JSON**: `merge-sources.py` propagates Twitter source `name` to article-level `display_name` field, eliminating need to re-read raw Twitter data
+- **New Twitter Sources**: Added @OpenClawAI (official) and @steipete (Peter Steinberger), total 49 Twitter KOLs / 133 sources
+- **Enforce Unified Pipeline**: `digest-prompt.md` now says "You MUST use" `run-pipeline.py`, individual steps demoted to `<details>` fallback with `--force` flags
+
 ## v3.4.0
 
 - **Unified Pipeline**: New `run-pipeline.py` runs all 5 fetch steps (RSS, Twitter, GitHub, Reddit, Web) in parallel, then merges — total ~30s vs ~3-4min sequential. Digest prompt updated to use this by default.
