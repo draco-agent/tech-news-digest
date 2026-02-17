@@ -145,7 +145,13 @@ Output is grouped by topic with articles sorted by score.
 
 ## Report Generation
 
-Use the merged output (`/tmp/td-merged.json`) and the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report. The merged JSON contains articles from **all 5 sources** (RSS, Twitter, Web, GitHub, Reddit) grouped by topic and sorted by `quality_score`. **Select articles purely by score regardless of source type** — Reddit posts with high scores should appear alongside RSS/Web articles in topic sections. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*` after the title.
+First, get a structured overview of the merged data:
+```bash
+python3 <SKILL_DIR>/scripts/summarize-merged.py --input /tmp/td-merged.json --top <ITEMS_PER_SECTION>
+```
+This prints a human-readable summary with top articles per topic, sorted by quality score, including metrics and sources. Use this output to select articles for the report — **do NOT write ad-hoc Python to parse the merged JSON**.
+
+Then use the appropriate template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md` to generate the report. The merged JSON contains articles from **all 5 sources** (RSS, Twitter, Web, GitHub, Reddit) grouped by topic and sorted by `quality_score`. **Select articles purely by score regardless of source type** — Reddit posts with high scores should appear alongside RSS/Web articles in topic sections. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*` after the title.
 
 ### Executive Summary
 Place a **2-4 sentence summary** between the title and topic sections, highlighting the day's top 3-5 stories. Select from articles with the highest `quality_score` in the merged JSON. Style: concise and punchy, like a news broadcast opener. No links, no detailed descriptions — just the key events.
