@@ -1681,6 +1681,30 @@
         "frontier-tech"
       ],
       "note": "OpenClaw creator, now at OpenAI"
+    },
+    {
+      "id": "mem0-github",
+      "type": "github",
+      "repo": "mem0ai/mem0",
+      "name": "Mem0",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Memory layer for AI agents"
+    },
+    {
+      "id": "openviking-github",
+      "type": "github",
+      "repo": "volcengine/OpenViking",
+      "name": "OpenViking",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Volcengine/ByteDance open-source LLM"
     }
   ]
 }
