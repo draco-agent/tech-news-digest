@@ -15,7 +15,7 @@ import logging
 import sys
 import os
 from pathlib import Path
-from typing import Dict, List, Any, Set
+from typing import Dict, Any, Set
 
 try:
     import jsonschema

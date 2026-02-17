@@ -15,7 +15,7 @@ import logging
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional
-from datetime import datetime, timezone
+from datetime import datetime
 
 HEALTH_FILE = "/tmp/tech-news-digest-source-health.json"
 HISTORY_DAYS = 7

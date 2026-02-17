@@ -26,7 +26,6 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from urllib.request import urlopen, Request
 from urllib.parse import urlencode
-from urllib.error import URLError, HTTPError
 
 TIMEOUT = 30
 MAX_RESULTS_PER_QUERY = 5

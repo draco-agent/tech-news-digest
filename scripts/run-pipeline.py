@@ -25,10 +25,9 @@ import subprocess
 import time
 import argparse
 import logging
-import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Dict, Any
 
 SCRIPTS_DIR = Path(__file__).parent
 DEFAULT_TIMEOUT = 180  # per-step timeout in seconds

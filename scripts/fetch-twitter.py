@@ -23,7 +23,7 @@ import re
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import urlopen, Request
-from urllib.error import URLError, HTTPError
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from pathlib import Path
 from typing import Dict, List, Any, Optional
