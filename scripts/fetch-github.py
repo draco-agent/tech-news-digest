@@ -106,14 +106,14 @@ def resolve_github_token() -> Optional[str]:
             logging.info("🔑 Using GitHub token (5000 req/hr)")
         return token
     
-    # 2. GitHub App auto-generation
-    app_id = os.environ.get("GH_APP_ID", "2870188")
-    install_id = os.environ.get("GH_APP_INSTALL_ID", "110276220")
-    key_file = os.environ.get("GH_APP_KEY_FILE",
-                              os.path.expanduser("~/.config/gh-app/draco-deploy.pem"))
-    token_script = os.path.expanduser("~/.openclaw/workspace/scripts/gh-app-token.py")
+    # 2. GitHub App auto-generation (requires GH_APP_ID, GH_APP_INSTALL_ID, GH_APP_KEY_FILE env vars
+    #    and a token generation script at GH_APP_TOKEN_SCRIPT)
+    app_id = os.environ.get("GH_APP_ID")
+    install_id = os.environ.get("GH_APP_INSTALL_ID")
+    key_file = os.environ.get("GH_APP_KEY_FILE")
+    token_script = os.environ.get("GH_APP_TOKEN_SCRIPT")
     
-    if os.path.exists(key_file) and os.path.exists(token_script):
+    if app_id and install_id and key_file and token_script and os.path.exists(key_file) and os.path.exists(token_script):
         try:
             import subprocess
             result = subprocess.run(

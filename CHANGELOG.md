@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.4.2
+
+- **Remove hardcoded GitHub App credentials**: App ID, install ID, key file path, and token script path now read exclusively from env vars (`GH_APP_ID`, `GH_APP_INSTALL_ID`, `GH_APP_KEY_FILE`, `GH_APP_TOKEN_SCRIPT`). No defaults — if not set, this auth method is silently skipped.
+- **Declare new env vars in SKILL.md**: All 4 GitHub App env vars declared in metadata
+- **Fix security docs**: Updated Shell Execution section to accurately describe `subprocess.run()` usage in `run-pipeline.py` and `fetch-github.py`
+
 ## v3.4.1
 
 - **KOL Display Names**: KOL Updates section now shows "Sam Altman (@sama)" instead of bare "@sama" across all templates (Discord, Email, Telegram)

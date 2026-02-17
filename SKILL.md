@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.4.1"
+version: "3.4.2"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -19,6 +19,18 @@ env:
   - name: GITHUB_TOKEN
     required: false
     description: GitHub token for higher API rate limits (auto-generated from GitHub App if not set)
+  - name: GH_APP_ID
+    required: false
+    description: GitHub App ID for automatic installation token generation
+  - name: GH_APP_INSTALL_ID
+    required: false
+    description: GitHub App Installation ID for automatic token generation
+  - name: GH_APP_KEY_FILE
+    required: false
+    description: Path to GitHub App private key PEM file
+  - name: GH_APP_TOKEN_SCRIPT
+    required: false
+    description: Path to script that generates GitHub App installation tokens
 tools:
   - python3: Required. Runs data collection and merge scripts.
   - gog: Optional. Gmail CLI for email delivery (skip if not installed).
@@ -414,7 +426,7 @@ All scripts support `--verbose` flag for detailed logging and troubleshooting.
 ## Security Considerations
 
 ### Shell Execution
-The digest prompt instructs agents to run Python scripts via shell commands. All script paths and arguments are skill-defined constants — no user input is interpolated into commands. Scripts themselves contain no subprocess/os.system calls. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation of fetched content. Email subjects are static format strings only.
+The digest prompt instructs agents to run Python scripts via shell commands. All script paths and arguments are skill-defined constants — no user input is interpolated into commands. Two scripts use `subprocess.run()`: `run-pipeline.py` orchestrates child fetch scripts, and `fetch-github.py` optionally invokes an external token generation script (path from `$GH_APP_TOKEN_SCRIPT` env var) and `gh auth token` CLI for GitHub authentication fallback. No user-supplied or fetched content is ever interpolated into subprocess arguments. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation. Email subjects are static format strings only.
 
 ### Input Sanitization
 - URL resolution rejects non-HTTP(S) schemes (javascript:, data:, etc.)
