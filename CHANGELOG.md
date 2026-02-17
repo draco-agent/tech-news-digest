@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.4.4
+
+- Remove hardcoded Discord channel ID from SKILL.md (use `<your-discord-channel-id>` placeholder)
+- Cron prompt examples: Chinese → English, default LANGUAGE = English
+- Remove outdated "Migration from v1.x" section
+
 ## v3.4.3
 
 - **Audit compliance**: Address all ClawHub Code Insights findings:
