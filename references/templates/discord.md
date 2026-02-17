@@ -64,7 +64,7 @@ Discord-optimized format with bullet points and link suppression.
 
 ## 📢 KOL Updates
 
-• **@elonmusk** — Confirmed X's crypto trading feature `👁 2.1M | 💬 12.3K | 🔁 8.5K | ❤️ 49.8K`
+• **Elon Musk** (@elonmusk) — Confirmed X's crypto trading feature `👁 2.1M | 💬 12.3K | 🔁 8.5K | ❤️ 49.8K`
   <https://twitter.com/elonmusk/status/123456789>
 • **@saylor** — Valentine's BTC enthusiasm `👁 450K | 💬 1.2K | 🔁 3.1K | ❤️ 13K`
   <https://twitter.com/saylor/status/987654321>

@@ -70,7 +70,7 @@ Telegram-optimized format using HTML formatting for rich display.
 
 <b>📢 KOL Updates</b>
 
-▪️ <b>@elonmusk</b> — Confirmed X's crypto trading feature
+▪️ <b>Elon Musk</b> (@elonmusk) — Confirmed X's crypto trading feature
    <code>👁 2.1M | 💬 12.3K | 🔁 8.5K | ❤️ 49.8K</code>
    <a href="https://twitter.com/elonmusk/status/123456789">tweet</a>
 
