@@ -173,16 +173,16 @@ def _build_token_buckets(articles: List[Dict[str, Any]]) -> Dict[int, Set[int]]:
 
 
 def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Remove duplicate articles based on title similarity and domain.
+    """Remove duplicate articles based on title similarity.
     
     Uses token-based bucketing to avoid O(n²) SequenceMatcher comparisons.
     Only articles sharing 2+ significant title tokens are compared.
+    Domain saturation is handled separately per-topic after grouping.
     """
     if not articles:
         return articles
         
     deduplicated = []
-    domain_counts = {}
     
     # Sort by quality score (highest first) to keep best versions
     articles.sort(key=lambda x: x.get("quality_score", 0), reverse=True)
@@ -198,8 +198,6 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
             continue
         
         title = article.get("title", "")
-        url = article.get("link", "")
-        domain = get_domain(url)
         
         # Mark future candidates as duplicates using SequenceMatcher (only within bucket)
         for j in candidates.get(i, set()):
@@ -210,18 +208,30 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
                     logging.debug(f"Title duplicate: '{other_title}' ~= '{title}' ({similarity:.2f})")
                     duplicate_indices.add(j)
             
-        # Check domain saturation (too many articles from same domain)
-        if domain:
-            domain_count = domain_counts.get(domain, 0)
-            if domain_count >= 3:  # Max 3 articles per domain per topic
-                logging.debug(f"Domain oversaturation: {domain} ({domain_count} articles)")
-                continue
-            domain_counts[domain] = domain_count + 1
-            
         deduplicated.append(article)
         
     logging.info(f"Deduplication: {len(articles)} → {len(deduplicated)} articles")
     return deduplicated
+
+
+def apply_domain_limits(articles: List[Dict[str, Any]], max_per_domain: int = 3) -> List[Dict[str, Any]]:
+    """Limit articles per domain within a single topic group.
+    
+    Should be called per-topic after group_by_topics() to ensure
+    each topic gets its own domain budget.
+    """
+    domain_counts: Dict[str, int] = {}
+    result = []
+    for article in articles:
+        domain = get_domain(article.get("link", ""))
+        if domain:
+            count = domain_counts.get(domain, 0)
+            if count >= max_per_domain:
+                logging.debug(f"Domain limit ({max_per_domain}): skipping {domain} article in topic")
+                continue
+            domain_counts[domain] = count + 1
+        result.append(article)
+    return result
 
 
 def merge_article_sources(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -514,6 +524,14 @@ Examples:
         
         # Group by topics
         topic_groups = group_by_topics(all_articles)
+        
+        # Apply per-topic domain limits (max 3 articles per domain per topic)
+        for topic in topic_groups:
+            before = len(topic_groups[topic])
+            topic_groups[topic] = apply_domain_limits(topic_groups[topic])
+            after = len(topic_groups[topic])
+            if before != after:
+                logger.info(f"Domain limits ({topic}): {before} → {after}")
         
         # Generate summary stats (use deduplicated count, not topic-grouped which double-counts)
         total_final = len(all_articles)

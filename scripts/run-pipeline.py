@@ -132,12 +132,15 @@ def main() -> int:
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
 
-    # Intermediate output paths
-    tmp_rss = Path("/tmp/td-rss.json")
-    tmp_twitter = Path("/tmp/td-twitter.json")
-    tmp_github = Path("/tmp/td-github.json")
-    tmp_reddit = Path("/tmp/td-reddit.json")
-    tmp_web = Path("/tmp/td-web.json")
+    # Intermediate output paths (unique per run to avoid cross-run cache pollution)
+    import tempfile
+    _run_dir = tempfile.mkdtemp(prefix="td-pipeline-")
+    tmp_rss = Path(_run_dir) / "rss.json"
+    tmp_twitter = Path(_run_dir) / "twitter.json"
+    tmp_github = Path(_run_dir) / "github.json"
+    tmp_reddit = Path(_run_dir) / "reddit.json"
+    tmp_web = Path(_run_dir) / "web.json"
+    logger.info(f"📁 Run directory: {_run_dir}")
 
     # Common args for all fetch scripts
     common = ["--defaults", str(args.defaults)]
