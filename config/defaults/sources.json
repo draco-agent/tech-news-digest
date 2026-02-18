@@ -679,18 +679,6 @@
       "note": "on-chain investigator"
     },
     {
-      "id": "kris-twitter",
-      "type": "twitter",
-      "name": "Kris",
-      "handle": "fishkris",
-      "enabled": true,
-      "priority": false,
-      "topics": [
-        "crypto"
-      ],
-      "note": "Chinese crypto KOL"
-    },
-    {
       "id": "wu-twitter",
       "type": "twitter",
       "name": "Wu Blockchain",
