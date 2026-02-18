@@ -493,7 +493,7 @@
       "id": "xai-twitter",
       "type": "twitter",
       "name": "xAI official",
-      "handle": "xaboratory",
+      "handle": "xai",
       "enabled": true,
       "priority": true,
       "topics": [
@@ -534,7 +534,7 @@
       "id": "jimfan-twitter",
       "type": "twitter",
       "name": "Jim Fan (NVIDIA)",
-      "handle": "jimfan_",
+      "handle": "DrJimFan",
       "enabled": true,
       "priority": true,
       "topics": [
@@ -597,7 +597,7 @@
       "id": "sebastian-twitter",
       "type": "twitter",
       "name": "Sebastian Raschka",
-      "handle": "swaborhm",
+      "handle": "rasbt",
       "enabled": true,
       "priority": false,
       "topics": [
@@ -1003,7 +1003,7 @@
       "id": "demis-twitter",
       "type": "twitter",
       "name": "Demis Hassabis (DeepMind CEO)",
-      "handle": "demaborhm",
+      "handle": "demishassabis",
       "enabled": true,
       "priority": true,
       "topics": [
