@@ -153,6 +153,7 @@ def resolve_github_token() -> Optional[str]:
     """
     # 1. Environment variable (PAT or externally-set App token)
     token = os.environ.get("GITHUB_TOKEN")
+    logging.info(f"🔍 GITHUB_TOKEN: {'set' if token else 'not set'}")
     if token:
         if token.startswith("ghp_"):
             logging.info("🔑 Using GitHub PAT (5000 req/hr)")
@@ -167,6 +168,9 @@ def resolve_github_token() -> Optional[str]:
     app_id = os.environ.get("GH_APP_ID")
     install_id = os.environ.get("GH_APP_INSTALL_ID")
     key_file = os.environ.get("GH_APP_KEY_FILE")
+    logging.info(f"🔍 GH_APP_ID: {'set' if app_id else 'not set'}")
+    logging.info(f"🔍 GH_APP_INSTALL_ID: {'set' if install_id else 'not set'}")
+    logging.info(f"🔍 GH_APP_KEY_FILE: {'set' if key_file else 'not set'}{' (file exists)' if key_file and os.path.exists(key_file) else ' (file missing)' if key_file else ''}")
     
     if app_id and install_id and key_file and os.path.exists(key_file):
         try:
@@ -178,6 +182,7 @@ def resolve_github_token() -> Optional[str]:
             logging.debug(f"GitHub App token generation failed: {e}")
     
     # 3. gh CLI fallback
+    logging.info("🔍 Trying gh CLI fallback...")
     try:
         import subprocess
         result = subprocess.run(
@@ -187,8 +192,10 @@ def resolve_github_token() -> Optional[str]:
         if token and result.returncode == 0:
             logging.info("🔑 Using gh CLI token (5000 req/hr)")
             return token
-    except Exception:
-        pass
+        else:
+            logging.info(f"🔍 gh auth token: exit={result.returncode}, output={'set' if token else 'empty'}")
+    except Exception as e:
+        logging.info(f"🔍 gh CLI not available: {e}")
     
     # 4. Unauthenticated
     logging.warning("⚠️ No GitHub token found — rate limit 60 req/hr (22 repos may fail)")
