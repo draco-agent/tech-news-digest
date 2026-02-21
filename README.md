@@ -1,6 +1,6 @@
 # Tech News Digest
 
-> Automated tech news digest — 133 sources, 5-layer pipeline, one chat message to install.
+> Automated tech news digest — 134 sources, 5-layer pipeline, one chat message to install.
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -28,14 +28,14 @@ clawhub install tech-news-digest
 
 ## 📊 What You Get
 
-A quality-scored, deduplicated tech digest built from **133 sources**:
+A quality-scored, deduplicated tech digest built from **134 sources**:
 
 | Layer | Sources | What |
 |-------|---------|------|
 | 📡 RSS | 49 feeds | OpenAI, Anthropic, Ben's Bites, HN, 36氪, CoinDesk… |
-| 🐦 Twitter/X | 49 KOLs | @karpathy, @VitalikButerin, @sama, @zuck… |
+| 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @zuck… |
 | 🔍 Web Search | 4 topics | Brave Search API with freshness filters |
-| 🐙 GitHub | 22 repos | Releases from key projects (LangChain, DeepSeek, Llama…) |
+| 🐙 GitHub | 24 repos | Releases from key projects (LangChain, DeepSeek, Llama…) |
 | 🗣️ Reddit | 13 subs | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency… |
 
 ### Pipeline
@@ -58,7 +58,7 @@ A quality-scored, deduplicated tech digest built from **133 sources**:
 
 ## ⚙️ Configuration
 
-- `config/defaults/sources.json` — 133 built-in sources
+- `config/defaults/sources.json` — 134 built-in sources
 - `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
 - User overrides in `workspace/config/` take priority
 

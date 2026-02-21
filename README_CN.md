@@ -1,6 +1,6 @@
 # Tech News Digest
 
-> 自动化科技资讯汇总 — 132 个数据源，5 层管道，一句话安装。
+> 自动化科技资讯汇总 — 134 个数据源，5 层管道，一句话安装。
 
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
@@ -28,14 +28,14 @@ clawhub install tech-news-digest
 
 ## 📊 你会得到什么
 
-基于 **132 个数据源** 的质量评分、去重科技日报：
+基于 **134 个数据源** 的质量评分、去重科技日报：
 
 | 层级 | 数量 | 内容 |
 |------|------|------|
-| 📡 RSS | 50 个订阅源 | OpenAI、Anthropic、Ben's Bites、HN、36氪、CoinDesk… |
-| 🐦 Twitter/X | 47 个 KOL | @karpathy、@VitalikButerin、@sama、@zuck… |
+| 📡 RSS | 49 个订阅源 | OpenAI、Anthropic、Ben's Bites、HN、36氪、CoinDesk… |
+| 🐦 Twitter/X | 48 个 KOL | @karpathy、@VitalikButerin、@sama、@zuck… |
 | 🔍 Web 搜索 | 4 个主题 | Brave Search API + 时效过滤 |
-| 🐙 GitHub | 22 个仓库 | 关键项目的 Release 跟踪（LangChain、DeepSeek、Llama…） |
+| 🐙 GitHub | 24 个仓库 | 关键项目的 Release 跟踪（LangChain、DeepSeek、Llama…） |
 | 🗣️ Reddit | 13 个子版块 | r/MachineLearning、r/LocalLLaMA、r/CryptoCurrency… |
 
 ### 数据管道
@@ -50,11 +50,11 @@ RSS + Twitter + Web + GitHub + Reddit
   Discord / 邮件 / Markdown 输出
 ```
 
-**质量评分**：优先级源 (+3)、多源交叉验证 (+5)、时效性 (+2)、互动度 (+1)、Reddit 热度加分 (+1/+3/+5)、已报道过 (-3)。
+**质量评分**：优先级源 (+3)、多源交叉验证 (+5)、时效性 (+2)、互动度 (+1)、Reddit 热度加分 (+1/+3/+5)、已报道过 (-5)。
 
 ## ⚙️ 配置
 
-- `config/defaults/sources.json` — 132 个内置数据源
+- `config/defaults/sources.json` — 134 个内置数据源
 - `config/defaults/topics.json` — 4 个主题，含搜索查询和 Twitter 查询
 - 用户自定义配置放 `workspace/config/`，优先级更高
 

@@ -6,6 +6,11 @@
 - Require email content to match Discord (no abbreviation or skipped sections)
 - Add CONTRIBUTING.md with development conventions
 
+## v3.5.0
+
+- **Unified source count**: 134 sources (49 RSS + 48 Twitter + 24 GitHub + 13 Reddit)
+- Updated README source counts and sub-totals
+
 ## v3.4.9
 
 - Declare `openssl` as optional binary in SKILL.md (used for GitHub App JWT signing)
