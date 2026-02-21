@@ -8,7 +8,7 @@ metadata:
   openclaw:
     requires:
       bins: ["python3"]
-    optionalBins: ["gog", "gh", "openssl"]
+    optionalBins: ["mail", "msmtp", "gog", "gh", "openssl"]
 env:
   - name: X_BEARER_TOKEN
     required: false
@@ -30,7 +30,8 @@ env:
     description: Path to GitHub App private key PEM file
 tools:
   - python3: Required. Runs data collection and merge scripts.
-  - gog: Optional. Gmail CLI for email delivery (skip if not installed).
+  - mail: Optional. msmtp-based mail command for email delivery (preferred).
+  - gog: Optional. Gmail CLI for email delivery (fallback if mail not available).
 files:
   read:
     - config/defaults/: Default source and topic configurations
@@ -393,7 +394,7 @@ The Python scripts make outbound requests to:
 No data is sent to any other endpoints. All API keys are read from environment variables declared in the skill metadata.
 
 ### Shell Safety
-Email delivery uses the `gog` CLI with hardcoded subject formats (`Daily Tech Digest - YYYY-MM-DD`). The prompt template explicitly prohibits interpolating untrusted content into shell arguments.
+Email delivery supports two CLIs: `mail` (msmtp) and `gog` (fallback). Both use hardcoded subject formats (`Daily Tech Digest - YYYY-MM-DD`) and read HTML body from a temp file (`/tmp/td-email.html`). The prompt template explicitly prohibits interpolating untrusted content (article titles, tweet text, etc.) into shell arguments. Email addresses and subjects must be static placeholder values only.
 
 ### File Access
 Scripts read from `config/` and write to `workspace/archive/`. No files outside the workspace are accessed.
@@ -422,7 +423,7 @@ The digest prompt instructs agents to run Python scripts via shell commands. All
   1. `openssl dgst -sha256 -sign` for JWT signing (only if `GH_APP_*` env vars are set — signs a self-constructed JWT payload, no user content involved)
   2. `gh auth token` CLI fallback (only if `gh` is installed — reads from gh's own credential store)
 
-No user-supplied or fetched content is ever interpolated into subprocess arguments. Email delivery writes HTML to a temp file before passing to `gog` CLI, avoiding shell interpolation. Email subjects are static format strings only.
+No user-supplied or fetched content is ever interpolated into subprocess arguments. Email delivery writes HTML to a temp file (`/tmp/td-email.html`) before passing to `mail` (msmtp) or `gog` CLI via stdin redirection or `--body-html-file`, avoiding shell interpolation. Email subjects are static format strings only — never constructed from fetched data.
 
 ### Credential & File Access
 Scripts do **not** directly read `~/.config/`, `~/.ssh/`, or any credential files. All API tokens are read from environment variables declared in the skill metadata. The GitHub auth cascade is:
