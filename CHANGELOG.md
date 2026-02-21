@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.5.1
+
+- Email delivery: prefer `mail` (msmtp) over `gog`, remove redundant fallback options
+- Require email content to match Discord (no abbreviation or skipped sections)
+- Add CONTRIBUTING.md with development conventions
+
 ## v3.4.9
 
 - Declare `openssl` as optional binary in SKILL.md (used for GitHub App JWT signing)
