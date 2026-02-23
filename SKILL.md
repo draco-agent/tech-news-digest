@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.6.3"
+version: "3.7.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -10,9 +10,15 @@ metadata:
       bins: ["python3"]
     optionalBins: ["mail", "msmtp", "gog", "gh", "openssl"]
 env:
+  - name: TWITTER_API_BACKEND
+    required: false
+    description: "Twitter API backend: 'official', 'twitterapiio', or 'auto' (default: auto)"
   - name: X_BEARER_TOKEN
     required: false
-    description: Twitter/X API bearer token for KOL monitoring
+    description: Twitter/X API bearer token for KOL monitoring (official backend)
+  - name: TWITTERAPI_IO_KEY
+    required: false
+    description: twitterapi.io API key for KOL monitoring (twitterapiio backend)
   - name: BRAVE_API_KEY
     required: false
     description: Brave Search API key for web search layer
@@ -58,7 +64,8 @@ Automated tech news digest system with unified data source model, quality scorin
    ```
 
 2. **Environment Variables**: 
-   - `X_BEARER_TOKEN` - Twitter API bearer token (optional)
+   - `TWITTERAPI_IO_KEY` - twitterapi.io API key (optional, preferred)
+   - `X_BEARER_TOKEN` - Twitter/X official API bearer token (optional, fallback)
    - `BRAVE_API_KEY` - Brave Search API key (optional)
    - `GITHUB_TOKEN` - GitHub personal access token (optional, improves rate limits)
 
@@ -153,11 +160,12 @@ python3 scripts/fetch-rss.py [--defaults DIR] [--config DIR] [--hours 48] [--out
 - Parallel fetching (10 workers), retry with backoff, feedparser + regex fallback
 - Timeout: 30s per feed, ETag/Last-Modified caching
 
-#### `fetch-twitter.py` - Twitter/X KOL Monitor  
+#### `fetch-twitter.py` - Twitter/X KOL Monitor
 ```bash
-python3 scripts/fetch-twitter.py [--defaults DIR] [--config DIR] [--hours 48] [--output FILE]
+python3 scripts/fetch-twitter.py [--defaults DIR] [--config DIR] [--hours 48] [--output FILE] [--backend auto|official|twitterapiio]
 ```
-- Requires `X_BEARER_TOKEN`, rate limit handling, engagement metrics
+- Backend auto-detection: uses twitterapi.io if `TWITTERAPI_IO_KEY` set, else official X API v2 if `X_BEARER_TOKEN` set
+- Rate limit handling, engagement metrics, retry with backoff
 
 #### `fetch-web.py` - Web Search Engine
 ```bash
@@ -387,7 +395,7 @@ This skill uses a **prompt template pattern**: the agent reads `digest-prompt.md
 ### Network Access
 The Python scripts make outbound requests to:
 - RSS feed URLs (configured in `sources.json`)
-- Twitter/X API (`api.x.com`)
+- Twitter/X API (`api.x.com` or `api.twitterapi.io`)
 - Brave Search API (`api.search.brave.com`)
 - GitHub API (`api.github.com`)
 

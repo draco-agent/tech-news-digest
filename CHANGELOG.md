@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.7.0
+
+- **twitterapi.io backend**: Alternative Twitter data source via `TWITTERAPI_IO_KEY` — no username→ID resolution needed, simpler API, same normalized output format
+- **Backend auto-detection**: `TWITTER_API_BACKEND=auto` (default) uses twitterapi.io if key is set, else falls back to official X API v2
+- **`--backend` CLI arg**: Override env var per invocation (`official`, `twitterapiio`, `auto`)
+- **Backend abstraction**: `fetch-twitter.py` refactored with `TwitterBackend` base class and two implementations (`OfficialBackend`, `TwitterApiIoBackend`)
+
 ## v3.6.3
 
 - Add GitHub source: zeroclaw-labs/zeroclaw (137→138 total, 27→28 GitHub)
