@@ -345,11 +345,14 @@ class TwitterApiIoBackend(TwitterBackend):
                     "User-Agent": "TechDigest/2.0",
                 }
 
-                time.sleep(0.3)
+                time.sleep(1.0)  # Rate limit friendly for twitterapi.io
 
                 req = Request(url, headers=headers)
                 with urlopen(req, timeout=TIMEOUT) as resp:
-                    data = json.loads(resp.read().decode())
+                    raw = json.loads(resp.read().decode())
+
+                # API wraps response in {"data": {...}} envelope
+                data = raw.get("data", raw)
 
                 articles = []
                 for tweet in data.get("tweets", []):
@@ -432,17 +435,14 @@ class TwitterApiIoBackend(TwitterBackend):
 
     def fetch_all(self, sources: List[Dict[str, Any]], cutoff: datetime) -> List[Dict[str, Any]]:
         results: List[Dict[str, Any]] = []
-        with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            futures = {pool.submit(self._fetch_user_tweets, source, cutoff): source
-                       for source in sources}
-
-            for future in as_completed(futures):
-                result = future.result()
-                results.append(result)
-                if result["status"] == "ok":
-                    logging.debug(f"✅ @{result['handle']}: {result['count']} tweets")
-                else:
-                    logging.debug(f"❌ @{result['handle']}: {result['error']}")
+        # Serial execution to respect twitterapi.io rate limits
+        for source in sources:
+            result = self._fetch_user_tweets(source, cutoff)
+            results.append(result)
+            if result["status"] == "ok":
+                logging.debug(f"✅ @{result['handle']}: {result['count']} tweets")
+            else:
+                logging.debug(f"❌ @{result['handle']}: {result['error']}")
 
         return results
 
