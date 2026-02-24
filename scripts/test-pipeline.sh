@@ -8,7 +8,7 @@
 #   ./test-pipeline.sh --ids sama-twitter,openai-rss  # specific source IDs
 #   ./test-pipeline.sh --hours 12               # custom time window
 #   ./test-pipeline.sh --keep                   # keep output dir after test
-#   ./test-pipeline.sh --backend twitterapiio   # force twitter backend
+#   ./test-pipeline.sh --twitter-backend twitterapiio  # force twitter backend
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
         --ids)        IDS="$2"; shift 2 ;;
         --hours)      HOURS="$2"; shift 2 ;;
         --keep)       KEEP=true; shift ;;
-        --backend)    TWITTER_BACKEND="$2"; shift 2 ;;
+        --twitter-backend|--backend) TWITTER_BACKEND="$2"; shift 2 ;;
         --config)     CONFIG="$2"; shift 2 ;;
         --verbose|-v) VERBOSE="--verbose"; shift ;;
         --help|-h)
@@ -66,7 +66,8 @@ OPTIONS:
   --hours N         Time window for fetching articles (default: 24)
                     Example: --hours 48
 
-  --backend NAME    Force a specific Twitter API backend
+  --twitter-backend NAME
+                    Force a specific Twitter API backend
                     Values: official, twitterapiio, auto
                     official     = X API v2 (needs X_BEARER_TOKEN)
                     twitterapiio = twitterapi.io (needs TWITTERAPI_IO_KEY)
@@ -83,7 +84,7 @@ OPTIONS:
 
 EXAMPLES:
   ./test-pipeline.sh                                    # full pipeline, all sources
-  ./test-pipeline.sh --only twitter --backend twitterapiio  # twitter only via twitterapi.io
+  ./test-pipeline.sh --only twitter --twitter-backend twitterapiio  # twitter only via twitterapi.io
   ./test-pipeline.sh --topics crypto --hours 48 --keep  # crypto sources, 48h window
   ./test-pipeline.sh --skip web,reddit -v               # skip web+reddit, verbose
   ./test-pipeline.sh --ids sama-twitter,karpathy-twitter --only twitter
