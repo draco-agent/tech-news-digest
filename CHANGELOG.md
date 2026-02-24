@@ -1,5 +1,16 @@
 # Changelog
 
+## v3.8.0
+
+- **twitterapiio pagination**: Fetches up to 2 pages (40 tweets) for high-volume users; logs truncation warning
+- **Unified tweet limit**: `MAX_TWEETS_PER_USER` 10→20 for official backend (matches twitterapiio)
+- **Shared result helpers**: `_make_result()` / `_make_error()` on base class, reduces duplication
+- **Smarter rate limiting**: `RateLimiter` class with `threading.Lock` for twitterapiio (5 QPS); replaces per-thread sleep
+- **Retry improvements**: `RETRY_COUNT` 1→2 (3 attempts); twitterapiio 429 wait 60s→5s
+- **Tweet text limit**: 200→280 chars (matches Twitter's actual limit)
+- **Empty result format**: Now matches normal output structure for consistent downstream parsing
+- **Removed redundant isReply filter** in twitterapiio (API already excludes replies)
+
 ## v3.7.1
 
 - **twitterapi.io bugfix**: Fix response envelope parsing (`data.tweets` not top-level `tweets`)

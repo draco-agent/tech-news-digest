@@ -23,6 +23,7 @@ import logging
 import time
 import tempfile
 import re
+import threading
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -34,9 +35,9 @@ from typing import Dict, List, Any, Optional
 
 TIMEOUT = 30
 MAX_WORKERS = 5  # Lower for API rate limits
-RETRY_COUNT = 1
+RETRY_COUNT = 2
 RETRY_DELAY = 2.0
-MAX_TWEETS_PER_USER = 10
+MAX_TWEETS_PER_USER = 20
 ID_CACHE_PATH = "/tmp/tech-news-digest-twitter-id-cache.json"
 ID_CACHE_TTL_DAYS = 7
 
@@ -64,9 +65,29 @@ def clean_tweet_text(text: str) -> str:
     # Remove excessive whitespace
     text = re.sub(r'\s+', ' ', text).strip()
     # Truncate if too long
-    if len(text) > 200:
-        text = text[:197] + "..."
+    if len(text) > 280:
+        text = text[:277] + "..."
     return text
+
+
+# ---------------------------------------------------------------------------
+# Rate limiting
+# ---------------------------------------------------------------------------
+
+class RateLimiter:
+    """Simple token-bucket rate limiter."""
+    def __init__(self, qps: float):
+        self._lock = threading.Lock()
+        self._min_interval = 1.0 / qps
+        self._last = 0.0
+
+    def wait(self):
+        with self._lock:
+            now = time.monotonic()
+            wait_time = self._min_interval - (now - self._last)
+            if wait_time > 0:
+                time.sleep(wait_time)
+            self._last = time.monotonic()
 
 
 # ---------------------------------------------------------------------------
@@ -75,6 +96,37 @@ def clean_tweet_text(text: str) -> str:
 
 class TwitterBackend(ABC):
     """Base class for Twitter API backends."""
+
+    @staticmethod
+    def _make_result(source, articles, attempt):
+        return {
+            "source_id": source["id"],
+            "source_type": "twitter",
+            "name": source["name"],
+            "handle": source["handle"].lstrip('@'),
+            "priority": source["priority"],
+            "topics": source["topics"],
+            "status": "ok",
+            "attempts": attempt + 1,
+            "count": len(articles),
+            "articles": articles,
+        }
+
+    @staticmethod
+    def _make_error(source, error_msg, attempt):
+        return {
+            "source_id": source["id"],
+            "source_type": "twitter",
+            "name": source["name"],
+            "handle": source["handle"].lstrip('@'),
+            "priority": source["priority"],
+            "topics": source["topics"],
+            "status": "error",
+            "attempts": attempt + 1,
+            "error": error_msg,
+            "count": 0,
+            "articles": [],
+        }
 
     @abstractmethod
     def fetch_all(self, sources: List[Dict[str, Any]], cutoff: datetime) -> List[Dict[str, Any]]:
@@ -179,10 +231,7 @@ class OfficialBackend(TwitterBackend):
 
     def _fetch_user_tweets(self, source: Dict[str, Any], cutoff: datetime,
                            user_id: Optional[str] = None) -> Dict[str, Any]:
-        source_id = source["id"]
-        name = source["name"]
         handle = source["handle"].lstrip('@')
-        priority = source["priority"]
         topics = source["topics"]
 
         for attempt in range(RETRY_COUNT + 1):
@@ -243,18 +292,7 @@ class OfficialBackend(TwitterBackend):
                             "tweet_id": tweet['id']
                         })
 
-                return {
-                    "source_id": source_id,
-                    "source_type": "twitter",
-                    "name": name,
-                    "handle": handle,
-                    "priority": priority,
-                    "topics": topics,
-                    "status": "ok",
-                    "attempts": attempt + 1,
-                    "count": len(articles),
-                    "articles": articles,
-                }
+                return self._make_result(source, articles, attempt)
 
             except HTTPError as e:
                 if e.code == 429:
@@ -274,19 +312,7 @@ class OfficialBackend(TwitterBackend):
                 time.sleep(RETRY_DELAY * (2 ** attempt))
                 continue
 
-            return {
-                "source_id": source_id,
-                "source_type": "twitter",
-                "name": name,
-                "handle": handle,
-                "priority": priority,
-                "topics": topics,
-                "status": "error",
-                "attempts": attempt + 1,
-                "error": error_msg,
-                "count": 0,
-                "articles": [],
-            }
+            return self._make_error(source, error_msg, attempt)
 
     def fetch_all(self, sources: List[Dict[str, Any]], cutoff: datetime) -> List[Dict[str, Any]]:
         all_handles = [s["handle"].lstrip('@') for s in sources]
@@ -320,6 +346,7 @@ class TwitterApiIoBackend(TwitterBackend):
 
     def __init__(self, api_key: str):
         self.api_key = api_key
+        self._limiter = RateLimiter(qps=5)
 
     @staticmethod
     def _parse_date(date_str: str) -> Optional[datetime]:
@@ -330,11 +357,42 @@ class TwitterApiIoBackend(TwitterBackend):
             logging.debug(f"Failed to parse twitterapi.io date: {date_str}")
             return None
 
+    def _parse_tweets_page(self, tweets: list, handle: str, topics: list, cutoff: datetime) -> list:
+        """Parse a page of tweets into article dicts."""
+        articles = []
+        for tweet in tweets:
+            # Skip retweets
+            if tweet.get("retweeted_tweet"):
+                continue
+            created_at = self._parse_date(tweet.get("createdAt", ""))
+            if not created_at or created_at < cutoff:
+                continue
+
+            text = tweet.get("text", "")
+            if text.startswith("RT @"):
+                continue
+
+            tweet_id = tweet.get("id", "")
+            link = tweet.get("url") or f"https://twitter.com/{handle}/status/{tweet_id}"
+
+            articles.append({
+                "title": clean_tweet_text(text),
+                "link": link,
+                "date": created_at.isoformat(),
+                "topics": topics[:],
+                "metrics": {
+                    "like_count": tweet.get("likeCount", 0),
+                    "retweet_count": tweet.get("retweetCount", 0),
+                    "reply_count": tweet.get("replyCount", 0),
+                    "quote_count": tweet.get("quoteCount", 0),
+                    "impression_count": tweet.get("viewCount", 0),
+                },
+                "tweet_id": tweet_id,
+            })
+        return articles
+
     def _fetch_user_tweets(self, source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
-        source_id = source["id"]
-        name = source["name"]
         handle = source["handle"].lstrip('@')
-        priority = source["priority"]
         topics = source["topics"]
 
         for attempt in range(RETRY_COUNT + 1):
@@ -349,7 +407,7 @@ class TwitterApiIoBackend(TwitterBackend):
                     "User-Agent": "TechDigest/2.0",
                 }
 
-                time.sleep(0.15)  # Brief pause between requests
+                self._limiter.wait()
 
                 req = Request(url, headers=headers)
                 with urlopen(req, timeout=TIMEOUT) as resp:
@@ -358,59 +416,46 @@ class TwitterApiIoBackend(TwitterBackend):
                 # API wraps response in {"data": {...}} envelope
                 data = raw.get("data", raw)
 
-                articles = []
-                for tweet in data.get("tweets", []):
-                    # Skip retweets and replies
-                    if tweet.get("retweeted_tweet"):
-                        continue
-                    if tweet.get("isReply"):
-                        continue
+                articles = self._parse_tweets_page(
+                    data.get("tweets", []), handle, topics, cutoff
+                )
 
-                    created_at = self._parse_date(tweet.get("createdAt", ""))
-                    if not created_at or created_at < cutoff:
-                        continue
+                # Pagination: fetch one more page if available and all tweets still in window
+                has_next = data.get("has_next_page", False)
+                next_cursor = data.get("next_cursor")
+                if has_next and next_cursor and articles:
+                    oldest = min(a["date"] for a in articles)
+                    if oldest >= cutoff.isoformat():
+                        self._limiter.wait()
+                        page2_params = urlencode({
+                            "userName": handle,
+                            "includeReplies": "false",
+                            "cursor": next_cursor,
+                        })
+                        page2_url = f"{TWITTERAPIIO_BASE}/twitter/user/last_tweets?{page2_params}"
+                        req2 = Request(page2_url, headers=headers)
+                        with urlopen(req2, timeout=TIMEOUT) as resp2:
+                            raw2 = json.loads(resp2.read().decode())
+                        data2 = raw2.get("data", raw2)
+                        articles.extend(self._parse_tweets_page(
+                            data2.get("tweets", []), handle, topics, cutoff
+                        ))
+                        has_next = data2.get("has_next_page", False)
 
-                    text = tweet.get("text", "")
-                    if text.startswith("RT @"):
-                        continue
+                # Truncation warning
+                if has_next and articles:
+                    oldest = min(a["date"] for a in articles)
+                    if oldest >= cutoff.isoformat():
+                        logging.warning(f"@{handle}: results may be truncated ({len(articles)} tweets, more available)")
 
-                    tweet_id = tweet.get("id", "")
-                    link = tweet.get("url") or f"https://twitter.com/{handle}/status/{tweet_id}"
-
-                    articles.append({
-                        "title": clean_tweet_text(text),
-                        "link": link,
-                        "date": created_at.isoformat(),
-                        "topics": topics[:],
-                        "metrics": {
-                            "like_count": tweet.get("likeCount", 0),
-                            "retweet_count": tweet.get("retweetCount", 0),
-                            "reply_count": tweet.get("replyCount", 0),
-                            "quote_count": tweet.get("quoteCount", 0),
-                            "impression_count": tweet.get("viewCount", 0),
-                        },
-                        "tweet_id": tweet_id,
-                    })
-
-                return {
-                    "source_id": source_id,
-                    "source_type": "twitter",
-                    "name": name,
-                    "handle": handle,
-                    "priority": priority,
-                    "topics": topics,
-                    "status": "ok",
-                    "attempts": attempt + 1,
-                    "count": len(articles),
-                    "articles": articles,
-                }
+                return self._make_result(source, articles, attempt)
 
             except HTTPError as e:
                 if e.code == 429:
                     error_msg = "Rate limit exceeded"
                     logging.warning(f"Rate limit hit for @{handle}, attempt {attempt + 1}")
                     if attempt < RETRY_COUNT:
-                        time.sleep(60)
+                        time.sleep(5)
                         continue
                 else:
                     error_msg = f"HTTP {e.code}: {e.reason}"
@@ -423,19 +468,7 @@ class TwitterApiIoBackend(TwitterBackend):
                 time.sleep(RETRY_DELAY * (2 ** attempt))
                 continue
 
-            return {
-                "source_id": source_id,
-                "source_type": "twitter",
-                "name": name,
-                "handle": handle,
-                "priority": priority,
-                "topics": topics,
-                "status": "error",
-                "attempts": attempt + 1,
-                "error": error_msg,
-                "count": 0,
-                "articles": [],
-            }
+            return self._make_error(source, error_msg, attempt)
 
     def fetch_all(self, sources: List[Dict[str, Any]], cutoff: datetime) -> List[Dict[str, Any]]:
         results: List[Dict[str, Any]] = []
@@ -623,9 +656,14 @@ Examples:
     if not backend:
         logger.warning("No Twitter backend available. Writing empty result and skipping Twitter fetch.")
         empty_result = {
-            "source": "twitter",
-            "fetched_at": datetime.now(timezone.utc).isoformat(),
-            "tweets": [],
+            "generated": datetime.now(timezone.utc).isoformat(),
+            "source_type": "twitter",
+            "backend": backend_name,
+            "hours": args.hours,
+            "sources_total": 0,
+            "sources_ok": 0,
+            "total_articles": 0,
+            "sources": [],
             "skipped_reason": f"No credentials for backend '{backend_name}'"
         }
         output_path = args.output or Path("/tmp/td-twitter.json")
