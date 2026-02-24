@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.7.1
+
+- **twitterapi.io bugfix**: Fix response envelope parsing (`data.tweets` not top-level `tweets`)
+- **twitterapi.io concurrency**: 3-worker parallel fetch with progress logs showing tweet counts and top likes
+- **test-pipeline.sh revamp**: `--only`, `--skip`, `--topics`, `--ids`, `--twitter-backend` filtering; per-step timing; detailed `--help`
+
 ## v3.7.0
 
 - **twitterapi.io backend**: Alternative Twitter data source via `TWITTERAPI_IO_KEY` — no username→ID resolution needed, simpler API, same normalized output format
