@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.9.1
+
+- Remove unused markdown and telegram templates
+- Add `sanitize-html.py` for safe markdown→HTML email conversion (XSS-safe, inline CSS)
+
 ## v3.9.0
 
 - **URL-based dedup**: merge-sources now deduplicates by normalized URL (domain+path) before title similarity, catching cross-source duplicates
