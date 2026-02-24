@@ -40,7 +40,60 @@ while [[ $# -gt 0 ]]; do
         --config)     CONFIG="$2"; shift 2 ;;
         --verbose|-v) VERBOSE="--verbose"; shift ;;
         --help|-h)
-            head -10 "$0" | grep '^#' | sed 's/^# *//'
+            cat <<'HELP'
+Pipeline smoke test — runs fetch steps with filtering, merges, and validates outputs.
+
+USAGE:
+  ./test-pipeline.sh [OPTIONS]
+
+OPTIONS:
+  --only TYPES      Only run these source types (comma-separated)
+                    Values: rss, twitter, github, reddit, web
+                    Example: --only twitter,rss
+
+  --skip TYPES      Skip these source types (comma-separated)
+                    Values: rss, twitter, github, reddit, web
+                    Example: --skip web,reddit
+
+  --topics TOPICS   Only include sources matching these topics (comma-separated)
+                    Values: llm, ai-agent, frontier-tech, crypto
+                    Example: --topics crypto,llm
+
+  --ids IDS         Only include specific source IDs (comma-separated)
+                    IDs are defined in config/defaults/sources.json
+                    Example: --ids sama-twitter,openai-rss,vitalik-twitter
+
+  --hours N         Time window for fetching articles (default: 24)
+                    Example: --hours 48
+
+  --backend NAME    Force a specific Twitter API backend
+                    Values: official, twitterapiio, auto
+                    official     = X API v2 (needs X_BEARER_TOKEN)
+                    twitterapiio = twitterapi.io (needs TWITTERAPI_IO_KEY)
+                    auto         = try twitterapiio first, fallback to official
+
+  --config DIR      User config overlay directory (optional)
+                    Example: --config workspace/config
+
+  --verbose, -v     Enable verbose logging for fetch scripts
+
+  --keep            Keep output directory after test (default: clean up on success)
+
+  --help, -h        Show this help message
+
+EXAMPLES:
+  ./test-pipeline.sh                                    # full pipeline, all sources
+  ./test-pipeline.sh --only twitter --backend twitterapiio  # twitter only via twitterapi.io
+  ./test-pipeline.sh --topics crypto --hours 48 --keep  # crypto sources, 48h window
+  ./test-pipeline.sh --skip web,reddit -v               # skip web+reddit, verbose
+  ./test-pipeline.sh --ids sama-twitter,karpathy-twitter --only twitter
+
+ENVIRONMENT:
+  X_BEARER_TOKEN     Official X API v2 bearer token
+  TWITTERAPI_IO_KEY  twitterapi.io API key
+  BRAVE_API_KEY      Brave Search API key (for web fetch)
+  GITHUB_TOKEN       GitHub token (optional, for higher rate limits)
+HELP
             exit 0
             ;;
         *) echo "Unknown option: $1"; exit 1 ;;
