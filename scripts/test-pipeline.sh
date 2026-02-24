@@ -89,10 +89,11 @@ EXAMPLES:
   ./test-pipeline.sh --ids sama-twitter,karpathy-twitter --only twitter
 
 ENVIRONMENT:
-  X_BEARER_TOKEN     Official X API v2 bearer token
-  TWITTERAPI_IO_KEY  twitterapi.io API key
-  BRAVE_API_KEY      Brave Search API key (for web fetch)
-  GITHUB_TOKEN       GitHub token (optional, for higher rate limits)
+  X_BEARER_TOKEN      Official X API v2 bearer token (for --backend official)
+  TWITTERAPI_IO_KEY   twitterapi.io API key (for --backend twitterapiio)
+  TWITTER_API_BACKEND Default twitter backend if --backend not given (official|twitterapiio|auto)
+  BRAVE_API_KEY       Brave Search API key (for web fetch)
+  GITHUB_TOKEN        GitHub token (optional, increases GitHub API rate limits)
 HELP
             exit 0
             ;;
