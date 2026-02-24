@@ -127,7 +127,11 @@ def calculate_base_score(article: Dict[str, Any], source: Dict[str, Any]) -> flo
             score += SCORE_ENGAGEMENT_MED
         elif likes >= 50 or retweets >= 20:
             score += SCORE_ENGAGEMENT_LOW
-            
+
+    # RSS from priority sources get extra weight (official blogs, research papers)
+    if source.get("source_type") == "rss" and source.get("priority", False):
+        score += 2  # Extra priority RSS bonus
+
     return score
 
 
@@ -211,6 +215,11 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         for j in candidates.get(i, set()):
             if j > i and j not in duplicate_indices:
                 other_title = articles[j].get("title", "")
+                # Quick length check — titles with >30% length difference are unlikely duplicates
+                norm_i = normalize_title(title)
+                norm_j = normalize_title(other_title)
+                if abs(len(norm_i) - len(norm_j)) > 0.3 * max(len(norm_i), len(norm_j), 1):
+                    continue
                 similarity = calculate_title_similarity(title, other_title)
                 if similarity >= TITLE_SIMILARITY_THRESHOLD:
                     logging.debug(f"Title duplicate: '{other_title}' ~= '{title}' ({similarity:.2f})")
@@ -438,7 +447,7 @@ Examples:
         twitter_data = load_source_data(args.twitter)
         web_data = load_source_data(args.web)
         github_data = load_source_data(args.github)
-        reddit_data = load_source_data(getattr(args, 'reddit', None))
+        reddit_data = load_source_data(args.reddit)
         
         logger.info(f"Loaded sources - RSS: {rss_data.get('total_articles', 0)}, "
                    f"Twitter: {twitter_data.get('total_articles', 0)}, "
@@ -541,8 +550,9 @@ Examples:
             if before != after:
                 logger.info(f"Domain limits ({topic}): {before} → {after}")
         
-        # Generate summary stats (use deduplicated count, not topic-grouped which double-counts)
-        total_final = len(all_articles)
+        # Recalculate total after domain limits
+        total_after_domain_limits = sum(len(articles) for articles in topic_groups.values())
+
         topic_counts = {topic: len(articles) for topic, articles in topic_groups.items()}
         
         output = {
@@ -562,7 +572,7 @@ Examples:
                 "quality_scoring": True
             },
             "output_stats": {
-                "total_articles": total_final,
+                "total_articles": total_after_domain_limits,
                 "topics_count": len(topic_groups),
                 "topic_distribution": topic_counts
             },
@@ -581,7 +591,7 @@ Examples:
         
         logger.info(f"✅ Merged and scored articles:")
         logger.info(f"   Input: {total_collected} articles")
-        logger.info(f"   Output: {total_final} articles across {len(topic_groups)} topics")
+        logger.info(f"   Output: {total_after_domain_limits} articles across {len(topic_groups)} topics")
         logger.info(f"   File: {args.output}")
         
         return 0

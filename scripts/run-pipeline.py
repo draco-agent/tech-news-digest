@@ -126,6 +126,7 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=Path, default=None, help="Archive dir for dedup penalty")
     parser.add_argument("--output", "-o", type=Path, default=Path("/tmp/td-merged.json"), help="Final merged output")
     parser.add_argument("--step-timeout", type=int, default=DEFAULT_TIMEOUT, help="Per-step timeout (seconds)")
+    parser.add_argument("--twitter-backend", choices=["official", "twitterapiio", "auto"], default=None, help="Twitter API backend to use")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--force", action="store_true", help="Force re-fetch ignoring caches")
 
@@ -152,7 +153,7 @@ def main() -> int:
     # Define the 5 parallel fetch steps
     steps = [
         ("RSS", "fetch-rss.py", common + verbose_flag, tmp_rss),
-        ("Twitter", "fetch-twitter.py", common + verbose_flag, tmp_twitter),
+        ("Twitter", "fetch-twitter.py", common + verbose_flag + (["--backend", args.twitter_backend] if args.twitter_backend else []), tmp_twitter),
         ("GitHub", "fetch-github.py", common + verbose_flag, tmp_github),
         ("Reddit", "fetch-reddit.py", common + verbose_flag, tmp_reddit),
         ("Web", "fetch-web.py",
@@ -226,6 +227,13 @@ def main() -> int:
     meta_path = args.output.with_suffix(".meta.json")
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
+
+    import shutil
+    try:
+        shutil.rmtree(_run_dir)
+        logger.debug(f"Cleaned up {_run_dir}")
+    except Exception:
+        pass
 
     logger.info(f"✅ Done → {args.output}")
     return 0

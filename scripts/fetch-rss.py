@@ -31,6 +31,7 @@ try:
     HAS_FEEDPARSER = True
 except ImportError:
     HAS_FEEDPARSER = False
+    logging.warning("feedparser not installed — using basic XML regex parser (may miss some feeds). Install with: pip install feedparser")
 
 TIMEOUT = 30
 MAX_WORKERS = 10  

@@ -46,6 +46,17 @@ def load_merged_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -
     except json.JSONDecodeError as e:
         raise ValueError(f"Invalid JSON in default sources config: {e}")
     
+    # Validate required fields
+    validated = []
+    required_fields = {"id", "type", "enabled"}
+    for i, source in enumerate(default_sources):
+        missing = required_fields - set(source.keys())
+        if missing:
+            logger.warning(f"Source #{i} missing required fields {missing}, skipping: {source}")
+            continue
+        validated.append(source)
+    default_sources = validated
+
     # If no user config directory specified, return defaults only
     if config_dir is None:
         return default_sources

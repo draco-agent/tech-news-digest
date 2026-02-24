@@ -1,5 +1,13 @@
 # Changelog
 
+## v3.8.1
+
+- **merge-sources**: Fix `getattr` → direct `args.reddit`; domain limit stats now accurate; SequenceMatcher early-exit for >30% length diff
+- **merge-sources**: RSS priority sources get +2 extra score bonus (prevent drowning by low-engagement tweets)
+- **run-pipeline**: Add `--twitter-backend` parameter (transparent passthrough); clean up tmp dir after success
+- **fetch-rss**: Warn when feedparser not installed (basic regex parser fallback)
+- **config_loader**: Validate required fields (id, type, enabled) on source load, skip invalid with warning
+
 ## v3.8.0
 
 - **twitterapiio pagination**: Fetches up to 2 pages (40 tweets) for high-volume users; logs truncation warning
