@@ -129,13 +129,22 @@ def main() -> int:
     parser.add_argument("--twitter-backend", choices=["official", "twitterapiio", "auto"], default=None, help="Twitter API backend to use")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--force", action="store_true", help="Force re-fetch ignoring caches")
+    parser.add_argument("--skip", type=str, default="", help="Comma-separated list of steps to skip (rss,twitter,github,reddit,web)")
+    parser.add_argument("--reuse-dir", type=Path, default=None, help="Reuse existing intermediate directory instead of creating new one")
 
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
 
-    # Intermediate output paths (unique per run to avoid cross-run cache pollution)
+    # Parse --skip into a set
+    skip_steps = set(s.strip().lower() for s in args.skip.split(',') if s.strip())
+
+    # Intermediate output paths
     import tempfile
-    _run_dir = tempfile.mkdtemp(prefix="td-pipeline-")
+    if args.reuse_dir:
+        _run_dir = str(args.reuse_dir)
+        os.makedirs(_run_dir, exist_ok=True)
+    else:
+        _run_dir = tempfile.mkdtemp(prefix="td-pipeline-")
     tmp_rss = Path(_run_dir) / "rss.json"
     tmp_twitter = Path(_run_dir) / "twitter.json"
     tmp_github = Path(_run_dir) / "github.json"
@@ -164,25 +173,38 @@ def main() -> int:
          tmp_web),
     ]
 
-    logger.info(f"🚀 Starting pipeline: {len(steps)} sources, {args.hours}h window, freshness={args.freshness}")
+    # Filter steps by --skip and --reuse-dir
+    active_steps = []
+    for name, script, step_args, out_path in steps:
+        step_key = name.lower()
+        if step_key in skip_steps:
+            logger.info(f"  ⏭️  {name}: skipped (--skip)")
+            continue
+        if args.reuse_dir and out_path.exists() and not args.force:
+            logger.info(f"  ♻️  {name}: reusing existing {out_path}")
+            continue
+        active_steps.append((name, script, step_args, out_path))
+
+    logger.info(f"🚀 Starting pipeline: {len(active_steps)}/{len(steps)} sources, {args.hours}h window, freshness={args.freshness}")
     t_start = time.time()
 
     # Phase 1: Parallel fetch
     step_results = []
-    with ThreadPoolExecutor(max_workers=5) as pool:
-        futures = {}
-        for name, script, step_args, out_path in steps:
-            f = pool.submit(run_step, name, script, step_args, out_path, args.step_timeout, args.force)
-            futures[f] = name
+    if active_steps:
+        with ThreadPoolExecutor(max_workers=len(active_steps)) as pool:
+            futures = {}
+            for name, script, step_args, out_path in active_steps:
+                f = pool.submit(run_step, name, script, step_args, out_path, args.step_timeout, args.force)
+                futures[f] = name
 
-        for future in as_completed(futures):
-            res = future.result()
-            step_results.append(res)
-            status_icon = {"ok": "✅", "error": "❌", "timeout": "⏰"}.get(res["status"], "?")
-            logger.info(f"  {status_icon} {res['name']}: {res['count']} items ({res['elapsed_s']}s)")
-            if res["status"] != "ok" and res["stderr_tail"]:
-                for line in res["stderr_tail"]:
-                    logger.debug(f"    {line}")
+            for future in as_completed(futures):
+                res = future.result()
+                step_results.append(res)
+                status_icon = {"ok": "✅", "error": "❌", "timeout": "⏰"}.get(res["status"], "?")
+                logger.info(f"  {status_icon} {res['name']}: {res['count']} items ({res['elapsed_s']}s)")
+                if res["status"] != "ok" and res["stderr_tail"]:
+                    for line in res["stderr_tail"]:
+                        logger.debug(f"    {line}")
 
     fetch_elapsed = time.time() - t_start
     logger.info(f"📡 Fetch phase done in {fetch_elapsed:.1f}s")
@@ -228,12 +250,13 @@ def main() -> int:
     with open(meta_path, "w") as f:
         json.dump(meta, f, indent=2)
 
-    import shutil
-    try:
-        shutil.rmtree(_run_dir)
-        logger.debug(f"Cleaned up {_run_dir}")
-    except Exception:
-        pass
+    if not args.reuse_dir:
+        import shutil
+        try:
+            shutil.rmtree(_run_dir)
+            logger.debug(f"Cleaned up {_run_dir}")
+        except Exception:
+            pass
 
     logger.info(f"✅ Done → {args.output}")
     return 0

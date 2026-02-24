@@ -34,6 +34,7 @@ RETRY_DELAY = 2.0
 
 # Brave Search API
 BRAVE_API_BASE = "https://api.search.brave.com/res/v1/web/search"
+BRAVE_RATE_LIMIT_CACHE = "/tmp/tech-news-digest-brave-rate-limit.json"
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -54,11 +55,36 @@ def get_brave_api_key() -> Optional[str]:
 
 def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
     """Probe Brave API to detect per-second rate limit from response headers.
-    
+
     Returns (max_qps, max_workers) tuple.
     Free/basic plan: 1 QPS → (1, 1)
     Paid plans: 15-20 QPS → (N, min(N, 5))
+
+    Checks BRAVE_PLAN env var first, then cached result, then probes API.
     """
+    # Override via env var
+    brave_plan = os.getenv('BRAVE_PLAN', '').lower()
+    if brave_plan == 'free':
+        logging.info("BRAVE_PLAN=free override: 1 QPS, 1 worker")
+        return 1, 1
+    elif brave_plan == 'pro':
+        logging.info("BRAVE_PLAN=pro override: 15 QPS, 5 workers")
+        return 15, 5
+
+    # Check cache
+    try:
+        with open(BRAVE_RATE_LIMIT_CACHE, 'r') as f:
+            cache = json.load(f)
+        cache_age = time.time() - cache.get('ts', 0)
+        if cache_age < 86400:  # 24 hours
+            qps = cache['qps']
+            workers = cache['workers']
+            logging.info(f"Using cached Brave rate limit: {qps} QPS")
+            return qps, workers
+    except (FileNotFoundError, json.JSONDecodeError, KeyError, OSError):
+        pass
+
+    # Probe API
     try:
         params = urlencode({'q': 'test', 'count': 1})
         url = f"{BRAVE_API_BASE}?{params}"
@@ -71,14 +97,22 @@ def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
             limit_header = resp.headers.get('x-ratelimit-limit', '1')
             per_second = int(limit_header.split(',')[0].strip())
             resp.read()
-            
+
         if per_second >= 10:
             workers = min(per_second // 2, 5)
             logging.info(f"Brave API paid plan detected: {per_second} QPS → {workers} parallel workers")
-            return per_second, workers
         else:
+            workers = 1
             logging.info(f"Brave API free/basic plan: {per_second} QPS → sequential with 1s delay")
-            return per_second, 1
+
+        # Save to cache
+        try:
+            with open(BRAVE_RATE_LIMIT_CACHE, 'w') as f:
+                json.dump({'ts': time.time(), 'qps': per_second, 'workers': workers}, f)
+        except OSError:
+            pass
+
+        return per_second, workers
     except Exception as e:
         logging.warning(f"Rate limit detection failed: {e}, defaulting to conservative 1 QPS")
         return 1, 1

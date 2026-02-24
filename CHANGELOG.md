@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.9.0
+
+- **URL-based dedup**: merge-sources now deduplicates by normalized URL (domain+path) before title similarity, catching cross-source duplicates
+- **Brave rate limit caching**: `detect_brave_rate_limit()` results cached for 24h; supports `BRAVE_PLAN=free|pro` env override
+- **source-health**: Now tracks Reddit (`--reddit`) and Web (`--web`) sources; flexible key detection
+- **run-pipeline**: `--skip` (comma-separated step names) and `--reuse-dir` (reuse intermediate outputs) for partial reruns
+
 ## v3.8.1
 
 - **merge-sources**: Fix `getattr` → direct `args.reddit`; domain limit stats now accurate; SequenceMatcher early-exit for >30% length diff

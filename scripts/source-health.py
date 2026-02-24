@@ -52,6 +52,34 @@ def load_source_file(path: Optional[Path]) -> list:
         return []
 
 
+def load_source_file_flexible(path: Optional[Path]) -> list:
+    """Load sources from a JSON file, trying 'sources', 'subreddits', and 'topics' keys."""
+    if not path or not path.exists():
+        return []
+    try:
+        with open(path, 'r') as f:
+            data = json.load(f)
+        # Try standard keys
+        if "sources" in data:
+            return data["sources"]
+        if "subreddits" in data:
+            return data["subreddits"]
+        if "topics" in data:
+            # Create synthetic sources from topic results
+            synthetic = []
+            for topic in data["topics"]:
+                synthetic.append({
+                    "source_id": f"web-{topic.get('topic_id', 'unknown')}",
+                    "name": f"Web: {topic.get('topic_id', 'unknown')}",
+                    "status": topic.get("status", "ok"),
+                    "articles": topic.get("articles", []),
+                })
+            return synthetic
+        return []
+    except (json.JSONDecodeError, OSError):
+        return []
+
+
 def update_health(health: Dict[str, Any], sources: list, now: float) -> None:
     cutoff = now - HISTORY_DAYS * 86400
     for source in sources:
@@ -86,6 +114,8 @@ def main():
     parser.add_argument("--rss", type=Path, help="RSS output JSON")
     parser.add_argument("--twitter", type=Path, help="Twitter output JSON")
     parser.add_argument("--github", type=Path, help="GitHub output JSON")
+    parser.add_argument("--reddit", type=Path, help="Reddit output JSON")
+    parser.add_argument("--web", type=Path, help="Web search output JSON")
     parser.add_argument("--verbose", "-v", action="store_true")
     args = parser.parse_args()
 
@@ -93,8 +123,15 @@ def main():
     health = load_health_data()
     now = time.time()
 
+    # Standard sources (use 'sources' key)
     for path in [args.rss, args.twitter, args.github]:
         sources = load_source_file(path)
+        if sources:
+            update_health(health, sources, now)
+
+    # Reddit and Web use flexible loading (subreddits/topics keys)
+    for path in [args.reddit, args.web]:
+        sources = load_source_file_flexible(path)
         if sources:
             update_health(health, sources, now)
 

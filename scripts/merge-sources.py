@@ -96,6 +96,17 @@ def get_domain(url: str) -> str:
         return ''
 
 
+def normalize_url(url: str) -> str:
+    """Normalize URL for dedup comparison (strip query, fragment, trailing slash, www.)."""
+    try:
+        parsed = urlparse(url)
+        domain = parsed.netloc.lower().replace('www.', '')
+        path = parsed.path.rstrip('/')
+        return f"{domain}{path}"
+    except Exception:
+        return url
+
+
 def calculate_base_score(article: Dict[str, Any], source: Dict[str, Any]) -> float:
     """Calculate base quality score for an article."""
     score = 0.0
@@ -194,11 +205,31 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     if not articles:
         return articles
         
-    deduplicated = []
-    
     # Sort by quality score (highest first) to keep best versions
     articles.sort(key=lambda x: x.get("quality_score", 0), reverse=True)
-    
+
+    # Phase 1: URL dedup (exact URL match after normalization)
+    url_seen: Dict[str, int] = {}  # normalized_url -> index in articles
+    url_duplicates: Set[int] = set()
+    for i, article in enumerate(articles):
+        url = article.get("link", "")
+        if not url:
+            continue
+        norm_url = normalize_url(url)
+        if norm_url in url_seen:
+            # Keep the one with higher quality_score (articles already sorted by score)
+            url_duplicates.add(i)
+            logging.debug(f"URL duplicate: {url} ~= {articles[url_seen[norm_url]].get('link','')}")
+        else:
+            url_seen[norm_url] = i
+
+    if url_duplicates:
+        articles = [a for i, a in enumerate(articles) if i not in url_duplicates]
+        logging.info(f"URL dedup: removed {len(url_duplicates)} duplicates")
+
+    # Phase 2: Title similarity dedup
+    deduplicated = []
+
     # Build token buckets for candidate pairs
     candidates = _build_token_buckets(articles)
     
