@@ -293,6 +293,8 @@ class OfficialBackend(TwitterBackend):
         user_id_map = self._batch_resolve_user_ids(all_handles)
 
         results: List[Dict[str, Any]] = []
+        total = len(sources)
+        done = 0
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
             futures = {}
             for source in sources:
@@ -303,10 +305,12 @@ class OfficialBackend(TwitterBackend):
             for future in as_completed(futures):
                 result = future.result()
                 results.append(result)
+                done += 1
                 if result["status"] == "ok":
-                    logging.debug(f"✅ @{result['handle']}: {result['count']} tweets")
+                    logging.info(f"[{done}/{total}] ✅ @{result['handle']}: {result['count']} tweets"
+                                 + (f" (top: {result['articles'][0]['metrics']['like_count']}❤️)" if result.get('articles') else ""))
                 else:
-                    logging.debug(f"❌ @{result['handle']}: {result['error']}")
+                    logging.warning(f"[{done}/{total}] ❌ @{result['handle']}: {result.get('error','unknown')}")
 
         return results
 
@@ -345,7 +349,7 @@ class TwitterApiIoBackend(TwitterBackend):
                     "User-Agent": "TechDigest/2.0",
                 }
 
-                time.sleep(1.0)  # Rate limit friendly for twitterapi.io
+                time.sleep(0.15)  # Brief pause between requests
 
                 req = Request(url, headers=headers)
                 with urlopen(req, timeout=TIMEOUT) as resp:
@@ -435,14 +439,20 @@ class TwitterApiIoBackend(TwitterBackend):
 
     def fetch_all(self, sources: List[Dict[str, Any]], cutoff: datetime) -> List[Dict[str, Any]]:
         results: List[Dict[str, Any]] = []
-        # Serial execution to respect twitterapi.io rate limits
-        for source in sources:
-            result = self._fetch_user_tweets(source, cutoff)
-            results.append(result)
-            if result["status"] == "ok":
-                logging.debug(f"✅ @{result['handle']}: {result['count']} tweets")
-            else:
-                logging.debug(f"❌ @{result['handle']}: {result['error']}")
+        total = len(sources)
+        done = 0
+        with ThreadPoolExecutor(max_workers=3) as pool:
+            futures = {pool.submit(self._fetch_user_tweets, source, cutoff): source
+                       for source in sources}
+            for future in as_completed(futures):
+                result = future.result()
+                results.append(result)
+                done += 1
+                if result["status"] == "ok":
+                    logging.info(f"[{done}/{total}] ✅ @{result['handle']}: {result['count']} tweets"
+                                 + (f" (top: {result['articles'][0]['metrics']['like_count']}❤️)" if result['articles'] else ""))
+                else:
+                    logging.warning(f"[{done}/{total}] ❌ @{result['handle']}: {result['error']}")
 
         return results
 
