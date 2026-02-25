@@ -62,14 +62,16 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
 - `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
 - User overrides in `workspace/config/` take priority
 
-## 🔧 Requirements
+## 🔧 Optional Setup
+
+All environment variables are optional. The pipeline runs with whatever sources are available.
 
 ```bash
-export TWITTERAPI_IO_KEY="..."  # twitterapi.io (recommended, ~$5/mo)
-export X_BEARER_TOKEN="..."     # Twitter/X official API (alternative)
-export BRAVE_API_KEY="..."      # Web search (optional)
-export GITHUB_TOKEN="..."       # GitHub API (optional, auto-generated from GitHub App if unset)
-pip install weasyprint           # PDF generation (optional)
+export TWITTERAPI_IO_KEY="..."  # twitterapi.io (~$5/mo) — enables Twitter layer
+export X_BEARER_TOKEN="..."     # Twitter/X official API — alternative Twitter backend
+export BRAVE_API_KEY="..."      # Brave Search API — enables web search layer
+export GITHUB_TOKEN="..."       # GitHub API — higher rate limits (auto-generated from GitHub App if unset)
+pip install weasyprint           # Enables PDF report generation
 ```
 
 ## 📂 Repository

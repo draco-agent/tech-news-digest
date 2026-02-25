@@ -62,14 +62,16 @@ clawhub install tech-news-digest
 - `config/defaults/topics.json` — 4 个主题，含搜索查询和 Twitter 查询
 - 用户自定义配置放 `workspace/config/`，优先级更高
 
-## 🔧 环境要求
+## 🔧 可选配置
+
+所有环境变量均为可选，管道会自动使用可用的数据源。
 
 ```bash
-export TWITTERAPI_IO_KEY="..."  # twitterapi.io（推荐，~$5/月）
-export X_BEARER_TOKEN="..."     # Twitter/X 官方 API（备选）
-export BRAVE_API_KEY="..."      # Web 搜索（可选）
-export GITHUB_TOKEN="..."       # GitHub API（可选，自动从 GitHub App 生成）
-pip install weasyprint            # PDF 生成（可选）
+export TWITTERAPI_IO_KEY="..."  # twitterapi.io (~$5/月) — 启用 Twitter 数据层
+export X_BEARER_TOKEN="..."     # Twitter/X 官方 API — 备选 Twitter 后端
+export BRAVE_API_KEY="..."      # Brave Search API — 启用 Web 搜索层
+export GITHUB_TOKEN="..."       # GitHub API — 提高速率限制（未设置时自动从 GitHub App 生成）
+pip install weasyprint            # 启用 PDF 报告生成
 ```
 
 ## 📂 仓库地址
