@@ -110,13 +110,19 @@ Save to `<WORKSPACE>/archive/tech-news-digest/<MODE>-YYYY-MM-DD.md`. Delete file
 ## Delivery
 
 1. **Discord**: Send to `<DISCORD_CHANNEL_ID>` via `message` tool
-2. **Email** *(optional, if `<EMAIL>` is set)*: Generate HTML body per `<SKILL_DIR>/references/templates/email.md` → write to `/tmp/td-email.html`. **Email must contain ALL the same items as Discord.**
-   ```bash
-   # Option A: mail (msmtp) — preferred
-   mail -a "Content-Type: text/html; charset=UTF-8" [-a "From: <EMAIL_FROM>"] -s '<SUBJECT>' '<EMAIL>' < /tmp/td-email.html
-   # Option B: gog CLI — fallback
-   gog gmail send --to '<EMAIL>' --subject '<SUBJECT>' --body-html-file /tmp/td-email.html
-   ```
-   Only include `-a "From: ..."` if `<EMAIL_FROM>` is set. SUBJECT must be a static string. If delivery fails, log error and continue.
+2. **Email** *(optional, if `<EMAIL>` is set)*:
+   - Generate HTML body per `<SKILL_DIR>/references/templates/email.md` → write to `/tmp/td-email.html`
+   - Generate PDF attachment:
+     ```bash
+     python3 <SKILL_DIR>/scripts/generate-pdf.py -i <WORKSPACE>/archive/tech-news-digest/<MODE>-<DATE>.md -o /tmp/td-digest.pdf
+     ```
+   - Send email with PDF attached. **Email must contain ALL the same items as Discord.**
+     ```bash
+     # Option A: mail (msmtp) — preferred
+     mail -a "Content-Type: text/html; charset=UTF-8" -A /tmp/td-digest.pdf [-a "From: <EMAIL_FROM>"] -s '<SUBJECT>' '<EMAIL>' < /tmp/td-email.html
+     # Option B: gog CLI — fallback
+     gog gmail send --to '<EMAIL>' --subject '<SUBJECT>' --body-html-file /tmp/td-email.html --attach /tmp/td-digest.pdf
+     ```
+   - Only include `-a "From: ..."` if `<EMAIL_FROM>` is set. SUBJECT must be a static string. If PDF generation fails, send email without attachment and log error. If delivery fails, log error and continue.
 
 Write the report in <LANGUAGE>.
