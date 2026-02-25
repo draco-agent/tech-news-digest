@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.10.0
+
+- **PDF generation**: New `generate-pdf.py` script — converts markdown digest to styled A4 PDF with Chinese typography (Noto Sans CJK SC), emoji icons, page headers/footers, blue accent theme. Requires `weasyprint`.
+- **PDF template**: `references/templates/pdf.md` with usage docs and examples
+
 ## v3.9.1
 
 - Remove unused markdown and telegram templates
