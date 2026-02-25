@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.10.1
+
+- **Fix email MIME**: New `send-email.py` — proper multipart MIME construction for HTML body + PDF attachment (replaces broken `mail -a -A` approach)
+- **Docs alignment**: README + SKILL.md updated to v3.10 (source counts, PDF, all scripts documented)
+
 ## v3.10.0
 
 - **PDF generation**: New `generate-pdf.py` script — converts markdown digest to styled A4 PDF with Chinese typography (Noto Sans CJK SC), emoji icons, page headers/footers, blue accent theme. Requires `weasyprint`.
