@@ -116,13 +116,15 @@ Save to `<WORKSPACE>/archive/tech-news-digest/<MODE>-YYYY-MM-DD.md`. Delete file
      ```bash
      python3 <SKILL_DIR>/scripts/generate-pdf.py -i <WORKSPACE>/archive/tech-news-digest/<MODE>-<DATE>.md -o /tmp/td-digest.pdf
      ```
-   - Send email with PDF attached. **Email must contain ALL the same items as Discord.**
+   - Send email with PDF attached using the `send-email.py` script (handles MIME correctly). **Email must contain ALL the same items as Discord.**
      ```bash
-     # Option A: mail (msmtp) — preferred
-     mail -a "Content-Type: text/html; charset=UTF-8" -A /tmp/td-digest.pdf [-a "From: <EMAIL_FROM>"] -s '<SUBJECT>' '<EMAIL>' < /tmp/td-email.html
-     # Option B: gog CLI — fallback
-     gog gmail send --to '<EMAIL>' --subject '<SUBJECT>' --body-html-file /tmp/td-email.html --attach /tmp/td-digest.pdf
+     python3 <SKILL_DIR>/scripts/send-email.py \
+       --to '<EMAIL>' \
+       --subject '<SUBJECT>' \
+       --html /tmp/td-email.html \
+       --attach /tmp/td-digest.pdf \
+       --from '<EMAIL_FROM>'
      ```
-   - Only include `-a "From: ..."` if `<EMAIL_FROM>` is set. SUBJECT must be a static string. If PDF generation fails, send email without attachment and log error. If delivery fails, log error and continue.
+   - Omit `--from` if `<EMAIL_FROM>` is not set. Omit `--attach` if PDF generation failed. SUBJECT must be a static string. If delivery fails, log error and continue.
 
 Write the report in <LANGUAGE>.
