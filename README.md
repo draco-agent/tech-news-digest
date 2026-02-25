@@ -33,9 +33,9 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
 | Layer | Sources | What |
 |-------|---------|------|
 | 📡 RSS | 49 feeds | OpenAI, Anthropic, Ben's Bites, HN, 36氪, CoinDesk… |
-| 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @zuck… |
+| 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @elonmusk… |
 | 🔍 Web Search | 4 topics | Brave Search API with freshness filters |
-| 🐙 GitHub | 24 repos | Releases from key projects (LangChain, DeepSeek, Llama…) |
+| 🐙 GitHub | 28 repos | Releases from key projects (LangChain, vLLM, DeepSeek, Llama…) |
 | 🗣️ Reddit | 13 subs | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency… |
 
 ### Pipeline
@@ -51,7 +51,7 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
               ↓
   Quality Scoring → Deduplication → Topic Grouping
               ↓
-    Discord / Email / Markdown output
+    Discord / Email / PDF output
 ```
 
 **Quality scoring**: priority source (+3), multi-source cross-ref (+5), recency (+2), engagement (+1), Reddit score bonus (+1/+3/+5), already reported (-5).
@@ -65,9 +65,11 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
 ## 🔧 Requirements
 
 ```bash
-export X_BEARER_TOKEN="..."    # Twitter API (recommended)
-export BRAVE_API_KEY="..."     # Web search (optional)
-export GITHUB_TOKEN="..."      # GitHub API (optional, auto-generated from GitHub App if unset)
+export TWITTERAPI_IO_KEY="..."  # twitterapi.io (recommended, ~$5/mo)
+export X_BEARER_TOKEN="..."     # Twitter/X official API (alternative)
+export BRAVE_API_KEY="..."      # Web search (optional)
+export GITHUB_TOKEN="..."       # GitHub API (optional, auto-generated from GitHub App if unset)
+pip install weasyprint           # PDF generation (optional)
 ```
 
 ## 📂 Repository

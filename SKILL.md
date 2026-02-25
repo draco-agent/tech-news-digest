@@ -8,7 +8,7 @@ metadata:
   openclaw:
     requires:
       bins: ["python3"]
-    optionalBins: ["mail", "msmtp", "gog", "gh", "openssl"]
+    optionalBins: ["mail", "msmtp", "gog", "gh", "openssl", "weasyprint"]
 env:
   - name: TWITTER_API_BACKEND
     required: false
@@ -47,6 +47,7 @@ files:
   write:
     - /tmp/td-*.json: Temporary pipeline intermediate outputs
     - /tmp/td-email.html: Temporary email HTML body
+    - /tmp/td-digest.pdf: Generated PDF digest
     - <workspace>/archive/tech-news-digest/: Saved digest archives
 ---
 
@@ -80,7 +81,7 @@ Automated tech news digest system with unified data source model, quality scorin
      --output /tmp/td-merged.json --verbose --force
    ```
 
-4. **Use Templates**: Apply Discord, email, or markdown templates to merged output
+4. **Use Templates**: Apply Discord, email, or PDF templates to merged output
 
 ## Configuration Files
 
@@ -201,6 +202,34 @@ python3 scripts/validate-config.py [--defaults DIR] [--config DIR] [--verbose]
 ```
 - JSON schema validation, topic reference checks, duplicate ID detection
 
+#### `generate-pdf.py` - PDF Report Generator
+```bash
+python3 scripts/generate-pdf.py --input report.md --output digest.pdf [--verbose]
+```
+- Converts markdown digest to styled A4 PDF with Chinese typography (Noto Sans CJK SC)
+- Emoji icons, page headers/footers, blue accent theme. Requires `weasyprint`.
+
+#### `sanitize-html.py` - Safe HTML Email Converter
+```bash
+python3 scripts/sanitize-html.py --input report.md --output email.html [--verbose]
+```
+- Converts markdown to XSS-safe HTML email with inline CSS
+- URL whitelist (http/https only), HTML-escaped text content
+
+#### `source-health.py` - Source Health Monitor
+```bash
+python3 scripts/source-health.py --rss FILE --twitter FILE --github FILE --reddit FILE --web FILE [--verbose]
+```
+- Tracks per-source success/failure history over 7 days
+- Reports unhealthy sources (>50% failure rate)
+
+#### `summarize-merged.py` - Merged Data Summary
+```bash
+python3 scripts/summarize-merged.py --input merged.json [--top N] [--topic TOPIC]
+```
+- Human-readable summary of merged data for LLM consumption
+- Shows top articles per topic with scores and metrics
+
 ## User Customization
 
 ### Workspace Configuration Override
@@ -248,16 +277,16 @@ Place custom configs in `workspace/config/` to override defaults:
 - Executive summary, top articles section
 - HTML-compatible formatting
 
-### Markdown Template (`references/templates/markdown.md`)
-- GitHub-compatible tables and formatting
-- Technical details section
-- Expandable sections support
+### PDF Template (`references/templates/pdf.md`)
+- A4 layout with Noto Sans CJK SC font for Chinese support
+- Emoji icons, page headers/footers with page numbers
+- Generated via `scripts/generate-pdf.py` (requires `weasyprint`)
 
-## Default Sources (133 total)
+## Default Sources (138 total)
 
 - **RSS Feeds (49)**: AI labs, tech blogs, crypto news, Chinese tech media
-- **Twitter/X KOLs (49)**: AI researchers, crypto leaders, tech executives
-- **GitHub Repos (22)**: Major open-source projects (LangChain, vLLM, DeepSeek, Llama, etc.)
+- **Twitter/X KOLs (48)**: AI researchers, crypto leaders, tech executives
+- **GitHub Repos (28)**: Major open-source projects (LangChain, vLLM, DeepSeek, Llama, etc.)
 - **Reddit (13)**: r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency, r/ChatGPT, r/OpenAI, etc.
 - **Web Search (4 topics)**: LLM, AI Agent, Crypto, Frontier Tech
 
@@ -383,7 +412,7 @@ OpenClaw enforces **cross-provider isolation**: a single session can only send m
 - EMAIL = (none)
 - TEMPLATE = telegram
 ```
-Replace `DISCORD_CHANNEL_ID` delivery with Telegram delivery in the second job's prompt (use `message` tool with `channel=telegram`).
+Replace `DISCORD_CHANNEL_ID` delivery with the target platform's delivery in the second job's prompt.
 
 This is a security feature, not a bug — it prevents accidental cross-context data leakage.
 
