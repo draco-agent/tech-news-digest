@@ -25,6 +25,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Tuple
 from urllib.request import urlopen, Request
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 
 TIMEOUT = 30
@@ -48,43 +49,27 @@ def setup_logging(verbose: bool) -> logging.Logger:
     return logging.getLogger(__name__)
 
 
-def get_brave_api_key() -> Optional[str]:
-    """Get Brave Search API key from environment."""
-    return os.getenv('BRAVE_API_KEY')
-
-
-def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
-    """Probe Brave API to detect per-second rate limit from response headers.
-
-    Returns (max_qps, max_workers) tuple.
-    Free/basic plan: 1 QPS → (1, 1)
-    Paid plans: 15-20 QPS → (N, min(N, 5))
-
-    Checks BRAVE_PLAN env var first, then cached result, then probes API.
+def get_brave_api_keys() -> List[str]:
+    """Get Brave Search API keys from environment.
+    
+    Supports multiple keys via comma-separated BRAVE_API_KEY:
+        export BRAVE_API_KEY="key1,key2,key3"
+    Falls back to single key if no comma.
     """
-    # Override via env var
-    brave_plan = os.getenv('BRAVE_PLAN', '').lower()
-    if brave_plan == 'free':
-        logging.info("BRAVE_PLAN=free override: 1 QPS, 1 worker")
-        return 1, 1
-    elif brave_plan == 'pro':
-        logging.info("BRAVE_PLAN=pro override: 15 QPS, 5 workers")
-        return 15, 5
+    raw = os.getenv('BRAVE_API_KEY', '')
+    if not raw:
+        return []
+    return [k.strip() for k in raw.split(',') if k.strip()]
 
-    # Check cache
-    try:
-        with open(BRAVE_RATE_LIMIT_CACHE, 'r') as f:
-            cache = json.load(f)
-        cache_age = time.time() - cache.get('ts', 0)
-        if cache_age < 86400:  # 24 hours
-            qps = cache['qps']
-            workers = cache['workers']
-            logging.info(f"Using cached Brave rate limit: {qps} QPS")
-            return qps, workers
-    except (FileNotFoundError, json.JSONDecodeError, KeyError, OSError):
-        pass
 
-    # Probe API
+def get_brave_api_key() -> Optional[str]:
+    """Get first available Brave API key (legacy compat)."""
+    keys = get_brave_api_keys()
+    return keys[0] if keys else None
+
+
+def _probe_brave_key(api_key: str) -> Dict[str, Any]:
+    """Probe a single Brave API key. Returns {qps, workers, exhausted, error}."""
     try:
         params = urlencode({'q': 'test', 'count': 1})
         url = f"{BRAVE_API_BASE}?{params}"
@@ -95,27 +80,110 @@ def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
         })
         with urlopen(req, timeout=TIMEOUT) as resp:
             limit_header = resp.headers.get('x-ratelimit-limit', '1')
+            remaining = resp.headers.get('x-ratelimit-remaining', '')
             per_second = int(limit_header.split(',')[0].strip())
             resp.read()
 
-        if per_second >= 10:
-            workers = min(per_second // 2, 5)
-            logging.info(f"Brave API paid plan detected: {per_second} QPS → {workers} parallel workers")
-        else:
-            workers = 1
-            logging.info(f"Brave API free/basic plan: {per_second} QPS → sequential with 1s delay")
+        exhausted = False
+        if remaining.isdigit() and int(remaining) == 0:
+            exhausted = True
 
-        # Save to cache
+        workers = min(per_second // 2, 5) if per_second >= 10 else 1
+        return {'qps': per_second, 'workers': workers, 'exhausted': exhausted, 'error': None}
+    except HTTPError as e:
+        if e.code == 429:
+            return {'qps': 1, 'workers': 1, 'exhausted': True, 'error': '429 rate limited'}
+        return {'qps': 1, 'workers': 1, 'exhausted': False, 'error': f'HTTP {e.code}'}
+    except Exception as e:
+        return {'qps': 1, 'workers': 1, 'exhausted': False, 'error': str(e)}
+
+
+def select_brave_key_and_limits(keys: List[str]) -> Tuple[Optional[str], int, int]:
+    """Select the best available Brave API key and detect rate limits.
+    
+    Tries each key in order. Skips exhausted keys (cached for 24h).
+    Returns (api_key, max_qps, max_workers) or (None, 0, 0) if all exhausted.
+    """
+    if not keys:
+        return None, 0, 0
+
+    # Override via env var
+    brave_plan = os.getenv('BRAVE_PLAN', '').lower()
+    plan_qps = None
+    if brave_plan == 'free':
+        plan_qps, plan_workers = 1, 1
+    elif brave_plan == 'pro':
+        plan_qps, plan_workers = 15, 5
+
+    # Load cache
+    cache = {}
+    try:
+        with open(BRAVE_RATE_LIMIT_CACHE, 'r') as f:
+            cache = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError, OSError):
+        pass
+
+    now = time.time()
+    key_cache = cache.get('keys', {})
+
+    for i, key in enumerate(keys):
+        key_id = f"key_{i}"  # Don't log actual keys
+        cached = key_cache.get(key_id, {})
+        cache_age = now - cached.get('ts', 0)
+
+        # Use cache if fresh (24h)
+        if cache_age < 86400 and cached.get('exhausted'):
+            logging.debug(f"Brave {key_id}: exhausted (cached), skipping")
+            continue
+
+        if plan_qps is not None:
+            logging.info(f"Using Brave {key_id} with BRAVE_PLAN={brave_plan} override: {plan_qps} QPS")
+            return key, plan_qps, plan_workers
+
+        if cache_age < 86400 and 'qps' in cached and not cached.get('exhausted'):
+            qps = cached['qps']
+            workers = cached['workers']
+            logging.info(f"Using Brave {key_id} (cached): {qps} QPS, {workers} workers")
+            return key, qps, workers
+
+        # Probe
+        result = _probe_brave_key(key)
+        key_cache[key_id] = {'ts': now, **result}
+
+        if result['exhausted']:
+            logging.warning(f"Brave {key_id}: exhausted ({result.get('error', 'quota reached')}), trying next")
+            continue
+
+        if result['error']:
+            logging.warning(f"Brave {key_id}: probe error ({result['error']}), trying next")
+            continue
+
+        logging.info(f"Using Brave {key_id}: {result['qps']} QPS, {result['workers']} workers")
+        # Save cache
         try:
+            cache['keys'] = key_cache
             with open(BRAVE_RATE_LIMIT_CACHE, 'w') as f:
-                json.dump({'ts': time.time(), 'qps': per_second, 'workers': workers}, f)
+                json.dump(cache, f)
         except OSError:
             pass
+        return key, result['qps'], result['workers']
 
-        return per_second, workers
-    except Exception as e:
-        logging.warning(f"Rate limit detection failed: {e}, defaulting to conservative 1 QPS")
-        return 1, 1
+    # All keys exhausted
+    logging.warning("All Brave API keys exhausted or errored")
+    # Save cache
+    try:
+        cache['keys'] = key_cache
+        with open(BRAVE_RATE_LIMIT_CACHE, 'w') as f:
+            json.dump(cache, f)
+    except OSError:
+        pass
+    return None, 0, 0
+
+
+def detect_brave_rate_limit(api_key: str) -> Tuple[int, int]:
+    """Legacy wrapper: detect rate limit for a single key."""
+    _, qps, workers = select_brave_key_and_limits([api_key])
+    return max(qps, 1), max(workers, 1)
 
 
 def search_brave(query: str, api_key: str, freshness: Optional[str] = None) -> Dict[str, Any]:
@@ -396,13 +464,12 @@ Examples:
             logger.warning("No topics found")
             return 1
             
-        # Check for Brave API
-        api_key = get_brave_api_key()
+        # Check for Brave API (supports multiple comma-separated keys)
+        brave_keys = get_brave_api_keys()
+        api_key, max_qps, max_workers = select_brave_key_and_limits(brave_keys)
         if api_key:
-            logger.info(f"Using Brave Search API for {len(topics)} topics")
+            logger.info(f"Using Brave Search API for {len(topics)} topics ({len(brave_keys)} key(s) configured)")
             
-            # Detect rate limit to decide concurrency
-            max_qps, max_workers = detect_brave_rate_limit(api_key)
             delay = 1.0 / max_qps if max_workers == 1 else 0
             
             # Convert freshness to Brave API format
