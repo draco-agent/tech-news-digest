@@ -52,11 +52,12 @@ def setup_logging(verbose: bool) -> logging.Logger:
 def get_brave_api_keys() -> List[str]:
     """Get Brave Search API keys from environment.
     
-    Supports multiple keys via comma-separated BRAVE_API_KEY:
-        export BRAVE_API_KEY="key1,key2,key3"
-    Falls back to single key if no comma.
+    Supports multiple keys via comma-separated BRAVE_API_KEYS (preferred)
+    or BRAVE_API_KEY (single key fallback):
+        export BRAVE_API_KEYS="key1,key2,key3"
+        export BRAVE_API_KEY="key1"  # fallback for single key
     """
-    raw = os.getenv('BRAVE_API_KEY', '')
+    raw = os.getenv('BRAVE_API_KEYS', '') or os.getenv('BRAVE_API_KEY', '')
     if not raw:
         return []
     return [k.strip() for k in raw.split(',') if k.strip()]
