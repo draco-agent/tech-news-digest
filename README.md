@@ -69,7 +69,8 @@ All environment variables are optional. The pipeline runs with whatever sources 
 ```bash
 export TWITTERAPI_IO_KEY="..."  # twitterapi.io (~$5/mo) — enables Twitter layer
 export X_BEARER_TOKEN="..."     # Twitter/X official API — alternative Twitter backend
-export BRAVE_API_KEY="..."      # Brave Search API — enables web search layer
+export BRAVE_API_KEYS="k1,k2,k3" # Brave Search API keys (comma-separated, rotation)
+export BRAVE_API_KEY="..."       # Fallback: single Brave key
 export GITHUB_TOKEN="..."       # GitHub API — higher rate limits (auto-generated from GitHub App if unset)
 pip install weasyprint           # Enables PDF report generation
 ```

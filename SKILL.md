@@ -19,9 +19,12 @@ env:
   - name: TWITTERAPI_IO_KEY
     required: false
     description: twitterapi.io API key for KOL monitoring (twitterapiio backend)
+  - name: BRAVE_API_KEYS
+    required: false
+    description: Brave Search API keys (comma-separated for rotation)
   - name: BRAVE_API_KEY
     required: false
-    description: Brave Search API key for web search layer
+    description: Brave Search API key (single key fallback)
   - name: GITHUB_TOKEN
     required: false
     description: GitHub token for higher API rate limits (auto-generated from GitHub App if not set)
@@ -67,7 +70,8 @@ Automated tech news digest system with unified data source model, quality scorin
 2. **Environment Variables**: 
    - `TWITTERAPI_IO_KEY` - twitterapi.io API key (optional, preferred)
    - `X_BEARER_TOKEN` - Twitter/X official API bearer token (optional, fallback)
-   - `BRAVE_API_KEY` - Brave Search API key (optional)
+   - `BRAVE_API_KEYS` - Brave Search API keys, comma-separated for rotation (optional)
+   - `BRAVE_API_KEY` - Single Brave key fallback (optional)
    - `GITHUB_TOKEN` - GitHub personal access token (optional, improves rate limits)
 
 3. **Generate Digest**:
@@ -334,7 +338,8 @@ python3 scripts/fetch-twitter.py --hours 1 --verbose
 Set in `~/.zshenv` or similar:
 ```bash
 export X_BEARER_TOKEN="your_twitter_bearer_token"
-export BRAVE_API_KEY="your_brave_search_api_key"  # Optional
+export BRAVE_API_KEYS="key1,key2,key3"  # Optional, comma-separated for rotation
+export BRAVE_API_KEY="key1"             # Optional, single key fallback
 ```
 
 - **Twitter**: Read-only bearer token, pay-per-use pricing
