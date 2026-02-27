@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.10.3
+
+- **Docs**: Align API Keys & Environment with all 10 actual env vars
+- **Docs**: Update Network Access (add Reddit) and Shell Safety (send-email.py + generate-pdf.py)
+- **Refactor**: Rename user overlay configs to `tech-news-digest-sources.json` / `tech-news-digest-topics.json` to avoid naming conflicts
+
 ## v3.10.2
 
 - **Fix domain limits**: Exempt multi-author platforms (x.com, github.com, reddit.com) from per-topic domain limits — previously 77 tweets were cut to 12 (#1)
