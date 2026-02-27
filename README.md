@@ -72,6 +72,8 @@ export X_BEARER_TOKEN="..."     # Twitter/X official API — alternative Twitter
 export BRAVE_API_KEYS="k1,k2,k3" # Brave Search API keys (comma-separated, rotation)
 export BRAVE_API_KEY="..."       # Fallback: single Brave key
 export GITHUB_TOKEN="..."       # GitHub API — higher rate limits (auto-generated from GitHub App if unset)
+export TWITTER_API_BACKEND="auto" # auto|twitterapiio|official (default: auto)
+export BRAVE_PLAN="free"         # Override Brave rate limit detection: free|pro
 pip install weasyprint           # Enables PDF report generation
 ```
 

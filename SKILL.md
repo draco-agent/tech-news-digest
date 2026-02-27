@@ -337,13 +337,27 @@ python3 scripts/fetch-twitter.py --hours 1 --verbose
 
 Set in `~/.zshenv` or similar:
 ```bash
-export X_BEARER_TOKEN="your_twitter_bearer_token"
-export BRAVE_API_KEYS="key1,key2,key3"  # Optional, comma-separated for rotation
-export BRAVE_API_KEY="key1"             # Optional, single key fallback
+# Twitter (at least one required for Twitter source)
+export TWITTERAPI_IO_KEY="your_key"        # twitterapi.io key (preferred)
+export X_BEARER_TOKEN="your_bearer_token"  # Official X API v2 (fallback)
+export TWITTER_API_BACKEND="auto"          # auto|twitterapiio|official (default: auto)
+
+# Brave Search (optional, enables web search layer)
+export BRAVE_API_KEYS="key1,key2,key3"     # Multiple keys, comma-separated rotation
+export BRAVE_API_KEY="key1"                # Single key fallback
+export BRAVE_PLAN="free"                   # Override rate limit detection: free|pro
+
+# GitHub (optional, improves rate limits)
+export GITHUB_TOKEN="ghp_xxx"              # PAT (simplest)
+export GH_APP_ID="12345"                   # Or use GitHub App for auto-token
+export GH_APP_INSTALL_ID="67890"
+export GH_APP_KEY_FILE="/path/to/key.pem"
 ```
 
-- **Twitter**: Read-only bearer token, pay-per-use pricing
+- **Twitter**: `TWITTERAPI_IO_KEY` preferred ($3-5/mo); `X_BEARER_TOKEN` as fallback; `auto` mode tries twitterapiio first
 - **Brave Search**: Optional, fallback to agent web_search if unavailable
+- **GitHub**: Auto-generates token from GitHub App if PAT not set; unauthenticated fallback (60 req/hr)
+- **Reddit**: No API key needed (uses public JSON API)
 
 ## Cron / Scheduled Task Integration
 
