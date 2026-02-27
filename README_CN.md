@@ -2,7 +2,11 @@
 
 > 自动化科技资讯汇总 — 138 个数据源，5 层管道，一句话安装。
 
+[English](README.md) | **中文**
+
+[![Tests](https://github.com/draco-agent/tech-news-digest/actions/workflows/test.yml/badge.svg)](https://github.com/draco-agent/tech-news-digest/actions/workflows/test.yml)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![ClawHub](https://img.shields.io/badge/ClawHub-tech--news--digest-blueviolet)](https://clawhub.com/draco-agent/tech-news-digest)
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 ## 💬 一句话安装
@@ -67,11 +71,20 @@ clawhub install tech-news-digest
 所有环境变量均为可选，管道会自动使用可用的数据源。
 
 ```bash
-export TWITTERAPI_IO_KEY="..."  # twitterapi.io (~$5/月) — 启用 Twitter 数据层
-export X_BEARER_TOKEN="..."     # Twitter/X 官方 API — 备选 Twitter 后端
-export BRAVE_API_KEY="..."      # Brave Search API — 启用 Web 搜索层
-export GITHUB_TOKEN="..."       # GitHub API — 提高速率限制（未设置时自动从 GitHub App 生成）
-pip install weasyprint            # 启用 PDF 报告生成
+export TWITTERAPI_IO_KEY="..."    # twitterapi.io (~$5/月) — 启用 Twitter 数据层
+export X_BEARER_TOKEN="..."       # Twitter/X 官方 API — 备选 Twitter 后端
+export TWITTER_API_BACKEND="auto" # auto|twitterapiio|official（默认: auto）
+export BRAVE_API_KEYS="k1,k2,k3" # Brave Search API 密钥（逗号分隔，自动轮换）
+export BRAVE_API_KEY="..."        # 单密钥回退
+export BRAVE_PLAN="free"          # 覆盖速率限制检测: free|pro
+export GITHUB_TOKEN="..."         # GitHub API — 提高速率限制（未设置时自动从 GitHub App 生成）
+pip install weasyprint             # 启用 PDF 报告生成
+```
+
+## 🧪 测试
+
+```bash
+python -m unittest discover -s tests -v   # 41 个测试，纯标准库
 ```
 
 ## 📂 仓库地址
