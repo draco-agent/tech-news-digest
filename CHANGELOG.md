@@ -1,5 +1,10 @@
 # Changelog
 
+## v3.10.2
+
+- **Fix domain limits**: Exempt multi-author platforms (x.com, github.com, reddit.com) from per-topic domain limits — previously 77 tweets were cut to 12 (#1)
+- **Brave multi-key**: Prefer `BRAVE_API_KEYS` (comma-separated) over `BRAVE_API_KEY` for key rotation in `fetch-web.py`
+
 ## v3.10.1
 
 - **Fix email MIME**: New `send-email.py` — proper multipart MIME construction for HTML body + PDF attachment (replaces broken `mail -a -A` approach)
