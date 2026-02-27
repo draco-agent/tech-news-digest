@@ -66,6 +66,32 @@ clawhub install tech-news-digest
 - `config/defaults/topics.json` — 4 个主题，含搜索查询和 Twitter 查询
 - 用户自定义配置放 `workspace/config/`，优先级更高
 
+## 🎨 自定义数据源
+
+开箱即用，内置 138 个数据源——但完全可自定义。将默认配置复制到 workspace 并覆盖：
+
+```bash
+# 复制并自定义
+cp config/defaults/sources.json workspace/config/tech-news-digest-sources.json
+cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
+```
+
+你的配置文件会与默认配置**合并**：
+- **覆盖**：`id` 匹配的源会被你的版本替换
+- **新增**：使用新的 `id` 即可添加自定义源
+- **禁用**：对匹配的 `id` 设置 `"enabled": false`
+
+```json
+{
+  "sources": [
+    {"id": "my-blog", "type": "rss", "enabled": true, "url": "https://myblog.com/feed", "topics": ["llm"]},
+    {"id": "openai-blog", "enabled": false}
+  ]
+}
+```
+
+不需要复制整个文件——只写你要改的部分。
+
 ## 🔧 可选配置
 
 所有环境变量均为可选，管道会自动使用可用的数据源。

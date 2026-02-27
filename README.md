@@ -66,6 +66,32 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
 - `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
 - User overrides in `workspace/config/` take priority
 
+## 🎨 Customize Your Sources
+
+Works out of the box with 138 built-in sources — but fully customizable. Copy the defaults to your workspace config and override:
+
+```bash
+# Copy and customize
+cp config/defaults/sources.json workspace/config/tech-news-digest-sources.json
+cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
+```
+
+Your overlay file **merges** with defaults:
+- **Override** a source by matching its `id` — your version replaces the default
+- **Add** new sources with a unique `id` — appended to the list
+- **Disable** a built-in source — set `"enabled": false` on the matching `id`
+
+```json
+{
+  "sources": [
+    {"id": "my-blog", "type": "rss", "enabled": true, "url": "https://myblog.com/feed", "topics": ["llm"]},
+    {"id": "openai-blog", "enabled": false}
+  ]
+}
+```
+
+No need to copy the entire file — just include what you want to change.
+
 ## 🔧 Optional Setup
 
 All environment variables are optional. The pipeline runs with whatever sources are available.
