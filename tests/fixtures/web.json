@@ -1,8 +1,8 @@
 {
   "generated": "2026-02-27T12:04:12.666216+00:00",
   "source_type": "web",
-  "defaults_dir": "/home/bot/codes/tech-news-digest/scripts/../config/defaults",
-  "config_dir": null,
+  "defaults_dir": "(redacted)",
+  "config_dir": "(redacted)",
   "freshness": "pd",
   "api_used": "brave",
   "topics_total": 4,

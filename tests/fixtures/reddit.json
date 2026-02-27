@@ -1,8 +1,8 @@
 {
   "source": "reddit",
   "fetched_at": "2026-02-27T12:03:54.298608+00:00",
-  "defaults_dir": "/home/bot/codes/tech-news-digest/scripts/../config/defaults",
-  "config_dir": null,
+  "defaults_dir": "(redacted)",
+  "config_dir": "(redacted)",
   "hours": 24,
   "cutoff": "2026-02-26T12:03:51.224149+00:00",
   "subreddits_total": 13,

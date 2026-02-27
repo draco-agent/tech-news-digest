@@ -1,8 +1,8 @@
 {
   "generated": "2026-02-27T12:03:22.111511+00:00",
   "source_type": "github",
-  "defaults_dir": "/home/bot/codes/tech-news-digest/scripts/../config/defaults",
-  "config_dir": null,
+  "defaults_dir": "(redacted)",
+  "config_dir": "(redacted)",
   "hours": 24,
   "github_token_used": true,
   "sources_total": 28,
