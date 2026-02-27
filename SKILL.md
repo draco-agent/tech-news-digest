@@ -63,8 +63,8 @@ Automated tech news digest system with unified data source model, quality scorin
 1. **Configuration Setup**: Default configs are in `config/defaults/`. Copy to workspace for customization:
    ```bash
    mkdir -p workspace/config
-   cp config/defaults/sources.json workspace/config/
-   cp config/defaults/topics.json workspace/config/
+   cp config/defaults/sources.json workspace/config/tech-news-digest-sources.json
+   cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
    ```
 
 2. **Environment Variables**: 
@@ -248,7 +248,7 @@ Place custom configs in `workspace/config/` to override defaults:
 
 ### Example Workspace Override
 ```json
-// workspace/config/sources.json
+// workspace/config/tech-news-digest-sources.json
 {
   "sources": [
     {

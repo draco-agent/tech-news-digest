@@ -31,8 +31,8 @@ Generate the <MODE> tech digest for **<DATE>**. Use `<DATE>` as the report date 
 ## Configuration
 
 Read config files (workspace overrides take priority over defaults):
-1. **Sources**: `<WORKSPACE>/config/sources.json` → fallback `<SKILL_DIR>/config/defaults/sources.json`
-2. **Topics**: `<WORKSPACE>/config/topics.json` → fallback `<SKILL_DIR>/config/defaults/topics.json`
+1. **Sources**: `<WORKSPACE>/config/tech-news-digest-sources.json` → fallback `<SKILL_DIR>/config/defaults/sources.json`
+2. **Topics**: `<WORKSPACE>/config/tech-news-digest-topics.json` → fallback `<SKILL_DIR>/config/defaults/topics.json`
 
 ## Context: Previous Report
 

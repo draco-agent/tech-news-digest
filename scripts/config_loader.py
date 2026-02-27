@@ -61,7 +61,7 @@ def load_merged_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -
     if config_dir is None:
         return default_sources
         
-    config_path = config_dir / "sources.json"
+    config_path = config_dir / "tech-news-digest-sources.json"
     
     # Try to load user overlay
     try:
@@ -160,7 +160,7 @@ def load_merged_topics(defaults_dir: Path, config_dir: Optional[Path] = None) ->
     if config_dir is None:
         return default_topics
         
-    config_path = config_dir / "topics.json"
+    config_path = config_dir / "tech-news-digest-topics.json"
     
     # Try to load user overlay
     try:
