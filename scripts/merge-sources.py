@@ -262,6 +262,9 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
     return deduplicated
 
 
+# Domains exempt from per-topic limits (multi-author platforms)
+DOMAIN_LIMIT_EXEMPT = {"x.com", "twitter.com", "github.com", "reddit.com"}
+
 def apply_domain_limits(articles: List[Dict[str, Any]], max_per_domain: int = 3) -> List[Dict[str, Any]]:
     """Limit articles per domain within a single topic group.
     
@@ -272,7 +275,7 @@ def apply_domain_limits(articles: List[Dict[str, Any]], max_per_domain: int = 3)
     result = []
     for article in articles:
         domain = get_domain(article.get("link", ""))
-        if domain:
+        if domain and domain not in DOMAIN_LIMIT_EXEMPT:
             count = domain_counts.get(domain, 0)
             if count >= max_per_domain:
                 logging.debug(f"Domain limit ({max_per_domain}): skipping {domain} article in topic")
