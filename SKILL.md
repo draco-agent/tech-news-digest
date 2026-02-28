@@ -19,6 +19,12 @@ env:
   - name: TWITTERAPI_IO_KEY
     required: false
     description: twitterapi.io API key for KOL monitoring (twitterapiio backend)
+  - name: TAVILY_API_KEY
+    required: false
+    description: Tavily Search API key (alternative to Brave)
+  - name: WEB_SEARCH_BACKEND
+    required: false
+    description: "Web search backend: auto (default), brave, or tavily"
   - name: BRAVE_API_KEYS
     required: false
     description: Brave Search API keys (comma-separated for rotation)

@@ -100,9 +100,11 @@ cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
 export TWITTERAPI_IO_KEY="..."    # twitterapi.io (~$5/月) — 启用 Twitter 数据层
 export X_BEARER_TOKEN="..."       # Twitter/X 官方 API — 备选 Twitter 后端
 export TWITTER_API_BACKEND="auto" # auto|twitterapiio|official（默认: auto）
+export TAVILY_API_KEY="tvly-xxx"  # Tavily Search API（替代方案，免费 1000 次/月）
 export BRAVE_API_KEYS="k1,k2,k3" # Brave Search API 密钥（逗号分隔，自动轮换）
 export BRAVE_API_KEY="..."        # 单密钥回退
 export BRAVE_PLAN="free"          # 覆盖速率限制检测: free|pro
+export WEB_SEARCH_BACKEND="auto" # auto|brave|tavily（默认: auto）
 export GITHUB_TOKEN="..."         # GitHub API — 提高速率限制（未设置时自动从 GitHub App 生成）
 pip install weasyprint             # 启用 PDF 报告生成
 ```

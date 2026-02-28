@@ -35,6 +35,7 @@ RETRY_DELAY = 2.0
 
 # Brave Search API
 BRAVE_API_BASE = "https://api.search.brave.com/res/v1/web/search"
+TAVILY_API_BASE = "https://api.tavily.com/search"
 BRAVE_RATE_LIMIT_CACHE = "/tmp/tech-news-digest-brave-rate-limit.json"
 
 
@@ -323,6 +324,101 @@ def search_topic_brave(topic: Dict[str, Any], api_key: str, freshness: Optional[
     }
 
 
+
+def get_tavily_api_key() -> Optional[str]:
+    """Get Tavily API key from environment."""
+    return os.getenv('TAVILY_API_KEY', '').strip() or None
+
+
+def search_tavily(query: str, api_key: str, topic: str = "general",
+                  max_results: int = 10, search_depth: str = "basic",
+                  days: Optional[int] = None) -> Dict[str, Any]:
+    """Perform search using Tavily Search API.
+    
+    Args:
+        topic: 'general' or 'news' (news for real-time updates)
+        days: Limit results to the last N days (None = no limit)
+    """
+    payload = {
+        "api_key": api_key,
+        "query": query,
+        "search_depth": search_depth,
+        "topic": topic,
+        "max_results": max_results,
+        "include_answer": False,
+    }
+    if days is not None:
+        payload["days"] = days
+
+    try:
+        data = json.dumps(payload).encode()
+        req = Request(TAVILY_API_BASE, data=data, headers={
+            "Content-Type": "application/json",
+            "User-Agent": "TechDigest/3.0"
+        }, method="POST")
+        with urlopen(req, timeout=TIMEOUT) as resp:
+            result = json.loads(resp.read().decode())
+
+        articles = []
+        for r in result.get("results", []):
+            articles.append({
+                "title": r.get("title", ""),
+                "link": r.get("url", ""),
+                "snippet": r.get("content", "")[:300],
+                "date": r.get("published_date", ""),
+                "source": "tavily",
+            })
+
+        return {
+            "query": query,
+            "status": "ok",
+            "total": len(articles),
+            "results": articles,
+        }
+    except HTTPError as e:
+        logging.warning(f"Tavily search error for '{query}': HTTP {e.code}")
+        return {"query": query, "status": "error", "total": 0, "results": [], "error": f"HTTP {e.code}"}
+    except Exception as e:
+        logging.warning(f"Tavily search error for '{query}': {e}")
+        return {"query": query, "status": "error", "total": 0, "results": [], "error": str(e)}
+
+
+def search_topic_tavily(topic: Dict[str, Any], api_key: str, days: Optional[int] = None) -> Dict[str, Any]:
+    """Search all queries for a topic using Tavily API."""
+    topic_id = topic["id"]
+    queries = topic["search"]["queries"]
+    must_include = topic["search"].get("must_include", [])
+    exclude = topic["search"].get("exclude", [])
+
+    all_results = []
+    query_stats = []
+
+    for query in queries:
+        search_result = search_tavily(query, api_key, topic="news", days=days)
+        query_stats.append({
+            "query": search_result["query"],
+            "status": search_result["status"],
+            "count": search_result["total"],
+        })
+        if search_result["status"] == "ok":
+            for result in search_result["results"]:
+                combined_text = f"{result['title']} {result['snippet']}"
+                if filter_content(combined_text, must_include, exclude):
+                    result["topics"] = [topic_id]
+                    all_results.append(result)
+
+    ok_count = sum(1 for s in query_stats if s["status"] == "ok")
+    return {
+        "topic": topic_id,
+        "status": "ok" if ok_count > 0 else "error",
+        "queries": len(queries),
+        "queries_ok": ok_count,
+        "count": len(all_results),
+        "articles": all_results,
+        "query_details": query_stats,
+    }
+
+
 def generate_search_interface(topic: Dict[str, Any]) -> Dict[str, Any]:
     """Generate JSON interface for agent web search."""
     topic_id = topic["id"]
@@ -465,10 +561,76 @@ Examples:
             logger.warning("No topics found")
             return 1
             
-        # Check for Brave API (supports multiple comma-separated keys)
+        # Backend selection: WEB_SEARCH_BACKEND env or auto-detect
+        web_backend = os.getenv('WEB_SEARCH_BACKEND', 'auto').lower()
+        tavily_key = get_tavily_api_key()
         brave_keys = get_brave_api_keys()
-        api_key, max_qps, max_workers = select_brave_key_and_limits(brave_keys)
-        if api_key:
+        
+        use_tavily = False
+        use_brave = False
+        api_key = None
+        max_qps = 1
+        max_workers = 1
+        
+        if web_backend == 'tavily' and tavily_key:
+            use_tavily = True
+        elif web_backend == 'brave' and brave_keys:
+            api_key, max_qps, max_workers = select_brave_key_and_limits(brave_keys)
+            use_brave = bool(api_key)
+        elif web_backend == 'auto':
+            if tavily_key:
+                use_tavily = True
+            elif brave_keys:
+                api_key, max_qps, max_workers = select_brave_key_and_limits(brave_keys)
+                use_brave = bool(api_key)
+        
+        if use_tavily:
+            logger.info(f"Using Tavily Search API for {len(topics)} topics")
+            
+            # Convert freshness to days for Tavily
+            tavily_days = None
+            if args.freshness in ('pd',): tavily_days = 1
+            elif args.freshness in ('pw',): tavily_days = 7
+            elif args.freshness in ('pm',): tavily_days = 30
+            elif args.freshness in ('py',): tavily_days = 365
+            else:
+                try:
+                    tavily_days = max(1, int(args.freshness.rstrip('h')) // 24)
+                except (ValueError, AttributeError):
+                    tavily_days = 2
+            
+            results = []
+            for topic in topics:
+                if not topic.get("search", {}).get("queries"):
+                    logger.debug(f"Topic {topic['id']} has no search queries, skipping")
+                    continue
+                logger.debug(f"Searching topic: {topic['id']}")
+                result = search_topic_tavily(topic, tavily_key, days=tavily_days)
+                results.append(result)
+            
+            total_articles = sum(r.get("count", 0) for r in results)
+            ok_topics = sum(1 for r in results if r["status"] == "ok")
+            
+            output = {
+                "generated": datetime.now(timezone.utc).isoformat(),
+                "source_type": "web",
+                "defaults_dir": str(args.defaults),
+                "config_dir": str(args.config) if args.config else None,
+                "freshness": args.freshness,
+                "api_used": "tavily",
+                "topics_total": len(topics),
+                "topics_ok": ok_topics,
+                "total_articles": total_articles,
+                "topics": results,
+            }
+            
+            with open(args.output, 'w', encoding='utf-8') as f:
+                json.dump(output, f, indent=2, ensure_ascii=False)
+            
+            logger.info(f"\u2705 Done: {ok_topics}/{len(topics)} topics ok, {total_articles} articles → {args.output}")
+            return 0
+        
+        elif use_brave:
             logger.info(f"Using Brave Search API for {len(topics)} topics ({len(brave_keys)} key(s) configured)")
             
             delay = 1.0 / max_qps if max_workers == 1 else 0
