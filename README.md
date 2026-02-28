@@ -38,7 +38,7 @@ A quality-scored, deduplicated tech digest built from **138 sources**:
 |-------|---------|------|
 | 📡 RSS | 49 feeds | OpenAI, Anthropic, Ben's Bites, HN, 36氪, CoinDesk… |
 | 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @elonmusk… |
-| 🔍 Web Search | 4 topics | Brave Search API with freshness filters |
+| 🔍 Web Search | 4 topics | Tavily or Brave Search API with freshness filters |
 | 🐙 GitHub | 28 repos | Releases from key projects (LangChain, vLLM, DeepSeek, Llama…) |
 | 🗣️ Reddit | 13 subs | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency… |
 
