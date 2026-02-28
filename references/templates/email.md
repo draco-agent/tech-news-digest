@@ -31,7 +31,7 @@ The agent should generate an HTML email body. Use inline styles (email clients s
   <h2 style="font-size:17px;margin-top:24px;color:#333">{{emoji}} {{label}}</h2>
   <ul style="padding-left:20px">
     <li style="margin-bottom:10px">
-      <strong>{{title}}</strong> — {{description}}
+      <strong>🔥{{quality_score}}</strong> {{title}} — {{description}}
       <br><a href="{{link}}" style="color:#0969da;font-size:13px">{{link}}</a>
     </li>
   </ul>

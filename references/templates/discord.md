@@ -11,7 +11,7 @@ Discord-optimized format with bullet points and link suppression.
 ## {{emoji}} {{label}}
 
 {{#articles}}
-• {{title}}
+• 🔥{{quality_score}} | {{title}}
   <{{link}}>
   {{#multi_source}}*[{{source_count}} sources]*{{/multi_source}}
 
@@ -45,21 +45,21 @@ Discord-optimized format with bullet points and link suppression.
 
 ## 🧠 LLM / Large Models
 
-• OpenAI releases GPT-5 with breakthrough reasoning capabilities
+• 🔥15 | OpenAI releases GPT-5 with breakthrough reasoning capabilities
   <https://openai.com/blog/gpt5-announcement>
   *[3 sources]*
 
-• Meta's Llama 3.1 achieves new MMLU benchmarks
+• 🔥12 | Meta's Llama 3.1 achieves new MMLU benchmarks
   <https://ai.meta.com/blog/llama-31-release>
 
 ## 🤖 AI Agent
 
-• LangChain launches production-ready agent framework
+• 🔥14 | LangChain launches production-ready agent framework
   <https://blog.langchain.dev/production-agents>
 
 ## 💰 Cryptocurrency
 
-• Bitcoin reaches new ATH at $67,000 amid ETF approval
+• 🔥18 | Bitcoin reaches new ATH at $67,000 amid ETF approval
   <https://coindesk.com/markets/btc-ath-etf>
   *[2 sources]*
 
@@ -83,6 +83,7 @@ Discord-optimized format with bullet points and link suppression.
 - `{{articles}}` - Array of article objects per topic
 - `{{title}}` - Article title (truncated if needed)
 - `{{link}}` - Article URL
+- `{{quality_score}}` - Article quality score (higher = more important)
 - `{{multi_source}}` - Boolean, true if article from multiple sources
 - `{{source_count}}` - Number of sources for this article
 - `{{total_sources}}` - Total number of sources used

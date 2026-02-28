@@ -62,13 +62,15 @@ python3 <SKILL_DIR>/scripts/summarize-merged.py --input /tmp/td-merged.json --to
 
 Use this output to select articles — **do NOT write ad-hoc Python to parse the JSON**. Apply the template from `<SKILL_DIR>/references/templates/<TEMPLATE>.md`.
 
-Select articles **purely by quality_score regardless of source type**. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*`.
+Select articles **purely by quality_score regardless of source type**. Articles in merged JSON are already sorted by quality_score descending within each topic — respect this order. For Reddit posts, append `*[Reddit r/xxx, {{score}}↑]*`.
+
+Each article line must include its quality score using 🔥 prefix. Format: `🔥{score} | {summary with link}`. This makes scoring transparent and helps readers identify the most important news at a glance.
 
 ### Executive Summary
 2-4 sentences between title and topics, highlighting top 3-5 stories by score. Concise and punchy, no links. Discord: `> ` blockquote. Email: gray background. Telegram: `<i>`.
 
 ### Topic Sections
-From `topics.json`: `emoji` + `label` headers, `<ITEMS_PER_SECTION>` items each.
+From `topics.json`: `emoji` + `label` headers, `<ITEMS_PER_SECTION>` items each, strictly ordered by quality_score descending (highest first).
 
 ### Fixed Sections (after topics)
 
