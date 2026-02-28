@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.11.0
+
+- **Tavily Search backend**: Alternative to Brave Search via `TAVILY_API_KEY` + `WEB_SEARCH_BACKEND` env
+- **Quality scores in output**: 🔥 score prefix on every article, strict descending order per topic
+- **Domain limit fix**: Exempt x.com/github.com/reddit.com from per-topic domain limits (#1)
+- **Brave multi-key**: `BRAVE_API_KEYS` for comma-separated key rotation
+- **Config naming**: User overlay files renamed to `tech-news-digest-sources.json` / `tech-news-digest-topics.json`
+- **Tests**: 41 unit + integration tests with real fixture data, GitHub Actions CI (Python 3.9 + 3.12)
+- **Docs**: Full env var alignment, Network Access/Shell Safety updates, README badges, CN sync
+
 ## v3.10.3
 
 - **Docs**: Align API Keys & Environment with all 10 actual env vars

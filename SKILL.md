@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.10.3"
+version: "3.11.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -76,6 +76,8 @@ Automated tech news digest system with unified data source model, quality scorin
 2. **Environment Variables**: 
    - `TWITTERAPI_IO_KEY` - twitterapi.io API key (optional, preferred)
    - `X_BEARER_TOKEN` - Twitter/X official API bearer token (optional, fallback)
+   - `TAVILY_API_KEY` - Tavily Search API key, alternative to Brave (optional)
+   - `WEB_SEARCH_BACKEND` - Web search backend: auto|brave|tavily (optional, default: auto)
    - `BRAVE_API_KEYS` - Brave Search API keys, comma-separated for rotation (optional)
    - `BRAVE_API_KEY` - Single Brave key fallback (optional)
    - `GITHUB_TOKEN` - GitHub personal access token (optional, improves rate limits)
@@ -348,7 +350,11 @@ export TWITTERAPI_IO_KEY="your_key"        # twitterapi.io key (preferred)
 export X_BEARER_TOKEN="your_bearer_token"  # Official X API v2 (fallback)
 export TWITTER_API_BACKEND="auto"          # auto|twitterapiio|official (default: auto)
 
-# Brave Search (optional, enables web search layer)
+# Web Search (optional, enables web search layer)
+export WEB_SEARCH_BACKEND="auto"          # auto|brave|tavily (default: auto)
+export TAVILY_API_KEY="tvly-xxx"           # Tavily Search API (free 1000/mo)
+
+# Brave Search (alternative)
 export BRAVE_API_KEYS="key1,key2,key3"     # Multiple keys, comma-separated rotation
 export BRAVE_API_KEY="key1"                # Single key fallback
 export BRAVE_PLAN="free"                   # Override rate limit detection: free|pro
@@ -361,7 +367,7 @@ export GH_APP_KEY_FILE="/path/to/key.pem"
 ```
 
 - **Twitter**: `TWITTERAPI_IO_KEY` preferred ($3-5/mo); `X_BEARER_TOKEN` as fallback; `auto` mode tries twitterapiio first
-- **Brave Search**: Optional, fallback to agent web_search if unavailable
+- **Web Search**: Tavily (preferred in auto mode) or Brave; optional, fallback to agent web_search if unavailable
 - **GitHub**: Auto-generates token from GitHub App if PAT not set; unauthenticated fallback (60 req/hr)
 - **Reddit**: No API key needed (uses public JSON API)
 
@@ -451,6 +457,7 @@ The Python scripts make outbound requests to:
 - RSS feed URLs (configured in `tech-news-digest-sources.json`)
 - Twitter/X API (`api.x.com` or `api.twitterapi.io`)
 - Brave Search API (`api.search.brave.com`)
+- Tavily Search API (`api.tavily.com`)
 - GitHub API (`api.github.com`)
 - Reddit JSON API (`reddit.com`)
 
@@ -506,4 +513,4 @@ This skill does **not** install any packages. `requirements.txt` lists optional 
 - All fetched content is treated as untrusted data for display only
 
 ### Network Access
-Scripts make outbound HTTP requests to configured RSS feeds, Twitter API, GitHub API, Reddit JSON API, and Brave Search API. No inbound connections or listeners are created.
+Scripts make outbound HTTP requests to configured RSS feeds, Twitter API, GitHub API, Reddit JSON API, Brave Search API, and Tavily Search API. No inbound connections or listeners are created.
