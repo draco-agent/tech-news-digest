@@ -228,7 +228,7 @@ def main() -> int:
     merge_result = run_step("Merge", "merge-sources.py", merge_args, args.output, timeout=60, force=False)
 
     # Phase 3: Enrich high-scoring articles with full text
-    if merge_result["status"] == "ok" and args.enrich and "enrich" not in skip_set:
+    if merge_result["status"] == "ok" and args.enrich and "enrich" not in skip_steps:
         logger.info("📰 Enriching top articles with full text...")
         enrich_args = ["--input", str(args.output), "--output", str(args.output)]
         enrich_args += ["--verbose"] if args.verbose else []
