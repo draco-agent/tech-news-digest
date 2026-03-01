@@ -1,5 +1,35 @@
 # Changelog
 
+## v3.13.0 — 2026-03-01
+
+### Added
+- `enrich-articles.py` — full-text enrichment for high-scoring articles
+  - Cloudflare Markdown for Agents (Accept: text/markdown) preferred
+  - HTML readability extraction fallback
+  - Skip list for paywalled/social/video domains
+  - Blog domain whitelist with lower score threshold (>=3)
+  - Parallel fetching (5 workers, 10s timeout)
+- Pipeline `--enrich` flag to enable enrichment after merge (default off)
+- `<ENRICH>` placeholder in digest-prompt for cron control
+- Blog Picks section in digest (3-5 indie blog articles with summaries)
+- 13 HN top tech blogs added to RSS sources (49->62 feeds, 151 total)
+- Featured In section in README
+
+### Changed
+- Digest template: 3-5 items daily, 10-15 weekly per section
+- Digest template: min quality_score >= 5 for topic sections
+- Digest template: GitHub Releases + Trending at bottom, no score prefix
+- Digest template: all English (output language controlled by placeholder)
+- Trending: top 5 + any with daily_stars_est > 50
+- No dedup between GitHub Releases and Trending sections
+
+### Fixed
+- `skip_set` -> `skip_steps` variable name bug in run-pipeline.py
+- Blog Picks section made mandatory even without enrichment
+
+### Removed
+- Community Buzz section from digest template
+
 ## v3.12.0
 
 - **GitHub Trending**: Fetch daily trending repos via GitHub Search API (4 topics, sorted by stars)
