@@ -102,12 +102,12 @@ Filter for `source_type == "github"` from merged JSON. **Show ALL releases — d
 ```
 No 🔥 score prefix for this section. Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. **Show top 5, plus any additional repos with daily_stars_est > 50.**
 
-**📝 博客精选** — 2-3 篇来自 RSS 独立博客的深度文章（如 antirez, Simon Willison, Paul Graham, Overreacted, Eli Bendersky 等个人博客，非新闻站）。优先选有 `full_text` 的文章，没有也可基于 snippet 选取。**此章节必须输出，不可省略。** Format:
+**📝 Blog Picks** — 3-5 articles from RSS indie blogs(e.g. antirez, Simon Willison, Paul Graham, Overreacted, Eli Bendersky — personal blogs, not news sites）。Prefer articles with `full_text`; fallback to snippet-based picks. **This section is MANDATORY — never omit.** Format:
 ```
-• **文章标题** — 作者名 | 2-3 句中文正文摘要，介绍文章核心观点和亮点
+• **Article Title** — Author | 2-3 sentence summary of core insights and highlights
   <https://blog.example.com/post>
 ```
-如果有 `full_text` 字段，基于全文撰写摘要；否则根据标题和 snippet 撰写。摘要应体现文章的独特见解或技术深度，不要只翻译标题。
+If `full_text` is available, write summary from full text; otherwise use title + snippet. Summary should highlight unique insights or technical depth — do not just translate the title.
 
 ### Rules
 - Only news from `<TIME_WINDOW>`
