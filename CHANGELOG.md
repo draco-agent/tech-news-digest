@@ -1,5 +1,15 @@
 # Changelog
 
+## v3.12.0
+
+- **GitHub Trending**: Fetch daily trending repos via GitHub Search API (4 topics, sorted by stars)
+- **Trending display**: Shows ⭐ total stars, +N/day growth estimate, language, description
+- **Quality scoring**: Trending repos scored by daily star growth (base 5 + growth/10, max 15)
+- **Pipeline integration**: `run-pipeline.py` runs trending as a 6th parallel step
+- **Merge integration**: Trending repos deduplicated and grouped by topic alongside other sources
+- **Tavily backend**: Dual web search backend (Tavily/Brave) with auto-detection
+- **Templates updated**: Discord/digest templates show trending count in stats footer
+
 ## v3.11.0
 
 - **Tavily Search backend**: Alternative to Brave Search via `TAVILY_API_KEY` + `WEB_SEARCH_BACKEND` env

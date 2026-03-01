@@ -81,6 +81,7 @@ def run_step(
                     or data.get("total_posts")
                     or data.get("total_releases")
                     or data.get("total_results")
+                    or data.get("total")
                     or 0
                 )
             except (json.JSONDecodeError, OSError):
@@ -148,6 +149,7 @@ def main() -> int:
     tmp_rss = Path(_run_dir) / "rss.json"
     tmp_twitter = Path(_run_dir) / "twitter.json"
     tmp_github = Path(_run_dir) / "github.json"
+    tmp_trending = Path(_run_dir) / "trending.json"
     tmp_reddit = Path(_run_dir) / "reddit.json"
     tmp_web = Path(_run_dir) / "web.json"
     logger.info(f"📁 Run directory: {_run_dir}")
@@ -164,6 +166,7 @@ def main() -> int:
         ("RSS", "fetch-rss.py", common + verbose_flag, tmp_rss),
         ("Twitter", "fetch-twitter.py", common + verbose_flag + (["--backend", args.twitter_backend] if args.twitter_backend else []), tmp_twitter),
         ("GitHub", "fetch-github.py", common + verbose_flag, tmp_github),
+        ("GitHub Trending", "fetch-github.py", ["--trending", "--hours", str(args.hours)] + verbose_flag, tmp_trending),
         ("Reddit", "fetch-reddit.py", common + verbose_flag, tmp_reddit),
         ("Web", "fetch-web.py",
          ["--defaults", str(args.defaults)]
@@ -213,7 +216,7 @@ def main() -> int:
     logger.info("🔀 Merging & scoring...")
     merge_args = ["--verbose"] if args.verbose else []
     for flag, path in [("--rss", tmp_rss), ("--twitter", tmp_twitter),
-                       ("--github", tmp_github), ("--reddit", tmp_reddit),
+                       ("--github", tmp_github), ("--trending", tmp_trending), ("--reddit", tmp_reddit),
                        ("--web", tmp_web)]:
         if path.exists():
             merge_args += [flag, str(path)]

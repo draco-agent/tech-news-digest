@@ -443,6 +443,12 @@ Examples:
     )
     
     parser.add_argument(
+        "--trending",
+        type=Path,
+        help="GitHub trending repos JSON file"
+    )
+    
+    parser.add_argument(
         "--reddit",
         type=Path,
         help="Reddit posts results JSON file"
@@ -481,12 +487,13 @@ Examples:
         twitter_data = load_source_data(args.twitter)
         web_data = load_source_data(args.web)
         github_data = load_source_data(args.github)
+        trending_data = load_source_data(args.trending) if hasattr(args, "trending") else None
         reddit_data = load_source_data(args.reddit)
         
         logger.info(f"Loaded sources - RSS: {rss_data.get('total_articles', 0)}, "
                    f"Twitter: {twitter_data.get('total_articles', 0)}, "
                    f"Web: {web_data.get('total_articles', 0)}, "
-                   f"GitHub: {github_data.get('total_articles', 0)}, "
+                   f"GitHub: {github_data.get('total_articles', 0)} releases + {trending_data.get('total', 0) if trending_data else 0} trending, "
                    f"Reddit: {reddit_data.get('total_posts', 0)}")
         
         # Collect all articles with source context
@@ -555,6 +562,25 @@ Examples:
                     article["quality_score"] += 1
                 all_articles.append(article)
         
+
+        # Load GitHub trending repos
+        if trending_data:
+            for repo in trending_data.get("repos", []):
+                article = {
+                    "title": f"{repo['repo']}: {repo['description']}" if repo.get('description') else repo['repo'],
+                    "link": repo.get("url", f"https://github.com/{repo['repo']}"),
+                    "snippet": repo.get("description", ""),
+                    "date": repo.get("pushed_at", ""),
+                    "source": "github-trending",
+                    "source_type": "github_trending",
+                    "topics": repo.get("topics", []),
+                    "stars": repo.get("stars", 0),
+                    "daily_stars_est": repo.get("daily_stars_est", 0),
+                    "forks": repo.get("forks", 0),
+                    "language": repo.get("language", ""),
+                    "quality_score": 5 + min(10, repo.get("daily_stars_est", 0) // 10),
+                }
+                all_articles.append(article)
         total_collected = len(all_articles)
         logger.info(f"Total articles collected: {total_collected}")
         
@@ -587,6 +613,7 @@ Examples:
         # Recalculate total after domain limits
         total_after_domain_limits = sum(len(articles) for articles in topic_groups.values())
 
+
         topic_counts = {topic: len(articles) for topic, articles in topic_groups.items()}
         
         output = {
@@ -596,6 +623,7 @@ Examples:
                 "twitter_articles": twitter_data.get("total_articles", 0),
                 "web_articles": web_data.get("total_articles", 0),
                 "github_articles": github_data.get("total_articles", 0),
+                "github_trending": trending_data.get("total", 0) if trending_data else 0,
                 "reddit_posts": reddit_data.get("total_posts", 0),
                 "total_input": total_collected
             },

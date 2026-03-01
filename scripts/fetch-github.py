@@ -21,6 +21,7 @@ from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError
+from urllib.parse import quote
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
@@ -565,5 +566,122 @@ Environment Variables:
         return 1
 
 
+# --- GitHub Trending via Search API ---
+
+TRENDING_QUERIES = [
+    {"topic": "llm", "q": "llm large-language-model in:topics,name,description"},
+    {"topic": "ai-agent", "q": "ai-agent autonomous-agent in:topics,name,description"},
+    {"topic": "crypto", "q": "blockchain ethereum solidity defi in:topics,name,description"},
+    {"topic": "frontier-tech", "q": "machine-learning deep-learning in:topics,name,description"},
+]
+
+TRENDING_CACHE_PATH = "/tmp/tech-news-digest-trending-cache.json"
+
+
+def fetch_trending_repos(hours: int = 48, github_token: Optional[str] = None,
+                         min_stars: int = 50, per_topic: int = 15) -> List[Dict[str, Any]]:
+    """Fetch trending repos via GitHub Search API (created or pushed recently, sorted by stars).
+    
+    Strategy: search repos pushed within `hours`, with min stars, sorted by stars desc.
+    Then estimate daily star growth from repo age.
+    """
+    cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
+    cutoff_str = cutoff.strftime("%Y-%m-%d")
+
+    headers = {
+        "User-Agent": "TechDigest/3.0",
+        "Accept": "application/vnd.github.v3+json",
+    }
+    if github_token:
+        headers["Authorization"] = f"Bearer {github_token}"
+
+    all_repos = []
+    seen_repos = set()
+
+    for tq in TRENDING_QUERIES:
+        q = f"{tq['q']} pushed:>{cutoff_str} stars:>{min_stars}"
+        url = f"https://api.github.com/search/repositories?q={quote(q)}&sort=stars&order=desc&per_page={per_topic}"
+
+        try:
+            req = Request(url, headers=headers)
+            with urlopen(req, timeout=TIMEOUT) as resp:
+                data = json.loads(resp.read().decode())
+
+            for item in data.get("items", []):
+                full_name = item["full_name"]
+                if full_name in seen_repos:
+                    continue
+                seen_repos.add(full_name)
+
+                # Estimate daily star growth
+                created = parse_github_date(item.get("created_at", ""))
+                age_days = max(1, (datetime.now(timezone.utc) - created).days) if created else 365
+                stars = item.get("stargazers_count", 0)
+                daily_stars = round(stars / age_days)
+
+                all_repos.append({
+                    "repo": full_name,
+                    "name": item.get("name", ""),
+                    "description": (item.get("description") or "")[:200],
+                    "url": item.get("html_url", ""),
+                    "stars": stars,
+                    "daily_stars_est": daily_stars,
+                    "forks": item.get("forks_count", 0),
+                    "language": item.get("language", ""),
+                    "topics": [tq["topic"]],
+                    "created_at": item.get("created_at", ""),
+                    "pushed_at": item.get("pushed_at", ""),
+                    "source_type": "github_trending",
+                })
+
+            logging.debug(f"Trending [{tq['topic']}]: {len(data.get('items', []))} repos")
+            time.sleep(0.5)  # Rate limit courtesy
+
+        except HTTPError as e:
+            logging.warning(f"GitHub trending search error [{tq['topic']}]: HTTP {e.code}")
+        except Exception as e:
+            logging.warning(f"GitHub trending search error [{tq['topic']}]: {e}")
+
+    # Sort by stars desc
+    all_repos.sort(key=lambda x: -x["stars"])
+    logging.info(f"🔥 Trending: {len(all_repos)} repos found across {len(TRENDING_QUERIES)} topics")
+    return all_repos
+
+
+def cmd_trending():
+    """CLI entrypoint for trending repos."""
+    parser = argparse.ArgumentParser(description="Fetch GitHub trending repos")
+    parser.add_argument("--hours", type=int, default=48, help="Lookback window (default: 48)")
+    parser.add_argument("--min-stars", type=int, default=50, help="Minimum stars (default: 50)")
+    parser.add_argument("--per-topic", type=int, default=15, help="Max repos per topic (default: 15)")
+    parser.add_argument("--output", "-o", type=Path, help="Output JSON path")
+    parser.add_argument("--verbose", "-v", action="store_true")
+    parser.add_argument("--force", action="store_true", help="Ignored (compat)")
+    args = parser.parse_args()
+
+    setup_logging(args.verbose)
+    github_token = resolve_github_token()
+    repos = fetch_trending_repos(args.hours, github_token, args.min_stars, args.per_topic)
+
+    output = {
+        "generated": datetime.now(timezone.utc).isoformat(),
+        "source_type": "github_trending",
+        "hours": args.hours,
+        "min_stars": args.min_stars,
+        "total": len(repos),
+        "repos": repos,
+    }
+
+    out_path = args.output or Path(tempfile.mkstemp(prefix="td-trending-", suffix=".json")[1])
+    with open(out_path, 'w', encoding='utf-8') as f:
+        json.dump(output, f, indent=2, ensure_ascii=False)
+
+    print(f"✅ {len(repos)} trending repos → {out_path}")
+    return 0
+
+
 if __name__ == "__main__":
+    if "--trending" in sys.argv:
+        sys.argv.remove("--trending")
+        sys.exit(cmd_trending())
     sys.exit(main())
