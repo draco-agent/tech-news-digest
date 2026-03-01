@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.14.0 — 2026-03-02
+
+### Changed
+- `BLOG_PICKS_COUNT` restored as configurable placeholder (default 3, weekly 3-5)
+- SKILL.md aligned with v3.13.0 features: 6-source pipeline, 151 sources, enrich/trending docs
+- Cron examples updated with ENRICH and BLOG_PICKS_COUNT placeholders
+
 ## v3.13.0 — 2026-03-01
 
 ### Added
