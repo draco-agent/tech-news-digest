@@ -13,6 +13,7 @@ Replace `<...>` placeholders before use. Daily defaults shown; weekly overrides 
 | `<ITEMS_PER_SECTION>` | `3-5` | `10-15` |
 | `<EXTRA_SECTIONS>` | *(none)* | `📊 Weekly Trend Summary` |
 | `<ENRICH>` | `false` | `true` |
+| `<BLOG_PICKS_COUNT>` | `3` | `3-5` |
 | `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
 | `<WORKSPACE>` | Your workspace path | |
 | `<SKILL_DIR>` | Installed skill directory | |
@@ -102,7 +103,7 @@ Filter for `source_type == "github"` from merged JSON. **Show ALL releases — d
 ```
 No 🔥 score prefix for this section. Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. **Show top 5, plus any additional repos with daily_stars_est > 50.**
 
-**📝 Blog Picks** — 3-5 articles from RSS indie blogs(e.g. antirez, Simon Willison, Paul Graham, Overreacted, Eli Bendersky — personal blogs, not news sites）。Prefer articles with `full_text`; fallback to snippet-based picks. **This section is MANDATORY — never omit.** Format:
+**📝 Blog Picks** — <BLOG_PICKS_COUNT> articles from RSS indie blogs(e.g. antirez, Simon Willison, Paul Graham, Overreacted, Eli Bendersky — personal blogs, not news sites）。Prefer articles with `full_text`; fallback to snippet-based picks. **This section is MANDATORY — never omit.** Format:
 ```
 • **Article Title** — Author | 2-3 sentence summary of core insights and highlights
   <https://blog.example.com/post>

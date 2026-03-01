@@ -406,6 +406,7 @@ Replace placeholders with:
 - RSS_HOURS = 48
 - ITEMS_PER_SECTION = 3-5
 - ENRICH = true
+- BLOG_PICKS_COUNT = 3
 - EXTRA_SECTIONS = (none)
 - SUBJECT = Daily Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
@@ -429,6 +430,7 @@ Replace placeholders with:
 - RSS_HOURS = 168
 - ITEMS_PER_SECTION = 10-15
 - ENRICH = true
+- BLOG_PICKS_COUNT = 3-5
 - EXTRA_SECTIONS = 📊 Weekly Trend Summary (2-3 sentences summarizing macro trends)
 - SUBJECT = Weekly Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
