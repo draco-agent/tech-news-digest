@@ -73,6 +73,8 @@ From `topics.json`: `emoji` + `label` headers, `<ITEMS_PER_SECTION>` items each.
 
 **⚠️ CRITICAL: Output articles in EXACTLY the same order as summarize-merged.py output (quality_score descending). Do NOT reorder, group by subtopic, or rearrange. The 🔥 scores must appear in strictly decreasing order within each section.**
 
+**⚠️ Minimum score threshold: Only include articles with quality_score ≥ 5 in topic sections (LLM, AI Agent, Crypto, Frontier Tech). Skip anything below 5.**
+
 ### Fixed Sections (after topics)
 
 **📢 KOL Updates** — Top Twitter KOLs + notable blog authors. Format:
@@ -89,14 +91,14 @@ Read `display_name` and `metrics` (impression_count→👁, reply_count→💬, 
 • **owner/repo** `vX.Y.Z` — release highlights
   <https://github.com/owner/repo/releases/tag/vX.Y.Z>
 ```
-Filter for `source_type == "github"` from merged JSON. Show 3-5 repos with most significant releases. Skip if no releases in time window.
+Filter for `source_type == "github"` from merged JSON. **Show ALL releases — do not filter or reduce.** No 🔥 score prefix for this section. Deduplicate against GitHub Trending (same repo appears in only one section, prefer Releases for watched repos). Skip section if no releases in time window.
 
 **🐙 GitHub Trending** — Top trending repos from the past 24-48h. Format:
 ```
 • **repo/name** ⭐ 1,234 (+56/day) | Language — description
   <https://github.com/repo/name>
 ```
-Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. **Show top 5, plus any additional repos with daily_stars_est > 50.**
+No 🔥 score prefix for this section. Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. **Show top 5, plus any additional repos with daily_stars_est > 50.**
 
 ### Rules
 - Only news from `<TIME_WINDOW>`
