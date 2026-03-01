@@ -134,7 +134,24 @@ def fetch_full_text(url, max_chars=DEFAULT_MAX_CHARS):
 
 
 def enrich_articles(articles, min_score=DEFAULT_MIN_SCORE, max_articles=DEFAULT_MAX_ARTICLES, max_chars=DEFAULT_MAX_CHARS):
-    eligible = [a for a in articles if a.get("quality_score", 0) >= min_score and a.get("link") and not a.get("full_text")]
+    # Eligible: high-score articles OR RSS blog articles (lower threshold for blogs)
+    blog_domains = {
+        "simonwillison.net", "overreacted.io", "eli.thegreenplace.net",
+        "matklad.github.io", "lucumr.pocoo.org", "devblogs.microsoft.com",
+        "rachelbythebay.com", "xeiaso.net", "pluralistic.net", "lcamtuf.substack.com",
+        "hillelwayne.com", "dynomight.net", "geoffreylitt.com", "fabiensanglard.net",
+        "blog.cloudflare.com", "antirez.com", "paulgraham.com", "danluu.com",
+        "latent.space", "www.latent.space",
+    }
+    eligible = []
+    for a in articles:
+        if a.get("full_text") or not a.get("link"):
+            continue
+        score = a.get("quality_score", 0)
+        domain = get_domain(a.get("link", ""))
+        # Blog articles get lower threshold (score >= 3), others use min_score
+        if score >= min_score or (domain in blog_domains and score >= 3):
+            eligible.append(a)
 
     seen_urls = {}
     unique = []
