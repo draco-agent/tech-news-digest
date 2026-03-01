@@ -12,6 +12,7 @@ Replace `<...>` placeholders before use. Daily defaults shown; weekly overrides 
 | `<RSS_HOURS>` | `48` | `168` |
 | `<ITEMS_PER_SECTION>` | `3-5` | `10-15` |
 | `<EXTRA_SECTIONS>` | *(none)* | `📊 Weekly Trend Summary` |
+| `<ENRICH>` | `false` | `true` |
 | `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
 | `<WORKSPACE>` | Your workspace path | |
 | `<SKILL_DIR>` | Installed skill directory | |
@@ -47,7 +48,8 @@ python3 <SKILL_DIR>/scripts/run-pipeline.py \
   --config <WORKSPACE>/config \
   --hours <RSS_HOURS> --freshness <FRESHNESS> \
   --archive-dir <WORKSPACE>/archive/tech-news-digest/ \
-  --output /tmp/td-merged.json --verbose --force
+  --output /tmp/td-merged.json --verbose --force \
+  $([ "<ENRICH>" = "true" ] && echo "--enrich")
 ```
 
 If it fails, run individual scripts in `<SKILL_DIR>/scripts/` (see each script's `--help`), then merge with `merge-sources.py`.
