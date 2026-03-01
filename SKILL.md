@@ -1,6 +1,6 @@
 ---
 name: tech-news-digest
-description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Five-layer data collection from RSS feeds, Twitter/X KOLs, GitHub releases, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
+description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
 version: "3.13.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
@@ -84,7 +84,7 @@ Automated tech news digest system with unified data source model, quality scorin
 
 3. **Generate Digest**:
    ```bash
-   # Unified pipeline (recommended) — runs all 5 sources in parallel + merge
+   # Unified pipeline (recommended) — runs all 6 sources in parallel + merge
    python3 scripts/run-pipeline.py \
      --defaults config/defaults \
      --config workspace/config \
@@ -158,7 +158,7 @@ python3 scripts/run-pipeline.py \
   --archive-dir workspace/archive/tech-news-digest/ \
   --output /tmp/td-merged.json --verbose --force
 ```
-- **Features**: Runs all 5 fetch steps in parallel, then merges + deduplicates + scores
+- **Features**: Runs all 6 fetch steps in parallel, then merges + deduplicates + scores
 - **Output**: Final merged JSON ready for report generation (~30s total)
 - **Metadata**: Saves per-step timing and counts to `*.meta.json`
 - **GitHub Auth**: Auto-generates GitHub App token if `$GITHUB_TOKEN` not set
@@ -194,12 +194,30 @@ python3 scripts/fetch-github.py [--defaults DIR] [--config DIR] [--hours 168] [-
 - Parallel fetching (10 workers), 30s timeout
 - Auth priority: `$GITHUB_TOKEN` → GitHub App auto-generate → `gh` CLI → unauthenticated (60 req/hr)
 
+
+#### `fetch-github.py --trending` - GitHub Trending Repos
+```bash
+python3 scripts/fetch-github.py --trending [--hours 48] [--output FILE] [--verbose]
+```
+- Searches GitHub API for trending repos across 4 topics (LLM, AI Agent, Crypto, Frontier Tech)
+- Quality scoring: base 5 + daily_stars_est / 10, max 15
+
 #### `fetch-reddit.py` - Reddit Posts Fetcher
 ```bash
 python3 scripts/fetch-reddit.py [--defaults DIR] [--config DIR] [--hours 48] [--output FILE]
 ```
 - Parallel fetching (4 workers), public JSON API (no auth required)
 - 13 subreddits with score filtering
+
+
+#### `enrich-articles.py` - Article Full-Text Enrichment
+```bash
+python3 scripts/enrich-articles.py --input merged.json --output enriched.json [--min-score 10] [--max-articles 15] [--verbose]
+```
+- Fetches full article text for high-scoring articles
+- Cloudflare Markdown for Agents (preferred) → HTML extraction (fallback) → Skip (paywalled/social)
+- Blog domain whitelist with lower score threshold (≥3)
+- Parallel fetching (5 workers, 10s timeout)
 
 #### `merge-sources.py` - Quality Scoring & Deduplication
 ```bash
@@ -294,9 +312,9 @@ Place custom configs in `workspace/config/` to override defaults:
 - Emoji icons, page headers/footers with page numbers
 - Generated via `scripts/generate-pdf.py` (requires `weasyprint`)
 
-## Default Sources (138 total)
+## Default Sources (151 total)
 
-- **RSS Feeds (49)**: AI labs, tech blogs, crypto news, Chinese tech media
+- **RSS Feeds (62)**: AI labs, tech blogs, crypto news, Chinese tech media
 - **Twitter/X KOLs (48)**: AI researchers, crypto leaders, tech executives
 - **GitHub Repos (28)**: Major open-source projects (LangChain, vLLM, DeepSeek, Llama, etc.)
 - **Reddit (13)**: r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency, r/ChatGPT, r/OpenAI, etc.
@@ -387,7 +405,7 @@ Replace placeholders with:
 - FRESHNESS = pd
 - RSS_HOURS = 48
 - ITEMS_PER_SECTION = 3-5
-- BLOG_PICKS_COUNT = 2-3
+- ENRICH = true
 - EXTRA_SECTIONS = (none)
 - SUBJECT = Daily Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
@@ -409,8 +427,8 @@ Replace placeholders with:
 - TIME_WINDOW = past 7 days
 - FRESHNESS = pw
 - RSS_HOURS = 168
-- ITEMS_PER_SECTION = 5-8
-- BLOG_PICKS_COUNT = 3-5
+- ITEMS_PER_SECTION = 10-15
+- ENRICH = true
 - EXTRA_SECTIONS = 📊 Weekly Trend Summary (2-3 sentences summarizing macro trends)
 - SUBJECT = Weekly Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
