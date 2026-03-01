@@ -96,7 +96,7 @@ Filter for `source_type == "github"` from merged JSON. Show 3-5 repos with most 
 • **repo/name** ⭐ 1,234 (+56/day) | Language — description
   <https://github.com/repo/name>
 ```
-Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. Include 5-10 repos.
+Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. **Show top 5, plus any additional repos with daily_stars_est > 50.**
 
 ### Rules
 - Only news from `<TIME_WINDOW>`
