@@ -11,7 +11,6 @@ Replace `<...>` placeholders before use. Daily defaults shown; weekly overrides 
 | `<FRESHNESS>` | `pd` | `pw` |
 | `<RSS_HOURS>` | `48` | `168` |
 | `<ITEMS_PER_SECTION>` | `3-5` | `10-15` |
-| `<BLOG_PICKS_COUNT>` | `2-3` | `3-5` |
 | `<EXTRA_SECTIONS>` | *(none)* | `📊 Weekly Trend Summary` |
 | `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
 | `<WORKSPACE>` | Your workspace path | |
@@ -82,15 +81,6 @@ From `topics.json`: `emoji` + `label` headers, `<ITEMS_PER_SECTION>` items each.
   <https://twitter.com/handle/status/ID>
 ```
 Read `display_name` and `metrics` (impression_count→👁, reply_count→💬, retweet_count→🔁, like_count→❤️) from merged JSON. Always show all 4 metrics, use K/M formatting, wrap in backticks. One tweet per bullet.
-
-**🔥 Community Buzz** — Top Reddit + Twitter trending combined. Format:
-```
-• **r/subreddit** — title `{{score}}↑ · {{num_comments}} comments`
-  <{{url}}>
-```
-Sort by engagement across both platforms. Every entry must have a link.
-
-**📝 Blog Picks** — `<BLOG_PICKS_COUNT>` deep articles from RSS.
 
 **<EXTRA_SECTIONS>**
 
