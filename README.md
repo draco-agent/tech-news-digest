@@ -113,6 +113,10 @@ pip install weasyprint           # Enables PDF report generation
 
 **GitHub**: [github.com/draco-agent/tech-news-digest](https://github.com/draco-agent/tech-news-digest)
 
+## 🌟 Featured In
+
+- [Awesome OpenClaw Use Cases](https://github.com/hesamsheikh/awesome-openclaw-usecases) — Community-curated collection of OpenClaw agent use cases
+
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.

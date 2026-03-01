@@ -119,6 +119,10 @@ python -m unittest discover -s tests -v   # 41 个测试，纯标准库
 
 **GitHub**: [github.com/draco-agent/tech-news-digest](https://github.com/draco-agent/tech-news-digest)
 
+## 🌟 相关引用
+
+- [Awesome OpenClaw Use Cases](https://github.com/hesamsheikh/awesome-openclaw-usecases) — OpenClaw 社区精选用例合集
+
 ## 📄 开源协议
 
 MIT License — 详见 [LICENSE](LICENSE)
