@@ -130,6 +130,7 @@ def main() -> int:
     parser.add_argument("--twitter-backend", choices=["official", "twitterapiio", "auto"], default=None, help="Twitter API backend to use")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--force", action="store_true", help="Force re-fetch ignoring caches")
+    parser.add_argument("--enrich", action="store_true", help="Enable full-text enrichment for top articles")
     parser.add_argument("--skip", type=str, default="", help="Comma-separated list of steps to skip (rss,twitter,github,reddit,web)")
     parser.add_argument("--reuse-dir", type=Path, default=None, help="Reuse existing intermediate directory instead of creating new one")
 
@@ -227,7 +228,7 @@ def main() -> int:
     merge_result = run_step("Merge", "merge-sources.py", merge_args, args.output, timeout=60, force=False)
 
     # Phase 3: Enrich high-scoring articles with full text
-    if merge_result["status"] == "ok" and "enrich" not in skip_set:
+    if merge_result["status"] == "ok" and args.enrich and "enrich" not in skip_set:
         logger.info("📰 Enriching top articles with full text...")
         enrich_args = ["--input", str(args.output), "--output", str(args.output)]
         enrich_args += ["--verbose"] if args.verbose else []
