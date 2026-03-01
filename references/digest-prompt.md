@@ -10,7 +10,7 @@ Replace `<...>` placeholders before use. Daily defaults shown; weekly overrides 
 | `<TIME_WINDOW>` | `past 1-2 days` | `past 7 days` |
 | `<FRESHNESS>` | `pd` | `pw` |
 | `<RSS_HOURS>` | `48` | `168` |
-| `<ITEMS_PER_SECTION>` | `3-5` | `5-8` |
+| `<ITEMS_PER_SECTION>` | `3-5` | `10-15` |
 | `<BLOG_PICKS_COUNT>` | `2-3` | `3-5` |
 | `<EXTRA_SECTIONS>` | *(none)* | `📊 Weekly Trend Summary` |
 | `<SUBJECT>` | `Daily Tech Digest - YYYY-MM-DD` | `Weekly Tech Digest - YYYY-MM-DD` |
@@ -90,16 +90,23 @@ Read `display_name` and `metrics` (impression_count→👁, reply_count→💬, 
 ```
 Sort by engagement across both platforms. Every entry must have a link.
 
+**📝 Blog Picks** — `<BLOG_PICKS_COUNT>` deep articles from RSS.
+
+**<EXTRA_SECTIONS>**
+
+**📦 GitHub Releases** — Notable new releases from watched repos. Format:
+```
+• **owner/repo** `vX.Y.Z` — release highlights
+  <https://github.com/owner/repo/releases/tag/vX.Y.Z>
+```
+Filter for `source_type == "github"` from merged JSON. Show 3-5 repos with most significant releases. Skip if no releases in time window.
+
 **🐙 GitHub Trending** — Top trending repos from the past 24-48h. Format:
 ```
 • **repo/name** ⭐ 1,234 (+56/day) | Language — description
   <https://github.com/repo/name>
 ```
-Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. Include 5-10 repos max.
-
-**📝 Blog Picks** — `<BLOG_PICKS_COUNT>` deep articles from RSS.
-
-**<EXTRA_SECTIONS>**
+Filter for `source_type == "github_trending"` from merged JSON. Show total stars, estimated daily star growth (+N/day), primary language, and description. Sort by daily_stars_est descending. Include 5-10 repos.
 
 ### Rules
 - Only news from `<TIME_WINDOW>`
