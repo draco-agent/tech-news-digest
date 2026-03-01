@@ -1741,6 +1741,149 @@
         "crypto"
       ],
       "note": "ZeroClaw Labs project"
+    },
+    {
+      "id": "overreacted-rss",
+      "type": "rss",
+      "name": "Overreacted (Dan Abramov)",
+      "url": "https://overreacted.io/rss.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "eli-bendersky-rss",
+      "type": "rss",
+      "name": "Eli Bendersky",
+      "url": "https://eli.thegreenplace.net/feeds/all.atom.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "matklad-rss",
+      "type": "rss",
+      "name": "matklad (Alex Kladov)",
+      "url": "https://matklad.github.io/feed.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "lucumr-rss",
+      "type": "rss",
+      "name": "Armin Ronacher",
+      "url": "https://lucumr.pocoo.org/feed.atom",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "oldnewthing-rss",
+      "type": "rss",
+      "name": "The Old New Thing (Raymond Chen)",
+      "url": "https://devblogs.microsoft.com/oldnewthing/feed",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "rachelbythebay-rss",
+      "type": "rss",
+      "name": "Rachel by the Bay",
+      "url": "https://rachelbythebay.com/w/atom.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "xeiaso-rss",
+      "type": "rss",
+      "name": "Xe Iaso",
+      "url": "https://xeiaso.net/blog.rss",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "pluralistic-rss",
+      "type": "rss",
+      "name": "Pluralistic (Cory Doctorow)",
+      "url": "https://pluralistic.net/feed/",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "lcamtuf-rss",
+      "type": "rss",
+      "name": "lcamtuf (Michal Zalewski)",
+      "url": "https://lcamtuf.substack.com/feed",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "hillelwayne-rss",
+      "type": "rss",
+      "name": "Hillel Wayne",
+      "url": "https://buttondown.com/hillelwayne/rss",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "dynomight-rss",
+      "type": "rss",
+      "name": "Dynomight",
+      "url": "https://dynomight.net/feed.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "geoffreylitt-rss",
+      "type": "rss",
+      "name": "Geoffrey Litt",
+      "url": "https://www.geoffreylitt.com/feed.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "fabiensanglard-rss",
+      "type": "rss",
+      "name": "Fabien Sanglard",
+      "url": "https://fabiensanglard.net/rss.xml",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
     }
   ]
 }

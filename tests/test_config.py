@@ -111,7 +111,7 @@ class TestSourceCounts(unittest.TestCase):
     def test_rss_count(self):
         sources = load_merged_sources(DEFAULTS_DIR)
         rss = [s for s in sources if s["type"] == "rss"]
-        self.assertEqual(len(rss), 49)
+        self.assertEqual(len(rss), 62)
 
     def test_github_count(self):
         sources = load_merged_sources(DEFAULTS_DIR)
