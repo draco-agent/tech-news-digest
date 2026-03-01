@@ -91,7 +91,7 @@ Read `display_name` and `metrics` (impression_count→👁, reply_count→💬, 
 • **owner/repo** `vX.Y.Z` — release highlights
   <https://github.com/owner/repo/releases/tag/vX.Y.Z>
 ```
-Filter for `source_type == "github"` from merged JSON. **Show ALL releases — do not filter or reduce.** No 🔥 score prefix for this section. Deduplicate against GitHub Trending (same repo appears in only one section, prefer Releases for watched repos). Skip section if no releases in time window.
+Filter for `source_type == "github"` from merged JSON. **Show ALL releases — do not filter or reduce.** No 🔥 score prefix for this section. Skip section if no releases in time window.
 
 **🐙 GitHub Trending** — Top trending repos from the past 24-48h. Format:
 ```
