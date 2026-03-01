@@ -226,6 +226,15 @@ def main() -> int:
 
     merge_result = run_step("Merge", "merge-sources.py", merge_args, args.output, timeout=60, force=False)
 
+    # Phase 3: Enrich high-scoring articles with full text
+    if merge_result["status"] == "ok" and "enrich" not in skip_set:
+        logger.info("📰 Enriching top articles with full text...")
+        enrich_args = ["--input", str(args.output), "--output", str(args.output)]
+        enrich_args += ["--verbose"] if args.verbose else []
+        enrich_result = run_step("Enrich", "enrich-articles.py", enrich_args, args.output, timeout=120, force=False)
+    else:
+        enrich_result = {"name": "Enrich", "status": "skipped", "elapsed_s": 0, "count": 0, "stderr_tail": []}
+
     total_elapsed = time.time() - t_start
 
     # Summary
