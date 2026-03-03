@@ -30,29 +30,6 @@ Or install via CLI:
 clawhub install tech-news-digest
 ```
 
-## 📦 Dependencies
-
-### Core (required)
-
-The skill requires Python 3.8+ and two optional dependencies for enhanced functionality:
-
-```bash
-pip install -r requirements.txt
-# or
-pip install feedparser>=6.0.0 jsonschema>=4.0.0
-```
-
-- **feedparser** — RSS/Atom feed parsing (fallback to regex if not installed)
-- **jsonschema** — JSON Schema validation for config files
-
-### Optional
-
-```bash
-pip install weasyprint
-```
-
-- **weasyprint** — Enables PDF report generation
-
 ## 📊 What You Get
 
 A quality-scored, deduplicated tech digest built from **151 sources**:
@@ -130,6 +107,29 @@ export TWITTER_API_BACKEND="auto" # auto|twitterapiio|official (default: auto)
 export BRAVE_PLAN="free"         # Override Brave rate limit detection: free|pro
 export WEB_SEARCH_BACKEND="auto" # auto|brave|tavily (default: auto)
 ```
+
+## 📦 Dependencies
+
+### Core (required)
+
+The skill requires Python 3.8+ and two optional dependencies for enhanced functionality:
+
+```bash
+pip install -r requirements.txt
+# or
+pip install feedparser>=6.0.0 jsonschema>=4.0.0
+```
+
+- **feedparser** — RSS/Atom feed parsing (fallback to regex if not installed)
+- **jsonschema** — JSON Schema validation for config files
+
+### Optional
+
+```bash
+pip install weasyprint
+```
+
+- **weasyprint** — Enables PDF report generation
 
 ## 📂 Repository
 
