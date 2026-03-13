@@ -97,9 +97,10 @@ cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
 所有环境变量均为可选，管道会自动使用可用的数据源。
 
 ```bash
-export TWITTERAPI_IO_KEY="..."    # twitterapi.io (~$5/月) — 启用 Twitter 数据层
-export X_BEARER_TOKEN="..."       # Twitter/X 官方 API — 备选 Twitter 后端
-export TWITTER_API_BACKEND="auto" # auto|twitterapiio|official（默认: auto）
+export GETX_API_KEY="..."        # GetXAPI ($0.001/次) — 首选 Twitter 后端
+export TWITTERAPI_IO_KEY="..."    # twitterapi.io (~$5/月) — 备选 Twitter 后端
+export X_BEARER_TOKEN="..."       # Twitter/X 官方 API — 兜底 Twitter 后端
+export TWITTER_API_BACKEND="auto" # auto|getxapi|twitterapiio|official（默认: auto）
 export TAVILY_API_KEY="tvly-xxx"  # Tavily Search API（替代方案，免费 1000 次/月）
 export BRAVE_API_KEYS="k1,k2,k3" # Brave Search API 密钥（逗号分隔，自动轮换）
 export BRAVE_API_KEY="..."        # 单密钥回退
