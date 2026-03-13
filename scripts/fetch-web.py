@@ -35,7 +35,7 @@ RETRY_DELAY = 2.0
 
 # Brave Search API
 BRAVE_API_BASE = "https://api.search.brave.com/res/v1/web/search"
-TAVILY_API_BASE = "https://api.tavily.com/search"
+TAVILY_API_BASE = os.getenv("TAVILY_API_BASE", "https://api.tavily.com/search")
 BRAVE_RATE_LIMIT_CACHE = "/tmp/tech-news-digest-brave-rate-limit.json"
 
 
