@@ -1380,7 +1380,7 @@
       "type": "rss",
       "name": "Bankless",
       "url": "https://newsletter.banklesshq.com/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "crypto"
