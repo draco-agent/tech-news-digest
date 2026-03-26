@@ -1884,6 +1884,186 @@
       ],
       "priority": false,
       "enabled": true
+    },
+    {
+      "id": "youtube-karpathy",
+      "type": "rss",
+      "name": "YouTube: Andrej Karpathy",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCXUPKJO5MZQN11PqgIvyuvQ",
+      "topics": [
+        "llm"
+      ],
+      "priority": true,
+      "enabled": true
+    },
+    {
+      "id": "youtube-ai-explained",
+      "type": "rss",
+      "name": "YouTube: AI Explained",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCBjkbmzVplPgVF-GheNYWCg",
+      "topics": [
+        "llm"
+      ],
+      "priority": true,
+      "enabled": true
+    },
+    {
+      "id": "youtube-two-minute-papers",
+      "type": "rss",
+      "name": "YouTube: Two Minute Papers",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCbfYPyITQ-7l4upoX8nvctg",
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-yannic-kilcher",
+      "type": "rss",
+      "name": "YouTube: Yannic Kilcher",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCZHmQk67mSJgfCCTn7xBfew",
+      "topics": [
+        "llm"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-3blue1brown",
+      "type": "rss",
+      "name": "YouTube: 3Blue1Brown",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCYO_jab_esuFRV4b17AJtAw",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-fireship",
+      "type": "rss",
+      "name": "YouTube: Fireship",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCsBjURrPoezykLs9EqgamOA",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-matt-wolfe",
+      "type": "rss",
+      "name": "YouTube: Matt Wolfe",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCl3U-xOlFVLlsheAug-QoWA",
+      "topics": [
+        "ai-agent"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-dabo-rai",
+      "type": "rss",
+      "name": "YouTube: Dabo Rai",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCx11muyXurAlpAzrjhERSCw",
+      "topics": [
+        "ai-agent"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-ai-jason",
+      "type": "rss",
+      "name": "YouTube: AI Jason",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCrXSVX9a1mj8l0CMLwKgMVw",
+      "topics": [
+        "ai-agent"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-prompt-engineering",
+      "type": "rss",
+      "name": "YouTube: Prompt Engineering",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCDq7SjbgRKty5TgGafW8Clg",
+      "topics": [
+        "ai-agent",
+        "llm"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-bankless",
+      "type": "rss",
+      "name": "YouTube: Bankless",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCAl9Ld79qaZxp9JzEOwd3aA",
+      "topics": [
+        "crypto"
+      ],
+      "priority": true,
+      "enabled": true
+    },
+    {
+      "id": "youtube-a16z-crypto",
+      "type": "rss",
+      "name": "YouTube: a16z crypto",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCTHq3W46BiAYjKUYZq2qm-Q",
+      "topics": [
+        "crypto"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-lex-fridman",
+      "type": "rss",
+      "name": "YouTube: Lex Fridman",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCSHZKyawb77ixDdsGog4iWA",
+      "topics": [
+        "llm",
+        "crypto"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-computerphile",
+      "type": "rss",
+      "name": "YouTube: Computerphile",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UC9-y-6csu5WGm29I7JiwpnA",
+      "topics": [
+        "frontier-tech"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-ai-epiphany",
+      "type": "rss",
+      "name": "YouTube: AI Epiphany",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UChepm4zf3QIYZgL5w7jl3MA",
+      "topics": [
+        "llm"
+      ],
+      "priority": false,
+      "enabled": true
+    },
+    {
+      "id": "youtube-huggingface",
+      "type": "rss",
+      "name": "YouTube: Hugging Face",
+      "url": "https://www.youtube.com/feeds/videos.xml?channel_id=UCHlNU7kIZhRgSbhHvFoy72w",
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "priority": false,
+      "enabled": true
     }
   ]
 }
