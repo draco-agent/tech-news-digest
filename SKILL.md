@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.16.0"
+version: "3.16.1"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -43,6 +43,12 @@ env:
   - name: GH_APP_KEY_FILE
     required: false
     description: Path to GitHub App private key PEM file
+  - name: RESEND_API_KEY
+    required: false
+    description: Resend API key
+  - name: RESEND_FROM
+    required: false
+    description: Sender 
 tools:
   - python3: Required. Runs data collection and merge scripts.
   - mail: Optional. msmtp-based mail command for email delivery (preferred).
@@ -382,6 +388,10 @@ export GITHUB_TOKEN="ghp_xxx"              # PAT (simplest)
 export GH_APP_ID="12345"                   # Or use GitHub App for auto-token
 export GH_APP_INSTALL_ID="67890"
 export GH_APP_KEY_FILE="/path/to/key.pem"
+
+# Resend Email (optional, enables email delivery)
+export RESEND_API_KEY="re_xxx"
+export RESEND_FROM="Bot <bot@yourdomain.com>"
 ```
 
 - **Twitter**: `TWITTERAPI_IO_KEY` preferred ($3-5/mo); `X_BEARER_TOKEN` as fallback; `auto` mode tries twitterapiio first

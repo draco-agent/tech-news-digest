@@ -109,6 +109,9 @@ export BRAVE_API_KEY="..."         # Single Brave key
 export WEB_SEARCH_BACKEND="auto"   # auto|brave|tavily
 # GitHub
 export GITHUB_TOKEN="..."          # GitHub API
+# Resend
+export RESEND_API_KEY="re_xxx"     # Resend API
+export RESEND_FROM="Bot <bot@yourdomain.com>" # Resend Sender
 # Other
 export BRAVE_PLAN="free"           # Override Brave rate limit: free|pro
 ```
