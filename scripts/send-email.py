@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Send HTML email with optional PDF attachment via msmtp or sendmail.
+Send HTML email with optional PDF attachment via Resend, msmtp, or sendmail.
 
 Properly constructs MIME multipart message so HTML body renders correctly
-even when attachments are included.
+when attachments are included, while also supporting direct API delivery.
 
 Usage:
     python3 send-email.py --to user@example.com --subject "Daily Digest" \
@@ -12,14 +12,22 @@ Usage:
 
 import argparse
 import base64
+import json
+import logging
+import os
 import subprocess
 import sys
-import logging
+from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.mime.application import MIMEApplication
 from email.utils import formatdate
 from pathlib import Path
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
+
+
+RESEND_API_BASE = "https://api.resend.com/emails"
+RESEND_USER_AGENT = "tech-news-digest/1.0"
 
 
 def build_message(subject: str, from_addr: str, to_addrs: list,
@@ -49,6 +57,64 @@ def build_message(subject: str, from_addr: str, to_addrs: list,
     msg['Date'] = formatdate(localtime=True)
     
     return msg.as_string()
+
+
+def send_via_resend(subject: str, from_addr: str, to_addrs: list,
+                    html_path: Path, attach_path: Path = None,
+                    api_key: str = None) -> bool:
+    """Send via Resend HTTP API."""
+    if not api_key:
+        logging.debug("Resend API key not set")
+        return False
+
+    try:
+        payload = {
+            "from": from_addr,
+            "to": to_addrs,
+            "subject": subject,
+            "html": html_path.read_text(encoding='utf-8'),
+        }
+        if attach_path and attach_path.exists():
+            payload["attachments"] = [{
+                "filename": attach_path.name,
+                "content": base64.b64encode(attach_path.read_bytes()).decode("ascii"),
+            }]
+
+        req = Request(
+            RESEND_API_BASE,
+            data=json.dumps(payload).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+                "User-Agent": RESEND_USER_AGENT,
+                "Accept": "application/json",
+            },
+            method="POST",
+        )
+        with urlopen(req, timeout=30) as resp:
+            if 200 <= resp.status < 300:
+                return True
+            logging.error(f"Resend failed: HTTP {resp.status}")
+            return False
+    except HTTPError as e:
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            body = ""
+        if e.code == 403 and "1010" in body:
+            logging.error(
+                "Resend failed: HTTP 403 error code 1010. "
+                "This usually means the request was blocked before reaching the API, "
+                "often because the HTTP request is missing a User-Agent header."
+            )
+        logging.error(f"Resend failed: HTTP {e.code} {body[:300]}")
+        return False
+    except URLError as e:
+        logging.error(f"Resend network error: {e}")
+        return False
+    except Exception as e:
+        logging.error(f"Resend error: {e}")
+        return False
 
 
 def send_via_msmtp(message: str, to_addrs: list) -> bool:
@@ -101,6 +167,7 @@ Examples:
     python3 send-email.py --to user@example.com --subject "Daily Digest" --html /tmp/td-email.html
     python3 send-email.py --to a@x.com --to b@y.com --subject "Weekly" --html body.html --attach digest.pdf
     python3 send-email.py --to user@x.com --subject "Test" --html body.html --from "Bot <bot@x.com>"
+    python3 send-email.py --to user@x.com --subject "Test" --html body.html --provider resend
 """
     )
     parser.add_argument('--to', action='append', required=True, help='Recipient email (repeatable)')
@@ -108,6 +175,8 @@ Examples:
     parser.add_argument('--html', required=True, type=Path, help='HTML body file')
     parser.add_argument('--attach', type=Path, default=None, help='PDF attachment file')
     parser.add_argument('--from', dest='from_addr', default=None, help='From address')
+    parser.add_argument('--provider', choices=['auto', 'resend', 'msmtp', 'sendmail'], default='auto', help='Email delivery provider')
+    parser.add_argument('--resend-api-key', default=None, help='Resend API key (default: RESEND_API_KEY env var)')
     parser.add_argument('--verbose', '-v', action='store_true')
     args = parser.parse_args()
     
@@ -124,27 +193,38 @@ Examples:
     to_addrs = []
     for addr in args.to:
         to_addrs.extend([a.strip() for a in addr.split(',') if a.strip()])
-    
-    from_addr = args.from_addr or 'noreply@localhost'
-    
-    logging.info(f"Building email: {args.subject} → {', '.join(to_addrs)}")
+
+    resend_api_key = args.resend_api_key or os.environ.get('RESEND_API_KEY')
+    from_addr = args.from_addr or os.environ.get('RESEND_FROM') or 'noreply@localhost'
+
+    logging.info(f"Building email: {args.subject} -> {', '.join(to_addrs)}")
+    logging.info(f"Provider mode: {args.provider}")
     if args.attach:
         logging.info(f"Attachment: {args.attach} ({'exists' if args.attach.exists() else 'MISSING'})")
-    
+
+    provider_attempts = ['resend', 'msmtp', 'sendmail'] if args.provider == 'auto' else [args.provider]
     message = build_message(args.subject, from_addr, to_addrs, args.html, args.attach)
-    
-    # Try msmtp first, then sendmail
-    if send_via_msmtp(message, to_addrs):
-        logging.info("✅ Sent via msmtp")
-        return 0
-    
-    if send_via_sendmail(message, to_addrs):
-        logging.info("✅ Sent via sendmail")
-        return 0
-    
+
+    for provider in provider_attempts:
+        if provider == 'resend':
+            if send_via_resend(args.subject, from_addr, to_addrs, args.html, args.attach, resend_api_key):
+                logging.info("✅ Sent via Resend")
+                return 0
+        elif provider == 'msmtp':
+            if send_via_msmtp(message, to_addrs):
+                logging.info("✅ Sent via msmtp")
+                return 0
+        elif provider == 'sendmail':
+            if send_via_sendmail(message, to_addrs):
+                logging.info("✅ Sent via sendmail")
+                return 0
+
     logging.error("❌ All send methods failed")
     return 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
+
+
+

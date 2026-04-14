@@ -106,6 +106,9 @@ export BRAVE_API_KEY="..."         # 单个密钥
 export WEB_SEARCH_BACKEND="auto"   # auto|brave|tavily
 # GitHub
 export GITHUB_TOKEN="..."          # GitHub API
+# Resend
+export RESEND_API_KEY="re_xxx"     # Resend API
+export RESEND_FROM="Bot <bot@yourdomain.com>" # Resend Sender
 # 其他
 export BRAVE_PLAN="free"           # 覆盖速率限制检测：free|pro
 

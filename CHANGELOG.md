@@ -1,5 +1,11 @@
 # Changelog
 
+## v3.16.1 - 2026-03-29
+
+### Added 
+- Resend API support to `send-email.py` as a new email delivery provider, with optional `--provider resend` 
+  / `--resend-api-key` flags, environment-based `RESEND_API_KEY` and `RESEND_FROM` support, direct HTML/PDF attachment delivery, and automatic fallback to `msmtp` or `sendmail` when using `auto` mode.
+
 ## v3.16.0 — 2026-03-26
 
 ### Added
