@@ -12,17 +12,18 @@ Usage:
 """
 
 import json
+import ipaddress
 import re
 import sys
-import os
 import argparse
 import logging
 import time
+import socket
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from html.parser import HTMLParser
 from pathlib import Path
-from typing import Dict, List, Any, Optional, Tuple
+from urllib.parse import urlparse
 from urllib.request import urlopen, Request
 from urllib.error import HTTPError, URLError
 
@@ -51,10 +52,58 @@ def setup_logging(verbose=False):
 
 def get_domain(url):
     try:
-        from urllib.parse import urlparse
         return urlparse(url).netloc.lower().lstrip("www.")
     except Exception:
         return ""
+
+
+def _is_blocked_ip(ip_text):
+    ip = ipaddress.ip_address(ip_text)
+    return (
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
+
+
+def is_safe_fetch_url(url):
+    """Return (ok, reason) for URLs allowed for server-side enrichment fetches."""
+    try:
+        parsed = urlparse(url)
+    except Exception:
+        return False, "invalid URL"
+
+    if parsed.scheme not in {"http", "https"}:
+        return False, f"blocked scheme: {parsed.scheme or 'missing'}"
+
+    host = parsed.hostname
+    if not host:
+        return False, "missing host"
+
+    host_l = host.lower().rstrip(".")
+    if host_l in {"localhost"} or host_l.endswith(".localhost") or host_l.endswith(".local"):
+        return False, f"blocked local host: {host}"
+
+    try:
+        if _is_blocked_ip(host_l):
+            return False, f"blocked IP: {host}"
+    except Exception:
+        pass
+
+    try:
+        infos = socket.getaddrinfo(host, parsed.port or (443 if parsed.scheme == "https" else 80), type=socket.SOCK_STREAM)
+    except OSError as e:
+        return False, f"DNS error: {e}"
+
+    for info in infos:
+        ip_text = info[4][0]
+        if _is_blocked_ip(ip_text):
+            return False, f"blocked resolved IP: {ip_text}"
+
+    return True, "ok"
 
 
 class TextExtractor(HTMLParser):
@@ -98,6 +147,9 @@ def extract_readable_text(html):
 
 def fetch_full_text(url, max_chars=DEFAULT_MAX_CHARS):
     domain = get_domain(url)
+    ok, reason = is_safe_fetch_url(url)
+    if not ok:
+        return {"text": "", "method": "blocked", "tokens": 0, "error": reason}
     if domain in SKIP_DOMAINS:
         return {"text": "", "method": "skipped", "tokens": 0, "error": f"domain {domain} in skip list"}
 

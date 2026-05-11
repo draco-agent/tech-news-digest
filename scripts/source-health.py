@@ -20,6 +20,7 @@ from datetime import datetime
 HEALTH_FILE = "/tmp/tech-news-digest-source-health.json"
 HISTORY_DAYS = 7
 FAILURE_THRESHOLD = 0.5  # >50% failure rate triggers warning
+SKIPPED_STATUSES = {"interface", "skipped", "no_credentials"}
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -88,9 +89,11 @@ def update_health(health: Dict[str, Any], sources: list, now: float) -> None:
             health[sid] = {"name": source.get("name", sid), "checks": []}
         # Prune old entries
         health[sid]["checks"] = [c for c in health[sid]["checks"] if c["ts"] > cutoff]
+        status = source.get("status")
+        ok = None if status in SKIPPED_STATUSES else status == "ok"
         health[sid]["checks"].append({
             "ts": now,
-            "ok": source.get("status") == "ok",
+            "ok": ok,
         })
 
 
@@ -98,13 +101,14 @@ def report_unhealthy(health: Dict[str, Any], logger: logging.Logger) -> int:
     unhealthy = 0
     for sid, info in health.items():
         checks = info.get("checks", [])
-        if len(checks) < 2:
+        checked = [c for c in checks if c.get("ok") is not None]
+        if len(checked) < 2:
             continue
-        failures = sum(1 for c in checks if not c["ok"])
-        rate = failures / len(checks)
+        failures = sum(1 for c in checked if not c["ok"])
+        rate = failures / len(checked)
         if rate > FAILURE_THRESHOLD:
             logger.warning(f"⚠️  Unhealthy source: {info.get('name', sid)} "
-                         f"({failures}/{len(checks)} failures, {rate:.0%} failure rate)")
+                         f"({failures}/{len(checked)} failures, {rate:.0%} failure rate)")
             unhealthy += 1
     return unhealthy
 

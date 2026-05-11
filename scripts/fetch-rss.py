@@ -316,6 +316,7 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
             except URLError as e:
                 if hasattr(e, 'code') and e.code == 304:
                     logging.info(f"⏭ {name}: not modified (304)")
+                    cached_articles = list((cache_entry or {}).get("articles", []))
                     return {
                         "source_id": source_id,
                         "source_type": "rss",
@@ -326,8 +327,8 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
                         "status": "ok",
                         "attempts": attempt + 1,
                         "not_modified": True,
-                        "count": 0,
-                        "articles": [],
+                        "count": len(cached_articles),
+                        "articles": cached_articles,
                     }
                 raise
                 
@@ -342,6 +343,14 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
                 else:
                     logging.warning(f"⚠️ {name}: rejected article with unexpected domain: {article.get('link', '')}")
             articles = validated_articles
+            if cache_entry is not None or not no_cache:
+                with _rss_cache_lock:
+                    if _rss_cache is None:
+                        _rss_cache = {}
+                    existing = _rss_cache.get(url, {})
+                    existing.update({"articles": articles, "count": len(articles), "ts": now})
+                    _rss_cache[url] = existing
+                    _rss_cache_dirty = True
             
             return {
                 "source_id": source_id,

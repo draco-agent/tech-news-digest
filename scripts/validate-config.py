@@ -13,12 +13,10 @@ import json
 import argparse
 import logging
 import sys
-import os
 from pathlib import Path
-from typing import Dict, Any, Set
+from typing import Dict, Any
 
 try:
-    import jsonschema
     from jsonschema import validate, ValidationError
     HAS_JSONSCHEMA = True
 except ImportError:

@@ -24,10 +24,10 @@ from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 from typing import List, Dict, Any, Optional
+from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 _SSL_CTX = ssl.create_default_context()
-from urllib.error import HTTPError, URLError
 
 # Constants
 MAX_WORKERS = 4

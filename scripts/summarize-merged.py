@@ -16,7 +16,7 @@ def summarize(data: dict, top_n: int = 10, topic_filter: str = None):
     
     # Metadata
     meta = data.get("output_stats", {})
-    print(f"=== Merged Data Summary ===")
+    print("=== Merged Data Summary ===")
     print(f"Total articles: {meta.get('total_articles', '?')}")
     print(f"Topics: {', '.join(data.get('topics', {}).keys())}")
     print()

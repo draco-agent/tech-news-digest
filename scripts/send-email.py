@@ -11,7 +11,6 @@ Usage:
 """
 
 import argparse
-import base64
 import subprocess
 import sys
 import logging

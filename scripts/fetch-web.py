@@ -19,7 +19,6 @@ import argparse
 import logging
 import time
 import tempfile
-import re
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
@@ -461,8 +460,8 @@ def generate_search_interface(topic: Dict[str, Any]) -> Dict[str, Any]:
             'exclude': exclude
         },
         'instructions': [
-            f"Use web_search tool for each query in 'queries' list",
-            f"Filter results using 'filters.must_include' and 'filters.exclude'",
+            "Use web_search tool for each query in 'queries' list",
+            "Filter results using 'filters.must_include' and 'filters.exclude'",
             f"Tag matching articles with topic: '{topic_id}'",
             f"Expected max results per query: {MAX_RESULTS_PER_QUERY}"
         ],
@@ -614,10 +613,14 @@ Examples:
             
             # Convert freshness to days for Tavily
             tavily_days = None
-            if args.freshness in ('pd',): tavily_days = 1
-            elif args.freshness in ('pw',): tavily_days = 7
-            elif args.freshness in ('pm',): tavily_days = 30
-            elif args.freshness in ('py',): tavily_days = 365
+            if args.freshness in ('pd',):
+                tavily_days = 1
+            elif args.freshness in ('pw',):
+                tavily_days = 7
+            elif args.freshness in ('pm',):
+                tavily_days = 30
+            elif args.freshness in ('py',):
+                tavily_days = 365
             else:
                 try:
                     tavily_days = max(1, int(args.freshness.rstrip('h')) // 24)

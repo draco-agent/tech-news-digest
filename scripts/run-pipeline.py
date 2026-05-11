@@ -129,7 +129,7 @@ def main() -> int:
     parser.add_argument("--archive-dir", type=Path, default=None, help="Archive dir for dedup penalty")
     parser.add_argument("--output", "-o", type=Path, default=Path("/tmp/td-merged.json"), help="Final merged output")
     parser.add_argument("--step-timeout", type=int, default=DEFAULT_TIMEOUT, help="Per-step timeout (seconds)")
-    parser.add_argument("--twitter-backend", choices=["official", "twitterapiio", "auto"], default=None, help="Twitter API backend to use")
+    parser.add_argument("--twitter-backend", choices=["official", "twitterapiio", "getxapi", "auto"], default=None, help="Twitter API backend to use")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--force", action="store_true", help="Force re-fetch ignoring caches")
     parser.add_argument("--enrich", action="store_true", help="Enable full-text enrichment for top articles")
@@ -278,7 +278,6 @@ def main() -> int:
 
     if merge_result["status"] != "ok":
         logger.error(f"❌ Merge failed: {merge_result['stderr_tail']}")
-        return 1
 
     # Write pipeline metadata alongside output for agent consumption
     meta = {
@@ -287,6 +286,7 @@ def main() -> int:
         "fetch_elapsed_s": round(fetch_elapsed, 1),
         "steps": step_results,
         "merge": merge_result,
+        "enrich": enrich_result,
         "health": health_result,
         "health_summary": health_summary,
         "output": str(args.output),
@@ -319,6 +319,13 @@ def main() -> int:
             pass
 
     logger.info(f"✅ Done → {args.output}")
+
+    failed_steps = [r for r in step_results if r["status"] != "ok"]
+    if merge_result["status"] != "ok":
+        return 1
+    if failed_steps:
+        logger.error("❌ Fetch failed for: %s", ", ".join(r["name"] for r in failed_steps))
+        return 1
     return 0
 
 

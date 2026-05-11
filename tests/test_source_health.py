@@ -22,6 +22,17 @@ class TestSourceHealthHelpers(unittest.TestCase):
         self.assertGreater(len(data), 0)
         self.assertTrue(all(item["source_id"].startswith("web-") for item in data))
 
+    def test_interface_status_is_skipped_not_failed(self):
+        health = {}
+        now = 1_800_000_000
+        sources = [{"source_id": "web-llm", "name": "Web: llm", "status": "interface"}]
+
+        source_health.update_health(health, sources, now)
+        source_health.update_health(health, sources, now + 1)
+
+        checks = health["web-llm"]["checks"]
+        self.assertEqual([check["ok"] for check in checks], [None, None])
+
 
 class TestSourceHealthScript(unittest.TestCase):
     def test_writes_summary_output(self):

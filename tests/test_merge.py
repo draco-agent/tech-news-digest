@@ -15,7 +15,7 @@ sys.path.insert(0, str(SCRIPTS_DIR))
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 # Import merge-sources as module
-import importlib.util
+import importlib.util  # noqa: E402
 spec = importlib.util.spec_from_file_location("merge_sources", SCRIPTS_DIR / "merge-sources.py")
 merge_mod = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(merge_mod)

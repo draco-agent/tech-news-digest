@@ -10,7 +10,7 @@ from pathlib import Path
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
 sys.path.insert(0, str(SCRIPTS_DIR))
 
-from config_loader import load_merged_sources, load_merged_topics
+from config_loader import load_merged_sources, load_merged_topics  # noqa: E402
 
 DEFAULTS_DIR = Path(__file__).parent.parent / "config" / "defaults"
 README_EN = Path(__file__).parent.parent / "README.md"

@@ -302,6 +302,7 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
             except HTTPError as e:
                 if e.code == 304:
                     logging.info(f"⏭ {name}: not modified (304)")
+                    cached_articles = list((cache_entry or {}).get("articles", []))
                     return {
                         "source_id": source_id,
                         "source_type": "github",
@@ -312,8 +313,8 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
                         "status": "ok",
                         "attempts": attempt + 1,
                         "not_modified": True,
-                        "count": 0,
-                        "articles": [],
+                        "count": len(cached_articles),
+                        "articles": cached_articles,
                     }
                 raise
             
@@ -345,6 +346,11 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
                         "summary": summary,
                         "topics": topics[:],
                     })
+            if cache_entry is not None or not no_cache:
+                existing = cache.get(api_url, {})
+                existing.update({"articles": articles, "count": len(articles), "ts": now})
+                cache[api_url] = existing
+                _github_cache_dirty = True
             
             return {
                 "source_id": source_id,
