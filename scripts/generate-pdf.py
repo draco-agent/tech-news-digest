@@ -11,6 +11,7 @@ Usage:
 Requirements:
     - weasyprint (pip install weasyprint)
     - Noto Sans CJK SC font (apt install fonts-noto-cjk)
+    - Noto Color Emoji font (apt install fonts-noto-color-emoji)
 """
 
 import argparse
@@ -20,6 +21,34 @@ import sys
 import logging
 from pathlib import Path
 from urllib.parse import urlparse
+
+
+# Emoji presentation characters used in digest headings and badges.
+# We wrap them explicitly so WeasyPrint/Pango uses Noto Color Emoji instead of
+# relying on font fallback from the CJK text stack. Without this, fontTools can
+# try to subset an incompatible fallback font and fail with OS/2 unicode range
+# values outside the supported range.
+EMOJI_RE = re.compile(
+    r'('
+    r'(?:[\U0001F1E6-\U0001F1FF]{2})'  # regional indicator flags
+    r'|(?:[\U0001F300-\U0001FAFF][\ufe0f\u20e3]?(?:\u200d[\U0001F300-\U0001FAFF][\ufe0f\u20e3]?)*?)'
+    r'|(?:[\u2600-\u27BF]\ufe0f?)'
+    r')'
+)
+
+
+def wrap_emoji_spans(html_fragment: str) -> str:
+    """Wrap emoji codepoints in spans with the dedicated emoji font.
+
+    This operates after HTML escaping/inline markdown conversion, and skips tags
+    so attributes/URLs are never modified.
+    """
+    parts = re.split(r'(<[^>]+>)', html_fragment)
+    for i, part in enumerate(parts):
+        if not part or part.startswith('<'):
+            continue
+        parts[i] = EMOJI_RE.sub(r'<span class="emoji">\1</span>', part)
+    return ''.join(parts)
 
 
 # ---------------------------------------------------------------------------
@@ -76,6 +105,7 @@ def _process_inline(text: str) -> str:
 
     result = re.sub(r'\[([^\]]+?)\]\(([^)]+?)\)', restore_md_link, result)
 
+    result = wrap_emoji_spans(result)
     return result
 
 
@@ -190,6 +220,13 @@ PDF_CSS = """
     }
 }
 
+@font-face {
+    font-family: 'Noto Color Emoji PDF';
+    src: url('file:///usr/share/fonts/truetype/noto/NotoColorEmoji.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+}
+
 body {
     font-family: 'Noto Sans CJK SC', 'Noto Sans SC', 'PingFang SC',
                  'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
@@ -296,6 +333,11 @@ h1 + blockquote {
 body {
     -webkit-font-smoothing: antialiased;
 }
+
+.emoji {
+    font-family: 'Noto Color Emoji PDF', 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji', sans-serif;
+    font-weight: 400;
+}
 """
 
 
@@ -334,6 +376,7 @@ Examples:
 Requirements:
     pip install weasyprint
     apt install fonts-noto-cjk  (for Chinese support)
+    apt install fonts-noto-color-emoji  (for emoji support)
 """
     )
     parser.add_argument("--input", "-i", required=True, help="Input markdown file")
