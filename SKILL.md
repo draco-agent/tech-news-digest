@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.16.0"
+version: "3.16.1"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -31,6 +31,15 @@ env:
   - name: BRAVE_API_KEY
     required: false
     description: Brave Search API key (single key fallback)
+  - name: REDDIT_CLIENT_ID
+    required: false
+    description: Reddit API app client ID for OAuth fallback when public JSON is blocked
+  - name: REDDIT_CLIENT_SECRET
+    required: false
+    description: Reddit API app client secret for OAuth fallback when public JSON is blocked
+  - name: REDDIT_USERNAME
+    required: false
+    description: Optional Reddit username used only in the OAuth User-Agent string
   - name: GITHUB_TOKEN
     required: false
     description: GitHub token for higher API rate limits (auto-generated from GitHub App if not set)

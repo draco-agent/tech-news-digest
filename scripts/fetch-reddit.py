@@ -23,9 +23,11 @@ import tempfile
 from datetime import datetime, timedelta, timezone
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any, Optional, Tuple
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+from urllib.parse import urlencode
+from base64 import b64encode
 
 _SSL_CTX = ssl.create_default_context()
 
@@ -48,6 +50,40 @@ def setup_logging(verbose: bool = False) -> logging.Logger:
     return logging.getLogger(__name__)
 
 
+def get_oauth_token() -> Tuple[Optional[str], Optional[str]]:
+    """Return a Reddit OAuth app-only token when credentials are configured.
+
+    Public reddit.com JSON endpoints increasingly return HTTP 403 from servers
+    and datacenter IPs. If REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET are set,
+    use the official OAuth API instead. Optional REDDIT_USERNAME is used only in
+    the User-Agent string; no password grant is used.
+    """
+    client_id = os.environ.get('REDDIT_CLIENT_ID')
+    client_secret = os.environ.get('REDDIT_CLIENT_SECRET')
+    if not client_id or not client_secret:
+        return None, 'REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET not set'
+
+    ua_user = os.environ.get('REDDIT_USERNAME', 'draco-agent')
+    token_url = 'https://www.reddit.com/api/v1/access_token'
+    body = urlencode({'grant_type': 'client_credentials'}).encode('utf-8')
+    auth = b64encode(f'{client_id}:{client_secret}'.encode('utf-8')).decode('ascii')
+    req = Request(token_url, data=body, headers={
+        'Authorization': f'Basic {auth}',
+        'User-Agent': f'{USER_AGENT} (by /u/{ua_user})',
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Accept': 'application/json',
+    })
+    try:
+        with urlopen(req, timeout=TIMEOUT, context=_SSL_CTX) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+        token = data.get('access_token')
+        if token:
+            return token, None
+        return None, 'OAuth response missing access_token'
+    except Exception as e:
+        return None, f'OAuth token fetch failed: {e}'
+
+
 def load_reddit_sources(defaults_dir: Optional[Path], config_dir: Optional[Path]) -> List[Dict[str, Any]]:
     """Load Reddit sources from config, with user overrides."""
     sys.path.insert(0, str(Path(__file__).parent))
@@ -68,7 +104,7 @@ def load_reddit_sources(defaults_dir: Optional[Path], config_dir: Optional[Path]
     return reddit_sources
 
 
-def fetch_subreddit(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
+def fetch_subreddit(source: Dict[str, Any], cutoff: datetime, oauth_token: Optional[str] = None) -> Dict[str, Any]:
     """Fetch posts from a subreddit using Reddit's JSON API."""
     source_id = source['id']
     subreddit = source['subreddit']
@@ -79,15 +115,21 @@ def fetch_subreddit(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
     topics = source.get('topics', [])
     name = source.get('name', f'r/{subreddit}')
     
-    url = f"https://www.reddit.com/r/{subreddit}/{sort}.json?limit={limit}&raw_json=1"
+    if oauth_token:
+        url = f"https://oauth.reddit.com/r/{subreddit}/{sort}.json?limit={limit}&raw_json=1"
+    else:
+        url = f"https://www.reddit.com/r/{subreddit}/{sort}.json?limit={limit}&raw_json=1"
     
     for attempt in range(RETRY_COUNT + 1):
         try:
-            req = Request(url, headers={
+            headers = {
                 'User-Agent': USER_AGENT,
-                'Accept': 'text/html,application/json',
+                'Accept': 'application/json',
                 'Accept-Language': 'en-US,en;q=0.9',
-            })
+            }
+            if oauth_token:
+                headers['Authorization'] = f'Bearer {oauth_token}'
+            req = Request(url, headers=headers)
             
             with urlopen(req, timeout=TIMEOUT, context=_SSL_CTX) as resp:
                 data = json.loads(resp.read().decode('utf-8'))
@@ -176,14 +218,14 @@ def fetch_subreddit(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
                     time.sleep(10)
                     continue
             elif e.code == 403:
-                logging.warning(f"r/{subreddit} is private or quarantined")
+                logging.warning(f"r/{subreddit} returned HTTP 403 (blocked/private/quarantined); configure Reddit OAuth credentials if all subreddits fail")
                 return {
                     "source_id": source_id,
                     "source_type": "reddit",
                     "name": name,
                     "subreddit": subreddit,
                     "status": "error",
-                    "error": f"HTTP {e.code}: Forbidden",
+                    "error": f"HTTP {e.code}: Forbidden/blocked (set REDDIT_CLIENT_ID and REDDIT_CLIENT_SECRET for OAuth)",
                     "count": 0,
                     "articles": [],
                 }
@@ -282,13 +324,18 @@ Examples:
             print(f"Output (empty): {args.output}")
             return 0
         
+        oauth_token, oauth_error = get_oauth_token()
+        if oauth_token:
+            logger.info("🔐 Using Reddit OAuth API (client_credentials)")
+        else:
+            logger.info(f"🌐 Using Reddit public JSON API ({oauth_error})")
         logger.info(f"📡 Fetching {len(sources)} subreddits (cutoff: {cutoff.strftime('%Y-%m-%d %H:%M')} UTC)")
         
         results = []
         total_posts = 0
         
         with ThreadPoolExecutor(max_workers=MAX_WORKERS) as pool:
-            futures = {pool.submit(fetch_subreddit, source, cutoff): source for source in sources}
+            futures = {pool.submit(fetch_subreddit, source, cutoff, oauth_token): source for source in sources}
             for future in as_completed(futures):
                 result = future.result()
                 results.append(result)

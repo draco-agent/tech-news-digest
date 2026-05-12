@@ -16,37 +16,60 @@ import sys
 import logging
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+import re
+import html as html_lib
 from email.mime.application import MIMEApplication
 from email.utils import formatdate
 from pathlib import Path
 
 
+def _html_to_plain_text(html_content: str) -> str:
+    """Best-effort plain-text fallback for clients that do not render HTML."""
+    text = re.sub(r"(?i)<br\s*/?>", "\n", html_content)
+    text = re.sub(r"(?i)</(p|div|h[1-6]|li|ul|ol)>", "\n", text)
+    text = re.sub(r"<[^>]+>", "", text)
+    text = html_lib.unescape(text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+    return text.strip() or "HTML email body attached."
+
+
 def build_message(subject: str, from_addr: str, to_addrs: list,
                   html_path: Path, attach_path: Path = None) -> str:
-    """Build a proper MIME message with HTML body and optional attachment."""
-    
+    """Build a standards-compliant MIME message.
+
+    Structure:
+      multipart/mixed
+        multipart/alternative
+          text/plain
+          text/html
+        application/pdf (optional)
+
+    Nesting text/html inside multipart/alternative avoids clients treating the
+    HTML body as a raw attachment or displaying markup as plain text when a PDF
+    attachment is also present.
+    """
     html_content = html_path.read_text(encoding='utf-8')
-    
+    plain_content = _html_to_plain_text(html_content)
+
+    msg = MIMEMultipart('mixed')
+    alt = MIMEMultipart('alternative')
+    alt.attach(MIMEText(plain_content, 'plain', 'utf-8'))
+    alt.attach(MIMEText(html_content, 'html', 'utf-8'))
+    msg.attach(alt)
+
     if attach_path and attach_path.exists():
-        # Multipart mixed: HTML body + attachment
-        msg = MIMEMultipart('mixed')
-        html_part = MIMEText(html_content, 'html', 'utf-8')
-        msg.attach(html_part)
-        
         pdf_data = attach_path.read_bytes()
         pdf_part = MIMEApplication(pdf_data, _subtype='pdf')
         pdf_part.add_header('Content-Disposition', 'attachment',
                            filename=attach_path.name)
         msg.attach(pdf_part)
-    else:
-        # Simple HTML message
-        msg = MIMEText(html_content, 'html', 'utf-8')
-    
+
     msg['Subject'] = subject
     msg['From'] = from_addr
     msg['To'] = ', '.join(to_addrs)
     msg['Date'] = formatdate(localtime=True)
-    
+    msg['X-Mailer'] = 'Hermes Agent digest send-email.py'
+
     return msg.as_string()
 
 
