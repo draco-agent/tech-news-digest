@@ -67,22 +67,12 @@ def is_safe_url(url: str) -> bool:
         return False
 
 
-def _process_inline(text: str, *, emoji: bool = False) -> str:
-    """Process inline markdown with HTML escaping.
-
-    PDF emoji rendering through Pango/WeasyPrint is unreliable on many Linux
-    hosts. Keep emoji only when explicitly requested; otherwise remove emoji
-    codepoints and rely on styled badges/headings for visual hierarchy.
-    """
-    if not emoji:
-        text = EMOJI_RE.sub('', text)
+def _process_inline(text: str) -> str:
+    """Process inline markdown with HTML escaping."""
     result = escape(text)
 
     # Bold: **text**
     result = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', result)
-
-    # Italic: *text* (after bold so **...** is not consumed)
-    result = re.sub(r'(?<!\*)\*([^*\n]+?)\*(?!\*)', r'<em>\1</em>', result)
 
     # Inline code: `text`
     result = re.sub(
@@ -115,138 +105,96 @@ def _process_inline(text: str, *, emoji: bool = False) -> str:
 
     result = re.sub(r'\[([^\]]+?)\]\(([^)]+?)\)', restore_md_link, result)
 
-    if emoji:
-        result = wrap_emoji_spans(result)
+    result = wrap_emoji_spans(result)
     return result
 
 
 def markdown_to_html(md_content: str) -> str:
-    """Convert markdown digest to styled HTML for PDF rendering.
-
-    The Discord markdown is optimized for chat, not print. For PDF we convert
-    digest bullets into compact cards: score badge, summary, source domain, and
-    optional metadata live in one block instead of becoming separate bullets.
-    """
+    """Convert markdown digest to styled HTML for PDF rendering."""
     lines = md_content.strip().split('\n')
     html_parts = []
     in_list = False
-    open_card = False
-
-    def close_list():
-        nonlocal in_list
-        if in_list:
-            html_parts.append('</ul>')
-            in_list = False
-
-    def close_card():
-        nonlocal open_card
-        if open_card:
-            html_parts.append('</div>')
-            open_card = False
-
-    def source_link_html(url_line: str) -> str:
-        url = url_line.strip('<> ')
-        if not is_safe_url(url):
-            return ''
-        escaped_url = escape(url)
-        domain = escape(urlparse(url).netloc or url)
-        return f'<div class="item-link"><a href="{escaped_url}">{domain}</a></div>'
 
     for line in lines:
         stripped = line.strip()
 
         if not stripped:
-            close_list()
+            if in_list:
+                html_parts.append('</ul>')
+                in_list = False
             continue
 
         # H1
         if stripped.startswith('# '):
-            close_card(); close_list()
             title = _process_inline(stripped[2:])
             html_parts.append(f'<h1>{title}</h1>')
             continue
 
         # H2
         if stripped.startswith('## '):
-            close_card(); close_list()
+            if in_list:
+                html_parts.append('</ul>')
+                in_list = False
             section = _process_inline(stripped[3:])
             html_parts.append(f'<h2>{section}</h2>')
             continue
 
         # H3
         if stripped.startswith('### '):
-            close_card(); close_list()
+            if in_list:
+                html_parts.append('</ul>')
+                in_list = False
             section = _process_inline(stripped[4:])
             html_parts.append(f'<h3>{section}</h3>')
             continue
 
         # Blockquote
         if stripped.startswith('> '):
-            close_card(); close_list()
             text = _process_inline(stripped[2:])
             html_parts.append(f'<blockquote>{text}</blockquote>')
             continue
 
         # Horizontal rule
         if stripped == '---':
-            close_card(); close_list()
             html_parts.append('<hr>')
             continue
 
-        # Digest item bullets, e.g. "• 🔥18 | summary".
-        item_match = re.match(r'^[•\-]\s+(?:🔥\s*)?(\d+(?:\.\d+)?)\s*\|\s*(.+)$', stripped)
-        if item_match:
-            close_card(); close_list()
-            score, summary = item_match.groups()
-            html_parts.append('<div class="item-card">')
-            html_parts.append(
-                f'<div class="item-main"><span class="score-badge">{escape(score)}</span>'
-                f'<span class="item-summary">{_process_inline(summary)}</span></div>'
-            )
-            open_card = True
-            continue
-
-        # Generic report bullets (KOL, releases, trending, blog picks).
+        # Bullet items
         if stripped.startswith('• ') or stripped.startswith('- '):
-            close_card(); close_list()
+            if not in_list:
+                html_parts.append('<ul>')
+                in_list = True
             item_text = stripped[2:]
-            html_parts.append('<div class="item-card secondary">')
-            html_parts.append(f'<div class="item-main"><span class="dot-badge"></span><span class="item-summary">{_process_inline(item_text)}</span></div>')
-            open_card = True
+            safe_item = _process_inline(item_text)
+            html_parts.append(f'<li>{safe_item}</li>')
             continue
 
-        # Link after a card belongs to that card.
-        if stripped.startswith('<http') and open_card:
-            link = source_link_html(stripped)
-            if link:
-                html_parts.append(link)
-            continue
-
-        # Standalone link in a plain list.
+        # Angle-bracket link on its own line (often source URLs)
         if stripped.startswith('<http') and in_list:
-            link = source_link_html(stripped)
-            if link:
-                html_parts.append(f'<li class="source-link">{link}</li>')
-            continue
-
-        # Metadata after a card, e.g. *[2 sources]* or metrics.
-        if open_card and (stripped.startswith('*[') or stripped.startswith('`') or stripped.startswith('*')):
-            html_parts.append(f'<div class="item-meta">{_process_inline(stripped)}</div>')
+            url = stripped.strip('<> ')
+            if is_safe_url(url):
+                escaped_url = escape(url)
+                try:
+                    domain = urlparse(url).netloc
+                    label = escape(domain)
+                except Exception:
+                    label = escaped_url
+                html_parts.append(f'<li class="source-link"><a href="{escaped_url}">{label}</a></li>')
             continue
 
         # Stats/footer
         if stripped.startswith('📊') or stripped.startswith('🤖'):
-            close_card(); close_list()
             text = _process_inline(stripped)
             html_parts.append(f'<p class="footer">{text}</p>')
             continue
 
         # Regular paragraph
-        close_card(); close_list()
         text = _process_inline(stripped)
         html_parts.append(f'<p>{text}</p>')
 
-    close_card(); close_list()
+    if in_list:
+        html_parts.append('</ul>')
+
     return '\n'.join(html_parts)
 
 
@@ -282,30 +230,27 @@ PDF_CSS = """
 body {
     font-family: 'Noto Sans CJK SC', 'Noto Sans SC', 'PingFang SC',
                  'Microsoft YaHei', 'Segoe UI', Roboto, sans-serif;
-    font-size: 10.2pt;
-    line-height: 1.55;
-    color: #172033;
-    background: #ffffff;
+    font-size: 11pt;
+    line-height: 1.7;
+    color: #1a1a1a;
 }
 
 h1 {
-    font-size: 24pt;
-    color: #0f172a;
+    font-size: 22pt;
+    color: #111;
     border-bottom: 3px solid #2563eb;
-    padding-bottom: 9px;
-    margin-bottom: 18px;
+    padding-bottom: 8px;
+    margin-bottom: 20px;
     margin-top: 0;
-    letter-spacing: -0.02em;
 }
 
 h2 {
-    font-size: 14.5pt;
+    font-size: 15pt;
     color: #1e40af;
-    margin-top: 22px;
-    margin-bottom: 10px;
-    padding-bottom: 5px;
-    border-bottom: 1px solid #dbe3f0;
-    break-after: avoid;
+    margin-top: 28px;
+    margin-bottom: 12px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid #e5e7eb;
 }
 
 h3 {
@@ -316,90 +261,33 @@ h3 {
 }
 
 blockquote {
-    background: #f3f6ff;
+    background: #f0f4ff;
     border-left: 4px solid #2563eb;
-    padding: 11px 15px;
-    margin: 14px 0 18px;
-    color: #334155;
-    font-size: 10.1pt;
-    border-radius: 0 8px 8px 0;
-}
-
-.item-card {
-    margin: 8px 0 10px;
-    padding: 9px 11px;
-    border: 1px solid #e6ebf5;
-    border-left: 3px solid #3b82f6;
-    border-radius: 8px;
-    background: #ffffff;
-    break-inside: avoid;
-}
-
-.item-card.secondary {
-    border-left-color: #94a3b8;
-}
-
-.item-main {
-    display: block;
-}
-
-.score-badge {
-    display: inline-block;
-    min-width: 22px;
-    padding: 1px 7px;
-    margin-right: 7px;
-    border-radius: 999px;
-    background: #2563eb;
-    color: white;
-    font-weight: 700;
-    font-size: 8.5pt;
-    line-height: 1.45;
-    text-align: center;
-}
-
-.dot-badge {
-    display: inline-block;
-    width: 7px;
-    height: 7px;
-    margin-right: 8px;
-    margin-bottom: 1px;
-    border-radius: 50%;
-    background: #64748b;
-}
-
-.item-summary {
-    line-height: 1.55;
-}
-
-.item-link {
-    margin-top: 5px;
-    font-size: 8.5pt;
-}
-
-.item-meta {
-    margin-top: 4px;
-    color: #64748b;
-    font-size: 8.6pt;
+    padding: 12px 16px;
+    margin: 16px 0;
+    color: #374151;
+    font-size: 10.5pt;
+    border-radius: 0 6px 6px 0;
 }
 
 ul {
-    padding-left: 18px;
+    padding-left: 20px;
     margin: 8px 0;
 }
 
 li {
-    margin-bottom: 8px;
-    line-height: 1.55;
+    margin-bottom: 10px;
+    line-height: 1.6;
 }
 
 li.source-link {
     list-style: none;
     margin-bottom: 2px;
-    margin-top: -4px;
+    margin-top: -6px;
 }
 
 li.source-link a {
-    font-size: 8.5pt;
+    font-size: 9pt;
 }
 
 a {
