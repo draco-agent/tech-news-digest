@@ -8,7 +8,7 @@
 #   ./test-pipeline.sh --ids sama-twitter,openai-rss  # specific source IDs
 #   ./test-pipeline.sh --hours 12               # custom time window
 #   ./test-pipeline.sh --keep                   # keep output dir after test
-#   ./test-pipeline.sh --twitter-backend twitterapiio  # force twitter backend
+#   ./test-pipeline.sh --twitter-backend xquik  # force twitter backend
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -68,10 +68,12 @@ OPTIONS:
 
   --twitter-backend NAME
                     Force a specific Twitter API backend
-                    Values: official, twitterapiio, auto
+                    Values: official, twitterapiio, getxapi, xquik, auto
                     official     = X API v2 (needs X_BEARER_TOKEN)
                     twitterapiio = twitterapi.io (needs TWITTERAPI_IO_KEY)
-                    auto         = try twitterapiio first, fallback to official
+                    getxapi      = GetXAPI (needs GETX_API_KEY)
+                    xquik        = Xquik (needs XQUIK_API_KEY)
+                    auto         = try getxapi, xquik, twitterapiio, then official
 
   --config DIR      User config overlay directory (optional)
                     Example: --config workspace/config
@@ -84,7 +86,7 @@ OPTIONS:
 
 EXAMPLES:
   ./test-pipeline.sh                                    # full pipeline, all sources
-  ./test-pipeline.sh --only twitter --twitter-backend twitterapiio  # twitter only via twitterapi.io
+  ./test-pipeline.sh --only twitter --twitter-backend xquik  # twitter only via Xquik
   ./test-pipeline.sh --topics crypto --hours 48 --keep  # crypto sources, 48h window
   ./test-pipeline.sh --skip web,reddit -v               # skip web+reddit, verbose
   ./test-pipeline.sh --ids sama-twitter,karpathy-twitter --only twitter
@@ -92,7 +94,9 @@ EXAMPLES:
 ENVIRONMENT:
   X_BEARER_TOKEN      Official X API v2 bearer token (for --backend official)
   TWITTERAPI_IO_KEY   twitterapi.io API key (for --backend twitterapiio)
-  TWITTER_API_BACKEND Default twitter backend if --backend not given (official|twitterapiio|auto)
+  GETX_API_KEY        GetXAPI key (for --backend getxapi)
+  XQUIK_API_KEY       Xquik API key (for --backend xquik)
+  TWITTER_API_BACKEND Default twitter backend if --backend not given (official|twitterapiio|getxapi|xquik|auto)
   BRAVE_API_KEY       Brave Search API key (for web fetch)
   GITHUB_TOKEN        GitHub token (optional, increases GitHub API rate limits)
 HELP
@@ -223,11 +227,11 @@ if should_run "twitter"; then
     TWITTER_ARGS=("--defaults" "$DEFAULTS" "--hours" "$HOURS" "--output" "$OUTDIR/twitter.json" "--force" "${EXTRA_ARGS[@]}")
     [ -n "$TWITTER_BACKEND" ] && TWITTER_ARGS+=("--backend" "$TWITTER_BACKEND")
 
-    if [ -n "$X_BEARER_TOKEN" ] || [ -n "$TWITTERAPI_IO_KEY" ]; then
+    if [ -n "$X_BEARER_TOKEN" ] || [ -n "$TWITTERAPI_IO_KEY" ] || [ -n "$GETX_API_KEY" ] || [ -n "$XQUIK_API_KEY" ]; then
         run_step "fetch-twitter" python3 "$SCRIPT_DIR/fetch-twitter.py" "${TWITTER_ARGS[@]}"
         validate_json "$OUTDIR/twitter.json" "twitter"
     else
-        echo "⏭  fetch-twitter (no X_BEARER_TOKEN or TWITTERAPI_IO_KEY)"
+        echo "⏭  fetch-twitter (no X_BEARER_TOKEN, TWITTERAPI_IO_KEY, GETX_API_KEY, or XQUIK_API_KEY)"
         SKIPPED=$((SKIPPED + 1))
     fi
 else

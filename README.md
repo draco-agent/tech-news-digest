@@ -117,11 +117,12 @@ No need to copy the entire file — just include what you want to change.
 All environment variables are optional. The pipeline runs with whatever sources are available.
 
 ```bash
-# Twitter/X Backend (auto priority: getxapi > twitterapiio > official)
+# Twitter/X Backend (auto priority: getxapi > xquik > twitterapiio > official)
 export GETX_API_KEY="..."        # GetXAPI
+export XQUIK_API_KEY="..."       # Xquik
 export TWITTERAPI_IO_KEY="..."   # twitterapi.io
 export X_BEARER_TOKEN="..."      # Official X API v2
-export TWITTER_API_BACKEND="auto"  # auto|getxapi|twitterapiio|official
+export TWITTER_API_BACKEND="auto"  # auto|getxapi|xquik|twitterapiio|official
 # Web Search
 export TAVILY_API_KEY="tvly-xxx"   # Tavily Search API
 export BRAVE_API_KEYS="k1,k2,k3"   # Brave Search API keys (comma-separated for rotation)
@@ -174,3 +175,5 @@ pip install weasyprint
 ## 📄 License
 
 MIT License — see [LICENSE](LICENSE) for details.
+
+Xquik is an independent third-party service. Not affiliated with X Corp. "Twitter" and "X" are trademarks of X Corp.
