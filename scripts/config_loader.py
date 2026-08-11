@@ -8,10 +8,47 @@ Supports sources.json and topics.json with overlay logic for customization.
 
 import json
 import logging
+import os
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 
 logger = logging.getLogger(__name__)
+
+
+def get_state_dir() -> Path:
+    """Return the directory used for cross-run state (caches, source health).
+
+    State must survive reboots, so `/tmp` is not an option: the health tracker
+    needs several days of samples and the RSS/GitHub caches only pay off across
+    runs. Resolution order:
+
+        1. $TECH_NEWS_DIGEST_STATE_DIR
+        2. $XDG_STATE_HOME/tech-news-digest
+        3. ~/.local/state/tech-news-digest
+
+    Falls back to a temp directory if the chosen path is not writable.
+    """
+    override = os.environ.get("TECH_NEWS_DIGEST_STATE_DIR")
+    if override:
+        base = Path(override)
+    else:
+        xdg = os.environ.get("XDG_STATE_HOME")
+        base = Path(xdg) / "tech-news-digest" if xdg else Path.home() / ".local" / "state" / "tech-news-digest"
+
+    try:
+        base.mkdir(parents=True, exist_ok=True)
+        return base
+    except OSError as e:
+        import tempfile
+        fallback = Path(tempfile.gettempdir()) / "tech-news-digest"
+        logger.warning(f"State dir {base} not writable ({e}), falling back to {fallback}")
+        fallback.mkdir(parents=True, exist_ok=True)
+        return fallback
+
+
+def get_state_path(filename: str) -> Path:
+    """Return a path inside the state directory."""
+    return get_state_dir() / filename
 
 
 def load_merged_sources(defaults_dir: Path, config_dir: Optional[Path] = None) -> List[Dict[str, Any]]:

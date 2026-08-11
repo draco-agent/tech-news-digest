@@ -15,6 +15,7 @@ import sys
 import os
 import argparse
 import logging
+import random
 import time
 import tempfile
 from datetime import datetime, timedelta, timezone
@@ -35,12 +36,38 @@ except ImportError:
     logging.warning("feedparser not installed — using basic XML regex parser (may miss some feeds). Install with: pip install feedparser")
 
 TIMEOUT = 30
-MAX_WORKERS = 10  
+MAX_WORKERS = 10
 MAX_ARTICLES_PER_FEED = 20
-RETRY_COUNT = 1
+RETRY_COUNT = 2
 RETRY_DELAY = 2.0  # seconds
-RSS_CACHE_PATH = "/tmp/tech-news-digest-rss-cache.json"
 RSS_CACHE_TTL_HOURS = 24
+
+# Some hosts (notably YouTube) serve hundreds of feeds and return sporadic
+# 404/500s when several requests arrive from one IP at once. Cap concurrency
+# per host so a single provider cannot fail itself out of the digest.
+MAX_PER_HOST = 2
+_host_semaphores: Dict[str, threading.Semaphore] = {}
+_host_semaphore_lock = threading.Lock()
+
+
+def _host_semaphore(url: str) -> threading.Semaphore:
+    """Return the concurrency limiter for a URL's host."""
+    from urllib.parse import urlparse
+    host = (urlparse(url).hostname or "").lower()
+    with _host_semaphore_lock:
+        if host not in _host_semaphores:
+            _host_semaphores[host] = threading.Semaphore(MAX_PER_HOST)
+        return _host_semaphores[host]
+
+
+def _rss_cache_path() -> str:
+    """Cache lives outside /tmp so conditional requests survive reboots."""
+    try:
+        from config_loader import get_state_path
+    except ImportError:
+        sys.path.append(str(Path(__file__).resolve().parent))
+        from config_loader import get_state_path
+    return str(get_state_path("rss-cache.json"))
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -232,17 +259,19 @@ def parse_feed(content: str, cutoff: datetime, feed_url: str) -> List[Dict[str, 
 
 def _load_rss_cache() -> Dict[str, Any]:
     """Load RSS ETag/Last-Modified cache."""
-    try:
-        with open(RSS_CACHE_PATH, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    for path in (_rss_cache_path(), "/tmp/tech-news-digest-rss-cache.json"):
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+    return {}
 
 
 def _save_rss_cache(cache: Dict[str, Any]) -> None:
     """Save RSS ETag/Last-Modified cache."""
     try:
-        with open(RSS_CACHE_PATH, 'w') as f:
+        with open(_rss_cache_path(), 'w') as f:
             json.dump(cache, f)
     except Exception as e:
         logging.warning(f"Failed to save RSS cache: {e}")
@@ -300,19 +329,20 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
             
             req = Request(url, headers=req_headers)
             try:
-                with urlopen(req, timeout=TIMEOUT) as resp:
-                    # Update cache with response headers (thread-safe)
-                    etag = resp.headers.get("ETag")
-                    last_mod = resp.headers.get("Last-Modified")
-                    if etag or last_mod:
-                        with _rss_cache_lock:
-                            if _rss_cache is None:
-                                _rss_cache = {}
-                            _rss_cache[url] = {"etag": etag, "last_modified": last_mod, "ts": now}
-                            _rss_cache_dirty = True
-                    
-                    final_url = resp.url if hasattr(resp, 'url') else url
-                    content = resp.read().decode("utf-8", errors="replace")
+                with _host_semaphore(url):
+                    with urlopen(req, timeout=TIMEOUT) as resp:
+                        # Update cache with response headers (thread-safe)
+                        etag = resp.headers.get("ETag")
+                        last_mod = resp.headers.get("Last-Modified")
+                        if etag or last_mod:
+                            with _rss_cache_lock:
+                                if _rss_cache is None:
+                                    _rss_cache = {}
+                                _rss_cache[url] = {"etag": etag, "last_modified": last_mod, "ts": now}
+                                _rss_cache_dirty = True
+
+                        final_url = resp.url if hasattr(resp, 'url') else url
+                        content = resp.read().decode("utf-8", errors="replace")
             except URLError as e:
                 if hasattr(e, 'code') and e.code == 304:
                     logging.info(f"⏭ {name}: not modified (304)")
@@ -370,7 +400,9 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
             logging.debug(f"Attempt {attempt + 1} failed for {name}: {error_msg}")
             
             if attempt < RETRY_COUNT:
-                time.sleep(RETRY_DELAY * (2 ** attempt))  # Exponential backoff
+                # Exponential backoff with jitter so retries from a burst of
+                # feeds on the same host do not line up again
+                time.sleep(RETRY_DELAY * (2 ** attempt) + random.uniform(0, 1.0))
                 continue
             else:
                 return {

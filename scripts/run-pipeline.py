@@ -141,15 +141,25 @@ def main() -> int:
     args = parser.parse_args()
     logger = setup_logging(args.verbose)
 
-    # Parse --skip and --only into sets
-    skip_steps = set(s.strip().lower() for s in args.skip.split(',') if s.strip())
-    only_steps = set(s.strip().lower() for s in args.only.split(',') if s.strip())
-    
+    # Parse --skip and --only into sets of canonical step keys.
+    # Keys are matched exactly, so "trending" must be its own key rather than a
+    # substring of the display name "GitHub Trending".
+    all_step_keys = {"rss", "twitter", "github", "trending", "reddit", "web"}
+
+    def parse_steps(value: str, flag: str) -> set:
+        requested = set(s.strip().lower() for s in value.split(',') if s.strip())
+        unknown = requested - all_step_keys - {"enrich"}
+        if unknown:
+            logger.warning(f"⚠️  {flag}: unknown step(s) {sorted(unknown)}; valid: {sorted(all_step_keys)}")
+        return requested
+
+    skip_steps = parse_steps(args.skip, "--skip")
+    only_steps = parse_steps(args.only, "--only")
+
     # --only takes precedence: skip everything not in the list
     if only_steps:
-        all_step_keys = {"rss", "twitter", "github", "github trending", "reddit", "web"}
-        skip_steps = all_step_keys - {k for k in all_step_keys if any(o in k for o in only_steps)}
-        logger.info(f"🎯 --only {args.only} → running: {all_step_keys - skip_steps}")
+        skip_steps = all_step_keys - only_steps
+        logger.info(f"🎯 --only {args.only} → running: {sorted(all_step_keys - skip_steps)}")
 
     # Intermediate output paths
     import tempfile
@@ -173,14 +183,14 @@ def main() -> int:
     common += ["--hours", str(args.hours)]
     verbose_flag = ["--verbose"] if args.verbose else []
 
-    # Define the 5 parallel fetch steps
+    # Define the 6 parallel fetch steps as (key, display name, script, args, output)
     steps = [
-        ("RSS", "fetch-rss.py", common + verbose_flag, tmp_rss),
-        ("Twitter", "fetch-twitter.py", common + verbose_flag + (["--backend", args.twitter_backend] if args.twitter_backend else []), tmp_twitter),
-        ("GitHub", "fetch-github.py", common + verbose_flag, tmp_github),
-        ("GitHub Trending", "fetch-github.py", ["--trending", "--hours", str(args.hours)] + verbose_flag, tmp_trending),
-        ("Reddit", "fetch-reddit.py", common + verbose_flag, tmp_reddit),
-        ("Web", "fetch-web.py",
+        ("rss", "RSS", "fetch-rss.py", common + verbose_flag, tmp_rss),
+        ("twitter", "Twitter", "fetch-twitter.py", common + verbose_flag + (["--backend", args.twitter_backend] if args.twitter_backend else []), tmp_twitter),
+        ("github", "GitHub", "fetch-github.py", common + verbose_flag, tmp_github),
+        ("trending", "GitHub Trending", "fetch-github.py", ["--trending", "--hours", str(args.hours)] + verbose_flag, tmp_trending),
+        ("reddit", "Reddit", "fetch-reddit.py", common + verbose_flag, tmp_reddit),
+        ("web", "Web", "fetch-web.py",
          ["--defaults", str(args.defaults)]
          + (["--config", str(args.config)] if args.config else [])
          + ["--freshness", args.freshness]
@@ -190,8 +200,7 @@ def main() -> int:
 
     # Filter steps by --skip and --reuse-dir
     active_steps = []
-    for name, script, step_args, out_path in steps:
-        step_key = name.lower()
+    for step_key, name, script, step_args, out_path in steps:
         if step_key in skip_steps:
             logger.info(f"  ⏭️  {name}: skipped (--skip)")
             continue
@@ -234,7 +243,10 @@ def main() -> int:
             merge_args += [flag, str(path)]
     if args.archive_dir:
         merge_args += ["--archive-dir", str(args.archive_dir)]
-    merge_args += ["--output", str(args.output)]
+    # Topic priority order is derived from topics.json, so merge needs the config dirs
+    merge_args += ["--defaults", str(args.defaults)]
+    if args.config:
+        merge_args += ["--config", str(args.config)]
 
     merge_result = run_step("Merge", "merge-sources.py", merge_args, args.output, timeout=60, force=False)
 

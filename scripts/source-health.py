@@ -15,9 +15,19 @@ import logging
 import time
 from pathlib import Path
 from typing import Dict, Any, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
-HEALTH_FILE = "/tmp/tech-news-digest-source-health.json"
+try:
+    from config_loader import get_state_path
+except ImportError:
+    sys.path.append(str(Path(__file__).resolve().parent))
+    from config_loader import get_state_path
+
+# Health history spans several days and needs at least 2 samples before it can
+# flag anything, so it must outlive /tmp.
+HEALTH_FILE = str(get_state_path("source-health.json"))
+DEFAULT_HEALTH_FILE = HEALTH_FILE
+LEGACY_HEALTH_FILE = "/tmp/tech-news-digest-source-health.json"
 HISTORY_DAYS = 7
 FAILURE_THRESHOLD = 0.5  # >50% failure rate triggers warning
 SKIPPED_STATUSES = {"interface", "skipped", "no_credentials"}
@@ -30,11 +40,18 @@ def setup_logging(verbose: bool) -> logging.Logger:
 
 
 def load_health_data() -> Dict[str, Any]:
-    try:
-        with open(HEALTH_FILE, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    # The legacy /tmp store is only consulted when HEALTH_FILE is the default —
+    # a caller that redirects HEALTH_FILE (tests, sandboxes) must stay isolated.
+    candidates = [HEALTH_FILE]
+    if HEALTH_FILE == DEFAULT_HEALTH_FILE:
+        candidates.append(LEGACY_HEALTH_FILE)
+    for path in candidates:
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+    return {}
 
 
 def save_health_data(data: Dict[str, Any]) -> None:
@@ -153,7 +170,7 @@ def main():
         "unhealthy_sources": unhealthy,
         "inputs": processed_inputs,
         "health_file": HEALTH_FILE,
-        "checked_at": datetime.utcfromtimestamp(now).isoformat() + "Z",
+        "checked_at": datetime.fromtimestamp(now, timezone.utc).isoformat(),
     }
 
     if args.output:

@@ -21,7 +21,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 from typing import Dict, List, Any, Optional, Set
 from difflib import SequenceMatcher
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qsl, urlencode
 
 # Quality scoring weights
 SCORE_MULTI_SOURCE = 5      # Article appears in multiple sources
@@ -37,6 +37,9 @@ PENALTY_OLD_REPORT = -5     # Already in previous digest
 # Deduplication thresholds
 TITLE_SIMILARITY_THRESHOLD = 0.75  # Lowered from 0.85 to catch more duplicates
 DOMAIN_DUPLICATE_THRESHOLD = 0.95
+
+# Fallback ordering when topics.json cannot be read; must match config/defaults/topics.json
+DEFAULT_TOPIC_ORDER = ["llm", "ai-agent", "crypto", "frontier-tech"]
 
 
 def setup_logging(verbose: bool) -> logging.Logger:
@@ -96,13 +99,32 @@ def get_domain(url: str) -> str:
         return ''
 
 
+# Query parameters that carry no article identity — safe to drop when comparing URLs.
+TRACKING_PARAMS = {
+    "utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "utm_id",
+    "ref", "referrer", "source", "src", "fbclid", "gclid", "mc_cid", "mc_eid",
+    "spm", "share_id", "_hsenc", "_hsmi", "igshid", "si", "feature", "at_medium",
+}
+
+
 def normalize_url(url: str) -> str:
-    """Normalize URL for dedup comparison (strip query, fragment, trailing slash, www.)."""
+    """Normalize URL for dedup comparison.
+
+    Strips fragment, trailing slash, `www.` and known tracking parameters, but
+    KEEPS the remaining query string: for sites like YouTube (`/watch?v=ID`) the
+    query *is* the article identity, and dropping it collapses every video from
+    every channel into a single entry.
+    """
     try:
         parsed = urlparse(url)
         domain = parsed.netloc.lower().replace('www.', '')
         path = parsed.path.rstrip('/')
-        return f"{domain}{path}"
+        kept = [
+            (k, v) for k, v in parse_qsl(parsed.query, keep_blank_values=True)
+            if k.lower() not in TRACKING_PARAMS
+        ]
+        query = urlencode(sorted(kept)) if kept else ""
+        return f"{domain}{path}?{query}" if query else f"{domain}{path}"
     except Exception:
         return url
 
@@ -163,22 +185,29 @@ def _extract_tokens(title: str) -> Set[str]:
 
 def _build_token_buckets(articles: List[Dict[str, Any]]) -> Dict[int, Set[int]]:
     """Build token-based buckets mapping each article index to candidate duplicate indices.
-    
-    Two articles are candidates if they share 2+ significant tokens.
+
+    Two articles are candidates if they share 2+ significant tokens, or if their
+    normalized titles are identical (which catches short titles like "GPT-5" that
+    carry fewer than 2 significant tokens).
     Returns dict: article_index -> set of candidate article indices to compare against.
     """
     from collections import defaultdict
-    
+
     # token -> list of article indices
     token_to_indices: Dict[str, List[int]] = defaultdict(list)
+    title_to_indices: Dict[str, List[int]] = defaultdict(list)
     article_tokens: List[Set[str]] = []
-    
+
     for i, article in enumerate(articles):
-        tokens = _extract_tokens(article.get("title", ""))
+        title = article.get("title", "")
+        tokens = _extract_tokens(title)
         article_tokens.append(tokens)
         for token in tokens:
             token_to_indices[token].append(i)
-    
+        norm = normalize_title(title)
+        if norm:
+            title_to_indices[norm].append(i)
+
     # For each article, find candidates sharing 2+ tokens
     candidates: Dict[int, Set[int]] = defaultdict(set)
     for i, tokens in enumerate(article_tokens):
@@ -191,8 +220,53 @@ def _build_token_buckets(articles: List[Dict[str, Any]]) -> Dict[int, Set[int]]:
         for j, count in overlap_count.items():
             if count >= 2:
                 candidates[i].add(j)
-    
+
+    # Identical normalized titles are always candidates
+    for indices in title_to_indices.values():
+        if len(indices) > 1:
+            for i in indices:
+                candidates[i].update(j for j in indices if j != i)
+
     return candidates
+
+
+def _absorb_duplicate(primary: Dict[str, Any], duplicate: Dict[str, Any]) -> None:
+    """Fold a duplicate's provenance into the surviving article.
+
+    Cross-source corroboration is tracked here rather than in a separate
+    exact-title pass, so that near-duplicate headlines (which the similarity
+    dedup catches but exact matching does not) still earn the multi-source bonus
+    instead of being silently discarded.
+    """
+    types: Set[str] = primary.setdefault("_source_types", {primary.get("source_type", "")})
+    types.add(duplicate.get("source_type", ""))
+
+    names: List[str] = primary.setdefault("_source_names", [primary.get("source_name", "")])
+    dup_name = duplicate.get("source_name", "")
+    if dup_name and dup_name not in names:
+        names.append(dup_name)
+
+
+def apply_multi_source_bonus(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Reward articles corroborated by more than one source type.
+
+    Bonus is SCORE_MULTI_SOURCE per *additional* source type, so a story seen in
+    two source types gets +5 (matching the documented weighting).
+    """
+    boosted = 0
+    for article in articles:
+        types = {t for t in article.pop("_source_types", set()) if t}
+        names = [n for n in article.pop("_source_names", []) if n]
+        if len(types) < 2:
+            continue
+        article["quality_score"] = article.get("quality_score", 0) + SCORE_MULTI_SOURCE * (len(types) - 1)
+        article["multi_source"] = True
+        article["source_count"] = len(names) or len(types)
+        article["all_sources"] = names[:3]
+        boosted += 1
+
+    logging.info(f"Multi-source bonus applied to {boosted} articles")
+    return articles
 
 
 def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -219,6 +293,7 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
         if norm_url in url_seen:
             # Keep the one with higher quality_score (articles already sorted by score)
             url_duplicates.add(i)
+            _absorb_duplicate(articles[url_seen[norm_url]], article)
             logging.debug(f"URL duplicate: {url} ~= {articles[url_seen[norm_url]].get('link','')}")
         else:
             url_seen[norm_url] = i
@@ -255,6 +330,7 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
                 if similarity >= TITLE_SIMILARITY_THRESHOLD:
                     logging.debug(f"Title duplicate: '{other_title}' ~= '{title}' ({similarity:.2f})")
                     duplicate_indices.add(j)
+                    _absorb_duplicate(article, articles[j])
             
         deduplicated.append(article)
         
@@ -263,7 +339,8 @@ def deduplicate_articles(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]
 
 
 # Domains exempt from per-topic limits (multi-author platforms)
-DOMAIN_LIMIT_EXEMPT = {"x.com", "twitter.com", "github.com", "reddit.com"}
+DOMAIN_LIMIT_EXEMPT = {"x.com", "twitter.com", "github.com", "reddit.com",
+                       "youtube.com", "youtu.be", "arxiv.org"}
 
 def apply_domain_limits(articles: List[Dict[str, Any]], max_per_domain: int = 3) -> List[Dict[str, Any]]:
     """Limit articles per domain within a single topic group.
@@ -283,46 +360,6 @@ def apply_domain_limits(articles: List[Dict[str, Any]], max_per_domain: int = 3)
             domain_counts[domain] = count + 1
         result.append(article)
     return result
-
-
-def merge_article_sources(articles: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Merge articles that appear from multiple sources."""
-    if not articles:
-        return articles
-        
-    # Group articles by normalized title
-    title_groups = {}
-    for article in articles:
-        norm_title = normalize_title(article.get("title", ""))
-        if norm_title not in title_groups:
-            title_groups[norm_title] = []
-        title_groups[norm_title].append(article)
-    
-    merged = []
-    for group in title_groups.values():
-        if len(group) == 1:
-            merged.append(group[0])
-        else:
-            # Multiple sources for same story - merge and boost score
-            primary = max(group, key=lambda x: x.get("quality_score", 0))
-            
-            # Collect all source types
-            source_types = set(article.get("source_type", "") for article in group)
-            source_names = [article.get("source_name", "") for article in group]
-            
-            # Multi-source bonus
-            multi_source_bonus = len(source_types) * SCORE_MULTI_SOURCE
-            primary["quality_score"] = primary.get("quality_score", 0) + multi_source_bonus
-            
-            # Add metadata about multiple sources
-            primary["multi_source"] = True
-            primary["source_count"] = len(group)
-            primary["all_sources"] = source_names[:3]  # Limit to avoid bloat
-            
-            logging.debug(f"Merged {len(group)} sources for: '{primary['title'][:50]}...'")
-            merged.append(primary)
-            
-    return merged
 
 
 def load_previous_digests(archive_dir: Path, days: int = 14) -> Set[str]:
@@ -385,32 +422,60 @@ def apply_previous_digest_penalty(articles: List[Dict[str, Any]],
     return articles
 
 
-def group_by_topics(articles: List[Dict[str, Any]], dedup_across_topics: bool = True) -> Dict[str, List[Dict[str, Any]]]:
+def load_topic_order(defaults_dir: Optional[Path], config_dir: Optional[Path] = None) -> Optional[List[str]]:
+    """Read configured topic ids, in file order, from defaults + user overlay."""
+    if not defaults_dir:
+        return None
+    try:
+        try:
+            from config_loader import load_merged_topics
+        except ImportError:
+            sys.path.append(str(Path(__file__).resolve().parent))
+            from config_loader import load_merged_topics
+        topics = load_merged_topics(Path(defaults_dir), config_dir)
+        ids = [t["id"] for t in topics if t.get("id")]
+        return ids or None
+    except Exception as e:
+        logging.warning(f"Could not read topic order ({e}); using built-in ordering")
+        return None
+
+
+def build_topic_priority(topic_ids: Optional[List[str]] = None) -> Dict[str, int]:
+    """Build the topic priority map used to assign multi-topic articles.
+
+    Derived from the order topics appear in topics.json so the map cannot drift
+    out of sync with the configured topic ids. `uncategorized` always sorts last.
+    """
+    ids = list(topic_ids) if topic_ids else list(DEFAULT_TOPIC_ORDER)
+    priority = {topic_id: i for i, topic_id in enumerate(ids)}
+    priority.setdefault("uncategorized", len(priority))
+    return priority
+
+
+def group_by_topics(articles: List[Dict[str, Any]], dedup_across_topics: bool = True,
+                    topic_priority: Optional[Dict[str, int]] = None) -> Dict[str, List[Dict[str, Any]]]:
     """Group articles by their topics.
-    
+
     Args:
         articles: List of articles to group
         dedup_across_topics: If True, ensure each article appears in only one topic
                            (first topic by priority order)
+        topic_priority: topic_id -> rank; lower ranks win when an article matches
+                        several topics. Defaults to the built-in topic order.
     """
     topic_groups = {}
     seen_article_ids: Set[str] = set()  # Track which articles have been placed
-    
-    # Topic priority order (higher priority topics get first pick)
-    # If an article matches multiple topics, it goes to the highest priority one
-    topic_priority = {
-        "llm": 0,
-        "ai_agent": 1,
-        "crypto": 2,
-        "github": 3,
-        "trending": 4,
-        "uncategorized": 5,
-    }
-    
+
+    if topic_priority is None:
+        topic_priority = build_topic_priority()
+
+    # Unknown topics sort after every configured one
+    unknown_rank = len(topic_priority) + 1
+
     # Sort topics by priority for deterministic assignment
     def get_topic_priority(topic: str) -> int:
-        return topic_priority.get(topic, 99)
-    
+        return topic_priority.get(topic, unknown_rank)
+
     for article in articles:
         topics = article.get("topics", [])
         if not topics:
@@ -508,7 +573,20 @@ Examples:
         type=Path,
         help="Archive directory for previous digest penalty"
     )
-    
+
+    parser.add_argument(
+        "--defaults",
+        type=Path,
+        default=Path(__file__).resolve().parent.parent / "config" / "defaults",
+        help="Skill defaults config dir, used to derive topic priority order"
+    )
+
+    parser.add_argument(
+        "--config",
+        type=Path,
+        help="User configuration directory for overlays (optional)"
+    )
+
     parser.add_argument(
         "--verbose", "-v",
         action="store_true",
@@ -634,16 +712,18 @@ Examples:
         
         # Apply previous digest penalty
         all_articles = apply_previous_digest_penalty(all_articles, previous_titles)
-        
-        # Merge multi-source articles
-        all_articles = merge_article_sources(all_articles)
-        logger.info(f"After merging multi-source: {len(all_articles)}")
-        
-        # Deduplicate articles
+
+        # Deduplicate articles, folding each duplicate's provenance into the survivor
         all_articles = deduplicate_articles(all_articles)
-        
+
+        # Reward stories corroborated across source types
+        all_articles = apply_multi_source_bonus(all_articles)
+
         # Group by topics (with cross-topic deduplication)
-        topic_groups = group_by_topics(all_articles, dedup_across_topics=True)
+        topic_priority = build_topic_priority(load_topic_order(args.defaults, args.config))
+        logger.debug(f"Topic priority: {topic_priority}")
+        topic_groups = group_by_topics(all_articles, dedup_across_topics=True,
+                                       topic_priority=topic_priority)
         
         # Apply per-topic domain limits (max 3 articles per domain per topic)
         for topic in topic_groups:
@@ -661,6 +741,8 @@ Examples:
         
         output = {
             "generated": datetime.now(timezone.utc).isoformat(),
+            # Mirrored at the top level so run-pipeline.py can report the count
+            "total_articles": total_after_domain_limits,
             "input_sources": {
                 "rss_articles": rss_data.get("total_articles", 0),
                 "twitter_articles": twitter_data.get("total_articles", 0),
