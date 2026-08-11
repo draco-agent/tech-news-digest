@@ -1,6 +1,6 @@
 # Tech News Digest
 
-> Automated tech news digest — 168 built-in sources, 6-source pipeline, one chat message to install.
+> Automated tech news digest — 213 built-in sources, 6-source pipeline, one chat message to install.
 
 **English** | [中文](README_CN.md)
 
@@ -32,15 +32,15 @@ clawhub install tech-news-digest
 
 ## 📊 What You Get
 
-A quality-scored, deduplicated tech digest built from **168 built-in sources** plus **4 web search topics**:
+A quality-scored, deduplicated tech digest built from **213 built-in sources** plus **4 web search topics**:
 
 | Layer | Sources | What |
 |-------|---------|------|
-| 📡 RSS | 78 feeds | OpenAI, Anthropic, Ben's Bites, HN, 36氪, CoinDesk… |
-| 🐦 Twitter/X | 48 KOLs | @karpathy, @VitalikButerin, @sama, @elonmusk… |
+| 📡 RSS | 93 feeds | OpenAI, arXiv, Google Research, Techmeme, HN, Interconnects, CoinDesk… |
+| 🐦 Twitter/X | 73 KOLs | @karpathy, @simonw, @VitalikButerin, @sama, @deepseek_ai… |
 | 🔍 Web Search | 4 topics | Tavily or Brave Search API with freshness filters |
-| 🐙 GitHub | 29 repos | Releases from key projects (LangChain, vLLM, DeepSeek, Llama…) |
-| 🗣️ Reddit | 13 subs | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency… |
+| 🐙 GitHub | 47 repos | Releases from key projects (llama.cpp, vLLM, SGLang, LangGraph, MCP…) |
+| 🗣️ Reddit | 13 subs *(opt-in)* | r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency — needs OAuth, see below |
 
 ### Pipeline
 
@@ -58,17 +58,37 @@ A quality-scored, deduplicated tech digest built from **168 built-in sources** p
                Discord / Email / PDF output
 ```
 
-**Quality scoring**: priority source (+3), multi-source cross-ref (+5), recency (+2), engagement (+1), Reddit score bonus (+1/+3/+5), already reported (-5).
+**Quality scoring**: priority source (+3, +2 more for priority RSS), multi-source cross-ref (+5 per extra source type), recency <24h (+2), Twitter engagement (+1/+2/+3/+5 by tier), Reddit score bonus (+1/+3/+5), already reported (-5).
 
 ## ⚙️ Configuration
 
-- `config/defaults/sources.json` — 168 built-in sources (78 RSS, 48 Twitter, 29 GitHub, 13 Reddit)
+- `config/defaults/sources.json` — 213 built-in sources (93 RSS, 73 Twitter, 47 GitHub) plus 13 opt-in Reddit
 - `config/defaults/topics.json` — 4 topics with search queries & Twitter queries
 - User overrides in `workspace/config/` take priority
 
+### 🗣️ Enabling Reddit
+
+The 13 Reddit sources ship **disabled**. Reddit returns HTTP 403 for its public
+JSON endpoints when called from servers and datacenter IPs, and rate-limits the
+`.rss` fallback, so without credentials the layer contributes nothing but noise
+in the logs. To turn it on:
+
+1. Create a script-type app at <https://www.reddit.com/prefs/apps>
+2. Export `REDDIT_CLIENT_ID` and `REDDIT_CLIENT_SECRET`
+3. Re-enable the sources in your workspace overlay:
+
+```json
+{
+  "sources": [
+    {"id": "reddit-localllama", "enabled": true},
+    {"id": "reddit-machinelearning", "enabled": true}
+  ]
+}
+```
+
 ## 🎨 Customize Your Sources
 
-Works out of the box with 168 built-in sources (78 RSS, 48 Twitter, 29 GitHub, 13 Reddit) — but fully customizable. Copy the defaults to your workspace config and override:
+Works out of the box with 213 built-in sources (93 RSS, 73 Twitter, 47 GitHub) — but fully customizable. Copy the defaults to your workspace config and override:
 
 ```bash
 # Copy and customize
@@ -108,9 +128,16 @@ export BRAVE_API_KEYS="k1,k2,k3"   # Brave Search API keys (comma-separated for 
 export BRAVE_API_KEY="..."         # Single Brave key
 export WEB_SEARCH_BACKEND="auto"   # auto|brave|tavily
 # GitHub
-export GITHUB_TOKEN="..."          # GitHub API
+export GITHUB_TOKEN="..."          # Optional. Without it, releases are read from
+                                   # github.com/<repo>/releases.atom (no quota,
+                                   # slightly coarser release notes)
+# Reddit — required to enable the Reddit layer at all (see below)
+export REDDIT_CLIENT_ID="..."      # Reddit app client ID
+export REDDIT_CLIENT_SECRET="..."  # Reddit app client secret
+export REDDIT_USERNAME="..."       # Optional, used only in the User-Agent string
 # Other
 export BRAVE_PLAN="free"           # Override Brave rate limit: free|pro
+export TECH_NEWS_DIGEST_STATE_DIR="~/.local/state/tech-news-digest"  # Cache & health history location
 ```
 
 ## 📦 Dependencies

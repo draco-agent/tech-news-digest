@@ -18,13 +18,21 @@ README_ZH = Path(__file__).parent.parent / "README_CN.md"
 
 
 def get_source_counts():
+    """Counts of sources that are active out of the box.
+
+    Disabled entries (dead feeds kept for the record, and the opt-in Reddit
+    layer) are excluded so the documented numbers match what a fresh install
+    actually fetches. `reddit_optin` is reported separately.
+    """
     sources = load_merged_sources(DEFAULTS_DIR)
+    enabled = [s for s in sources if s.get("enabled", True)]
     return {
-        "total": len(sources),
-        "rss": len([s for s in sources if s["type"] == "rss"]),
-        "twitter": len([s for s in sources if s["type"] == "twitter"]),
-        "github": len([s for s in sources if s["type"] == "github"]),
-        "reddit": len([s for s in sources if s["type"] == "reddit"]),
+        "total": len(enabled),
+        "rss": len([s for s in enabled if s["type"] == "rss"]),
+        "twitter": len([s for s in enabled if s["type"] == "twitter"]),
+        "github": len([s for s in enabled if s["type"] == "github"]),
+        "reddit": len([s for s in enabled if s["type"] == "reddit"]),
+        "reddit_optin": len([s for s in sources if s["type"] == "reddit"]),
     }
 
 
@@ -114,23 +122,32 @@ class TestSourceCounts(unittest.TestCase):
     def test_total_sources(self):
         sources = load_merged_sources(DEFAULTS_DIR)
         enabled = [s for s in sources if s.get("enabled", True)]
-        self.assertGreaterEqual(len(enabled), 130)
+        self.assertGreaterEqual(len(enabled), 200)
 
     def test_twitter_count(self):
         counts = get_source_counts()
-        self.assertEqual(counts["twitter"], 48)
+        self.assertEqual(counts["twitter"], 73)
 
     def test_rss_count(self):
         counts = get_source_counts()
-        self.assertEqual(counts["rss"], 78)  # 62 original + 16 YouTube RSS
+        self.assertEqual(counts["rss"], 93)
 
     def test_github_count(self):
         counts = get_source_counts()
-        self.assertEqual(counts["github"], 29)
+        self.assertEqual(counts["github"], 47)
 
-    def test_reddit_count(self):
+    def test_reddit_is_opt_in(self):
+        """Reddit blocks datacenter IPs, so its sources ship disabled."""
         counts = get_source_counts()
-        self.assertEqual(counts["reddit"], 13)
+        self.assertEqual(counts["reddit"], 0)
+        self.assertEqual(counts["reddit_optin"], 13)
+
+    def test_disabled_sources_explain_why(self):
+        """Every disabled default must carry a note saying why."""
+        sources = load_merged_sources(DEFAULTS_DIR)
+        for s in sources:
+            if not s.get("enabled", True):
+                self.assertTrue(s.get("note"), f"Disabled source {s['id']} has no explanatory note")
 
 
 class TestReadmeCounts(unittest.TestCase):
@@ -154,7 +171,8 @@ class TestReadmeCounts(unittest.TestCase):
             content,
         )
         self.assertIn(
-            f"`config/defaults/sources.json` — {counts['total']} built-in sources ({counts['rss']} RSS, {counts['twitter']} Twitter, {counts['github']} GitHub, {counts['reddit']} Reddit)",
+            f"`config/defaults/sources.json` — {counts['total']} built-in sources ({counts['rss']} RSS, {counts['twitter']} Twitter, {counts['github']} GitHub) "
+            f"plus {counts['reddit_optin']} opt-in Reddit",
             content,
         )
 
@@ -178,7 +196,8 @@ class TestReadmeCounts(unittest.TestCase):
             content,
         )
         self.assertIn(
-            f"`config/defaults/sources.json` — {counts['total']} 个内置数据源（{counts['rss']} RSS、{counts['twitter']} Twitter、{counts['github']} GitHub、{counts['reddit']} Reddit）",
+            f"`config/defaults/sources.json` — {counts['total']} 个内置数据源（{counts['rss']} RSS、{counts['twitter']} Twitter、{counts['github']} GitHub）"
+            f"，另有 {counts['reddit_optin']} 个可选启用的 Reddit",
             content,
         )
 

@@ -1,5 +1,65 @@
 # Changelog
 
+## v3.17.0 — 2026-08-11
+
+### Fixed
+- **URL dedup no longer collapses query-string sources.** `normalize_url()` dropped the
+  entire query string, so every `youtube.com/watch?v=…` normalized to `youtube.com/watch`
+  and all 16 YouTube feeds were reduced to a single surviving item per run. Tracking
+  parameters (`utm_*`, `ref`, `fbclid`, …) are still stripped; the rest is preserved.
+- **GitHub Releases no longer returns zero without a token.** 47 repos exhaust the 60 req/hr
+  unauthenticated REST limit, so every repo returned `403 rate limit exceeded`. Unauthenticated
+  runs (and any run that hits a 403/429) now read `github.com/<repo>/releases.atom`, which
+  needs no auth and no quota. This also surfaces tag-only repos such as `torvalds/linux`.
+- **Topic priority no longer drifts from `topics.json`.** The hardcoded map used `ai_agent`
+  and lacked `frontier-tech`, so those topics fell to the default rank and lost multi-topic
+  articles to `crypto`. Priority is now derived from the configured topic order.
+- **`--skip trending` silently did nothing** — the step key was matched against the display
+  name `"GitHub Trending"`. Steps now carry explicit keys, and unknown `--skip`/`--only`
+  values are warned about instead of ignored.
+- **Multi-source bonus now matches the docs and the dedup logic.** It was applied only to
+  byte-identical titles (while dedup used a 0.75 similarity threshold), so near-duplicate
+  cross-source reports were discarded without ever earning credit; the bonus was also
+  `5 × source_types` rather than the documented +5. Provenance is now folded into the
+  surviving article during dedup, and the bonus is +5 per *additional* source type.
+- **Caches and health history moved out of `/tmp`.** With a 7-day window and a 2-sample
+  minimum, source health could never accumulate enough data to flag anything. State now
+  lives in `$TECH_NEWS_DIGEST_STATE_DIR` (default `~/.local/state/tech-news-digest`), with
+  automatic fallback to the old `/tmp` paths on first read.
+- YouTube feeds intermittently returned 404/500 under burst load. RSS fetching is now capped
+  at 2 concurrent requests per host, with an extra retry and jittered backoff.
+- `run-pipeline.py` reported `Merge ok 0 items`; the merged output now exposes `total_articles`
+  at the top level.
+- Replaced deprecated `datetime.utcfromtimestamp()` in `source-health.py`.
+
+### Changed
+- **Reddit ships disabled.** Reddit returns HTTP 403 to datacenter IPs on its public JSON
+  endpoints and rate-limits the `.rss` fallback, so all 13 subreddits failed every run.
+  Set `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET` and re-enable them in your overlay to use
+  the OAuth API. `REDDIT_*` env vars are now documented in the README.
+- Disabled 6 dead RSS sources and 2 release-less GitHub repos, each with a `note` explaining
+  why: `36kr-rss` and `synced-rss` (feeds replaced by anti-bot HTML), `messari-rss` (404),
+  `rachelbythebay-rss` (blocks datacenter IPs), `pg-rss` (no date fields, so nothing ever
+  passes the time filter), `gwern-rss` (abandoned since 2021), `eips-github` and
+  `moltworker-github` (never publish releases or tags).
+- `bankless-rss` re-enabled, pointed at `bankless.com/rss/feed` (the old newsletter host
+  fails TLS verification).
+
+### Added
+- 22 RSS sources: arXiv cs.CL/cs.AI/cs.LG (the digest previously had no paper coverage),
+  Google Research, Microsoft Research, BAIR, Interconnects, Latent Space, Import AI, The Zvi,
+  One Useful Thing, Techmeme, The Register, Lobsters, HN Best, The New Stack, NVIDIA Developer,
+  Cloudflare, The Changelog, Schneier on Security, ChinaTalk.
+- 20 GitHub repos: llama.cpp, SGLang, Unsloth, PEFT, JAX, Triton, Ray, LangGraph, Pydantic AI,
+  OpenAI Agents SDK, Google ADK, MCP spec, browser-use, OpenHands, Goose, Codex, Anthropic TS
+  SDK, ComfyUI, n8n, Reth.
+- 25 Twitter/X accounts, including the Chinese model labs (DeepSeek, Qwen, Kimi) that were
+  previously absent, plus researchers and crypto voices.
+
+### Stats
+- Total sources: 234 (213 enabled)
+- RSS: 93, Twitter: 73, GitHub: 47, Reddit: 13 (opt-in, disabled by default)
+
 ## v3.16.0 — 2026-03-26
 
 ### Added

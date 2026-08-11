@@ -1,7 +1,7 @@
 {
   "_description": "Unified data sources configuration. RSS feeds, Twitter/X KOLs, and web search sources. Each source binds to topics and has enabled/priority fields.",
-  "_updated": "2025-06-02",
-  "_version": "2.5.0",
+  "_updated": "2026-08-11",
+  "_version": "2.6.0",
   "sources": [
     {
       "id": "simonwillison-rss",
@@ -88,13 +88,13 @@
       "type": "rss",
       "name": "Gwern",
       "url": "https://gwern.substack.com/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
         "frontier-tech"
       ],
-      "note": "Deep AI/ML research essays"
+      "note": "Disabled 2026-08-11: Substack feed abandoned, newest entry is from 2021"
     },
     {
       "id": "dwarkesh-rss",
@@ -273,12 +273,12 @@
       "type": "rss",
       "name": "Paul Graham",
       "url": "http://www.aaronsw.com/2002/feeds/pgessays.rss",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "frontier-tech"
       ],
-      "note": "Startups and tech essays"
+      "note": "Disabled 2026-08-11: mirror feed has no date fields, so every item fails the time-window filter"
     },
     {
       "id": "troyhunt-rss",
@@ -347,27 +347,27 @@
       "type": "rss",
       "name": "36氪",
       "url": "https://36kr.com/feed",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "frontier-tech",
         "crypto"
       ],
-      "note": "中文科技媒体"
+      "note": "Disabled 2026-08-11: https://36kr.com/feed returns an anti-bot HTML page, not XML"
     },
     {
       "id": "synced-rss",
       "type": "rss",
       "name": "机器之心 Synced",
       "url": "https://www.jiqizhixin.com/rss",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent",
         "frontier-tech"
       ],
-      "note": "中文AI媒体"
+      "note": "Disabled 2026-08-11: jiqizhixin.com/rss returns an HTML page; feed discontinued"
     },
     {
       "id": "qbitai-rss",
@@ -894,12 +894,12 @@
       "type": "rss",
       "name": "Messari",
       "url": "https://messari.io/rss",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "crypto"
       ],
-      "note": "Crypto research reports"
+      "note": "Disabled 2026-08-11: messari.io/rss returns HTTP 404; see messari-twitter instead"
     },
     {
       "id": "defiant-rss",
@@ -1297,12 +1297,12 @@
       "type": "github",
       "name": "Ethereum EIPs",
       "repo": "ethereum/EIPs",
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "crypto"
       ],
-      "note": "Ethereum Improvement Proposals repository"
+      "note": "Disabled 2026-08-11: repo publishes neither releases nor tags"
     },
     {
       "id": "linux-github",
@@ -1379,12 +1379,13 @@
       "id": "bankless-rss",
       "type": "rss",
       "name": "Bankless",
-      "url": "https://newsletter.banklesshq.com/feed",
-      "enabled": false,
+      "url": "https://www.bankless.com/rss/feed",
+      "enabled": true,
       "priority": true,
       "topics": [
         "crypto"
-      ]
+      ],
+      "note": "Re-enabled 2026-08-11: switched from newsletter.banklesshq.com (TLS verify failure) to bankless.com/rss/feed"
     },
     {
       "id": "twitter-clementdelangue",
@@ -1463,12 +1464,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-localllama",
@@ -1478,11 +1480,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 30,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-cryptocurrency",
@@ -1492,11 +1495,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "crypto"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-artificial",
@@ -1506,12 +1510,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 30,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-ethereum",
@@ -1521,11 +1526,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 30,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "crypto"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-chatgpt",
@@ -1535,12 +1541,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-singularity",
@@ -1550,11 +1557,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-openai",
@@ -1564,12 +1572,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-bitcoin",
@@ -1579,11 +1588,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "crypto"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-programming",
@@ -1593,13 +1603,14 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
         "ai-agent",
         "crypto"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-anthropic",
@@ -1609,12 +1620,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 30,
-      "enabled": true,
+      "enabled": false,
       "priority": true,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-defi",
@@ -1624,11 +1636,12 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 30,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "crypto"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "reddit-experienceddevs",
@@ -1638,12 +1651,13 @@
       "sort": "hot",
       "limit": 25,
       "min_score": 50,
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "llm",
         "ai-agent"
-      ]
+      ],
+      "note": "Disabled 2026-08-11: Reddit blocks public JSON from datacenter IPs (HTTP 403) and rate-limits .rss (429). Set REDDIT_CLIENT_ID/REDDIT_CLIENT_SECRET and flip \"enabled\": true to re-enable via the OAuth API."
     },
     {
       "id": "openclaw-twitter",
@@ -1699,12 +1713,12 @@
       "type": "github",
       "name": "Cloudflare MoltWorker",
       "repo": "cloudflare/moltworker",
-      "enabled": true,
+      "enabled": false,
       "priority": false,
       "topics": [
         "frontier-tech"
       ],
-      "note": "Cloudflare MoltWorker project"
+      "note": "Disabled 2026-08-11: repo has never published a release"
     },
     {
       "id": "picoclaw-github",
@@ -1819,7 +1833,8 @@
         "frontier-tech"
       ],
       "priority": false,
-      "enabled": false
+      "enabled": false,
+      "note": "Disabled 2026-08-11: connection times out consistently (blocks datacenter IPs)"
     },
     {
       "id": "xeiaso-rss",
@@ -2077,6 +2092,826 @@
       ],
       "priority": false,
       "enabled": true
+    },
+    {
+      "id": "arxiv-cs-cl",
+      "type": "rss",
+      "name": "arXiv cs.CL",
+      "url": "http://export.arxiv.org/rss/cs.CL",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "NLP/LLM preprints; high volume — pair with topic must_include filters"
+    },
+    {
+      "id": "arxiv-cs-ai",
+      "type": "rss",
+      "name": "arXiv cs.AI",
+      "url": "http://export.arxiv.org/rss/cs.AI",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent",
+        "frontier-tech"
+      ],
+      "note": "AI preprints; high volume"
+    },
+    {
+      "id": "arxiv-cs-lg",
+      "type": "rss",
+      "name": "arXiv cs.LG",
+      "url": "http://export.arxiv.org/rss/cs.LG",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Machine learning preprints; high volume"
+    },
+    {
+      "id": "google-research-rss",
+      "type": "rss",
+      "name": "Google Research Blog",
+      "url": "https://research.google/blog/rss/",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Google Research publications and announcements"
+    },
+    {
+      "id": "microsoft-research-rss",
+      "type": "rss",
+      "name": "Microsoft Research",
+      "url": "https://www.microsoft.com/en-us/research/feed/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Microsoft Research blog"
+    },
+    {
+      "id": "bair-rss",
+      "type": "rss",
+      "name": "Berkeley AI Research",
+      "url": "https://bair.berkeley.edu/blog/feed.xml",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "BAIR lab blog, long-form research writeups"
+    },
+    {
+      "id": "interconnects-rss",
+      "type": "rss",
+      "name": "Interconnects",
+      "url": "https://www.interconnects.ai/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Nathan Lambert — post-training and open-model analysis"
+    },
+    {
+      "id": "latent-space-rss",
+      "type": "rss",
+      "name": "Latent Space",
+      "url": "https://www.latent.space/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "AI engineering podcast/newsletter"
+    },
+    {
+      "id": "importai-rss",
+      "type": "rss",
+      "name": "Import AI",
+      "url": "https://importai.substack.com/feed",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Jack Clark — weekly AI research and policy roundup"
+    },
+    {
+      "id": "thezvi-rss",
+      "type": "rss",
+      "name": "Don't Worry About the Vase",
+      "url": "https://thezvi.substack.com/feed",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Zvi Mowshowitz — dense weekly AI roundups"
+    },
+    {
+      "id": "oneusefulthing-rss",
+      "type": "rss",
+      "name": "One Useful Thing",
+      "url": "https://www.oneusefulthing.org/feed",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Ethan Mollick — applied AI in work and education"
+    },
+    {
+      "id": "techmeme-rss",
+      "type": "rss",
+      "name": "Techmeme",
+      "url": "https://www.techmeme.com/feed.xml",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "frontier-tech",
+        "llm"
+      ],
+      "note": "Aggregator — good signal for multi-source cross-referencing"
+    },
+    {
+      "id": "theregister-rss",
+      "type": "rss",
+      "name": "The Register",
+      "url": "https://www.theregister.com/headlines.atom",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Enterprise tech and infrastructure news"
+    },
+    {
+      "id": "lobsters-rss",
+      "type": "rss",
+      "name": "Lobsters",
+      "url": "https://lobste.rs/rss",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Focused technical link aggregator, complements Hacker News"
+    },
+    {
+      "id": "hn-best-rss",
+      "type": "rss",
+      "name": "Hacker News Best",
+      "url": "https://hnrss.org/best",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Higher signal-to-noise than the frontpage feed"
+    },
+    {
+      "id": "thenewstack-rss",
+      "type": "rss",
+      "name": "The New Stack",
+      "url": "https://thenewstack.io/feed/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech",
+        "ai-agent"
+      ],
+      "note": "Cloud native, platform engineering, AI infrastructure"
+    },
+    {
+      "id": "nvidia-dev-rss",
+      "type": "rss",
+      "name": "NVIDIA Developer Blog",
+      "url": "https://developer.nvidia.com/blog/feed/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "GPU/inference engineering deep dives"
+    },
+    {
+      "id": "cloudflare-rss",
+      "type": "rss",
+      "name": "Cloudflare Blog",
+      "url": "https://blog.cloudflare.com/rss/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Infrastructure engineering and outage postmortems"
+    },
+    {
+      "id": "changelog-rss",
+      "type": "rss",
+      "name": "The Changelog",
+      "url": "https://changelog.com/feed",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Open source software news"
+    },
+    {
+      "id": "schneier-rss",
+      "type": "rss",
+      "name": "Schneier on Security",
+      "url": "https://www.schneier.com/feed/",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Bruce Schneier — security and cryptography analysis"
+    },
+    {
+      "id": "chinatalk-rss",
+      "type": "rss",
+      "name": "ChinaTalk",
+      "url": "https://www.chinatalk.media/feed",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech",
+        "llm"
+      ],
+      "note": "China tech policy and semiconductor analysis"
+    },
+    {
+      "id": "llamacpp-github",
+      "type": "github",
+      "name": "llama.cpp",
+      "repo": "ggml-org/llama.cpp",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "Local LLM inference, very active releases"
+    },
+    {
+      "id": "sglang-github",
+      "type": "github",
+      "name": "SGLang",
+      "repo": "sgl-project/sglang",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "High-throughput LLM serving runtime"
+    },
+    {
+      "id": "unsloth-github",
+      "type": "github",
+      "name": "Unsloth",
+      "repo": "unslothai/unsloth",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Efficient LLM fine-tuning"
+    },
+    {
+      "id": "peft-github",
+      "type": "github",
+      "name": "PEFT",
+      "repo": "huggingface/peft",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Parameter-efficient fine-tuning library"
+    },
+    {
+      "id": "jax-github",
+      "type": "github",
+      "name": "JAX",
+      "repo": "jax-ml/jax",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Google numerical computing / ML framework"
+    },
+    {
+      "id": "triton-github",
+      "type": "github",
+      "name": "Triton",
+      "repo": "triton-lang/triton",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "GPU kernel language"
+    },
+    {
+      "id": "ray-github",
+      "type": "github",
+      "name": "Ray",
+      "repo": "ray-project/ray",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Distributed compute for ML workloads"
+    },
+    {
+      "id": "langgraph-github",
+      "type": "github",
+      "name": "LangGraph",
+      "repo": "langchain-ai/langgraph",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Stateful agent orchestration"
+    },
+    {
+      "id": "pydantic-ai-github",
+      "type": "github",
+      "name": "Pydantic AI",
+      "repo": "pydantic/pydantic-ai",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Typed agent framework"
+    },
+    {
+      "id": "openai-agents-github",
+      "type": "github",
+      "name": "OpenAI Agents SDK",
+      "repo": "openai/openai-agents-python",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "OpenAI agent framework"
+    },
+    {
+      "id": "adk-python-github",
+      "type": "github",
+      "name": "Google ADK",
+      "repo": "google/adk-python",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Google Agent Development Kit"
+    },
+    {
+      "id": "mcp-spec-github",
+      "type": "github",
+      "name": "MCP Specification",
+      "repo": "modelcontextprotocol/modelcontextprotocol",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Model Context Protocol spec releases"
+    },
+    {
+      "id": "browser-use-github",
+      "type": "github",
+      "name": "browser-use",
+      "repo": "browser-use/browser-use",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Browser automation for agents"
+    },
+    {
+      "id": "openhands-github",
+      "type": "github",
+      "name": "OpenHands",
+      "repo": "All-Hands-AI/OpenHands",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Autonomous software engineering agent"
+    },
+    {
+      "id": "goose-github",
+      "type": "github",
+      "name": "Goose",
+      "repo": "block/goose",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Block's local coding agent"
+    },
+    {
+      "id": "codex-github",
+      "type": "github",
+      "name": "OpenAI Codex",
+      "repo": "openai/codex",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "OpenAI coding agent CLI"
+    },
+    {
+      "id": "anthropic-sdk-ts-github",
+      "type": "github",
+      "name": "Anthropic TypeScript SDK",
+      "repo": "anthropics/anthropic-sdk-typescript",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Official Anthropic TS SDK"
+    },
+    {
+      "id": "comfyui-github",
+      "type": "github",
+      "name": "ComfyUI",
+      "repo": "comfyanonymous/ComfyUI",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Node-based generative media pipeline"
+    },
+    {
+      "id": "n8n-github",
+      "type": "github",
+      "name": "n8n",
+      "repo": "n8n-io/n8n",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "Workflow automation with AI nodes"
+    },
+    {
+      "id": "reth-github",
+      "type": "github",
+      "name": "Reth",
+      "repo": "paradigmxyz/reth",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "Rust Ethereum execution client"
+    },
+    {
+      "id": "simonw-twitter",
+      "type": "twitter",
+      "name": "Simon Willison",
+      "handle": "simonw",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "LLM tooling, prolific practitioner"
+    },
+    {
+      "id": "jasonwei-twitter",
+      "type": "twitter",
+      "name": "Jason Wei",
+      "handle": "_jasonwei",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "OpenAI researcher, chain-of-thought / scaling"
+    },
+    {
+      "id": "natolambert-twitter",
+      "type": "twitter",
+      "name": "Nathan Lambert",
+      "handle": "natolambert",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "Ai2, post-training and open models"
+    },
+    {
+      "id": "philschmid-twitter",
+      "type": "twitter",
+      "name": "Philipp Schmid",
+      "handle": "_philschmid",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Google DeepMind DevRel"
+    },
+    {
+      "id": "soumith-twitter",
+      "type": "twitter",
+      "name": "Soumith Chintala",
+      "handle": "soumithchintala",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "PyTorch co-creator"
+    },
+    {
+      "id": "tridao-twitter",
+      "type": "twitter",
+      "name": "Tri Dao",
+      "handle": "tri_dao",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "FlashAttention, inference efficiency"
+    },
+    {
+      "id": "giffmana-twitter",
+      "type": "twitter",
+      "name": "Lucas Beyer",
+      "handle": "giffmana",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "Vision/multimodal research"
+    },
+    {
+      "id": "akhaliq-twitter",
+      "type": "twitter",
+      "name": "AK",
+      "handle": "_akhaliq",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "High-volume paper and demo feed"
+    },
+    {
+      "id": "osanseviero-twitter",
+      "type": "twitter",
+      "name": "Omar Sanseviero",
+      "handle": "osanseviero",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Google DeepMind, open model ecosystem"
+    },
+    {
+      "id": "merve-twitter",
+      "type": "twitter",
+      "name": "Merve Noyan",
+      "handle": "mervenoyann",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Hugging Face, multimodal models"
+    },
+    {
+      "id": "emollick-twitter",
+      "type": "twitter",
+      "name": "Ethan Mollick",
+      "handle": "emollick",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Applied AI research"
+    },
+    {
+      "id": "randomwalker-twitter",
+      "type": "twitter",
+      "name": "Arvind Narayanan",
+      "handle": "random_walker",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "frontier-tech"
+      ],
+      "note": "AI Snake Oil co-author"
+    },
+    {
+      "id": "alexalbert-twitter",
+      "type": "twitter",
+      "name": "Alex Albert",
+      "handle": "alexalbert__",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "Anthropic developer relations"
+    },
+    {
+      "id": "lmarena-twitter",
+      "type": "twitter",
+      "name": "LMArena",
+      "handle": "lmarena_ai",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm"
+      ],
+      "note": "Model leaderboard and eval updates"
+    },
+    {
+      "id": "deepseek-twitter",
+      "type": "twitter",
+      "name": "DeepSeek",
+      "handle": "deepseek_ai",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "DeepSeek official model releases"
+    },
+    {
+      "id": "qwen-twitter",
+      "type": "twitter",
+      "name": "Qwen",
+      "handle": "Alibaba_Qwen",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "Alibaba Qwen official"
+    },
+    {
+      "id": "kimi-twitter",
+      "type": "twitter",
+      "name": "Moonshot Kimi",
+      "handle": "Kimi_Moonshot",
+      "enabled": true,
+      "priority": true,
+      "topics": [
+        "llm"
+      ],
+      "note": "Moonshot AI official"
+    },
+    {
+      "id": "perplexity-twitter",
+      "type": "twitter",
+      "name": "Perplexity",
+      "handle": "perplexity_ai",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "llm",
+        "ai-agent"
+      ],
+      "note": "AI search product updates"
+    },
+    {
+      "id": "cursor-twitter",
+      "type": "twitter",
+      "name": "Cursor",
+      "handle": "cursor_ai",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "ai-agent"
+      ],
+      "note": "AI coding editor"
+    },
+    {
+      "id": "carmack-twitter",
+      "type": "twitter",
+      "name": "John Carmack",
+      "handle": "ID_AA_Carmack",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "frontier-tech"
+      ],
+      "note": "Keen Technologies, AGI research"
+    },
+    {
+      "id": "messari-twitter",
+      "type": "twitter",
+      "name": "Messari",
+      "handle": "MessariCrypto",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "Crypto research (replaces the dead Messari RSS)"
+    },
+    {
+      "id": "haydenz-twitter",
+      "type": "twitter",
+      "name": "Hayden Adams",
+      "handle": "haydenzadams",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "Uniswap founder"
+    },
+    {
+      "id": "punk6529-twitter",
+      "type": "twitter",
+      "name": "6529",
+      "handle": "punk6529",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "NFT/decentralization commentary"
+    },
+    {
+      "id": "ngmi-twitter",
+      "type": "twitter",
+      "name": "0xngmi",
+      "handle": "0xngmi",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "DefiLlama, DeFi data"
+    },
+    {
+      "id": "ryanadams-twitter",
+      "type": "twitter",
+      "name": "Ryan Sean Adams",
+      "handle": "RyanSAdams",
+      "enabled": true,
+      "priority": false,
+      "topics": [
+        "crypto"
+      ],
+      "note": "Bankless co-host"
     }
   ]
 }

@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.16.2"
+version: "3.17.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -52,6 +52,9 @@ env:
   - name: GH_APP_KEY_FILE
     required: false
     description: Path to GitHub App private key PEM file
+  - name: TECH_NEWS_DIGEST_STATE_DIR
+    required: false
+    description: "Directory for cross-run state (RSS/GitHub caches, source health). Default: $XDG_STATE_HOME/tech-news-digest or ~/.local/state/tech-news-digest"
 tools:
   - python3: Required. Runs data collection and merge scripts.
   - mail: Optional. msmtp-based mail command for email delivery (preferred).
@@ -63,6 +66,7 @@ files:
     - scripts/: Python pipeline scripts
     - <workspace>/archive/tech-news-digest/: Previous digests for dedup
   write:
+    - $TECH_NEWS_DIGEST_STATE_DIR/: RSS/GitHub caches and source health history
     - /tmp/td-*.json: Temporary pipeline intermediate outputs
     - /tmp/td-email.html: Temporary email HTML body
     - /tmp/td-digest.pdf: Generated PDF digest
@@ -179,8 +183,8 @@ python3 scripts/run-pipeline.py \
 ```bash
 python3 scripts/fetch-rss.py [--defaults DIR] [--config DIR] [--hours 48] [--output FILE] [--verbose]
 ```
-- Parallel fetching (10 workers), retry with backoff, feedparser + regex fallback
-- Timeout: 30s per feed, ETag/Last-Modified caching
+- Parallel fetching (10 workers, max 2 concurrent per host), retry with jittered backoff, feedparser + regex fallback
+- Timeout: 30s per feed, ETag/Last-Modified caching in `$TECH_NEWS_DIGEST_STATE_DIR`
 
 #### `fetch-twitter.py` - Twitter/X KOL Monitor
 ```bash
@@ -201,7 +205,9 @@ python3 scripts/fetch-web.py [--defaults DIR] [--config DIR] [--freshness pd] [-
 python3 scripts/fetch-github.py [--defaults DIR] [--config DIR] [--hours 168] [--output FILE]
 ```
 - Parallel fetching (10 workers), 30s timeout
-- Auth priority: `$GITHUB_TOKEN` → GitHub App auto-generate → `gh` CLI → unauthenticated (60 req/hr)
+- Auth priority: `$GITHUB_TOKEN` → GitHub App auto-generate → `gh` CLI → `releases.atom`
+- Without a token (or on a 403/429 rate limit) it reads `github.com/<repo>/releases.atom`, which needs no auth,
+  consumes no REST quota, and also surfaces tag-only repos such as `torvalds/linux`
 
 
 #### `fetch-github.py --trending` - GitHub Trending Repos
@@ -232,7 +238,9 @@ python3 scripts/enrich-articles.py --input merged.json --output enriched.json [-
 ```bash
 python3 scripts/merge-sources.py --rss FILE --twitter FILE --web FILE --github FILE --reddit FILE
 ```
-- Quality scoring, title similarity dedup (85%), previous digest penalty
+- Quality scoring, URL dedup (tracking params stripped, query preserved), title similarity dedup (75%), previous digest penalty
+- Multi-source bonus: +5 per additional source type corroborating the same story
+- Topic priority is derived from `topics.json` order; pass `--defaults`/`--config` to keep it in sync
 - Output: topic-grouped articles sorted by score
 
 #### `validate-config.py` - Configuration Validator
@@ -259,8 +267,8 @@ python3 scripts/sanitize-html.py --input report.md --output email.html [--verbos
 ```bash
 python3 scripts/source-health.py --rss FILE --twitter FILE --github FILE --reddit FILE --web FILE [--verbose]
 ```
-- Tracks per-source success/failure history over 7 days
-- Reports unhealthy sources (>50% failure rate)
+- Tracks per-source success/failure history over 7 days in `$TECH_NEWS_DIGEST_STATE_DIR/source-health.json`
+- Reports unhealthy sources (>50% failure rate, minimum 2 samples)
 
 #### `summarize-merged.py` - Merged Data Summary
 ```bash
@@ -321,14 +329,15 @@ Place custom configs in `workspace/config/` to override defaults:
 - Emoji icons, page headers/footers with page numbers
 - Generated via `scripts/generate-pdf.py` (requires `weasyprint`)
 
-## Default Sources (151 total)
+## Default Sources (213 enabled)
 
-- **RSS Feeds (62)**: AI labs, tech blogs, crypto news, Chinese tech media
-- **Twitter/X KOLs (48)**: AI researchers, crypto leaders, tech executives
-- **GitHub Repos (28)**: Major open-source projects (LangChain, vLLM, DeepSeek, Llama, etc.)
-- **Reddit (13)**: r/MachineLearning, r/LocalLLaMA, r/CryptoCurrency, r/ChatGPT, r/OpenAI, etc.
+- **RSS Feeds (93)**: AI labs, arXiv, research blogs, tech news, crypto news, Chinese tech media, YouTube channels
+- **Twitter/X KOLs (73)**: AI researchers, model labs, crypto leaders, tech executives
+- **GitHub Repos (47)**: Major open-source projects (llama.cpp, vLLM, SGLang, LangGraph, MCP, etc.)
+- **Reddit (13, disabled by default)**: Reddit blocks datacenter IPs; set `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET` and re-enable in your overlay
 - **Web Search (4 topics)**: LLM, AI Agent, Crypto, Frontier Tech
 
+A further 7 RSS/GitHub defaults ship disabled because the upstream feed is dead; each carries a `note` saying why.
 All sources pre-configured with appropriate topic tags and priority levels.
 
 ## Dependencies
@@ -386,7 +395,12 @@ export BRAVE_API_KEYS="key1,key2,key3"     # Multiple keys, comma-separated rota
 export BRAVE_API_KEY="key1"                # Single key fallback
 export BRAVE_PLAN="free"                   # Override rate limit detection: free|pro
 
-# GitHub (optional, improves rate limits)
+# Reddit (required to enable the Reddit layer — it ships disabled)
+export REDDIT_CLIENT_ID="xxx"              # Script-type app from reddit.com/prefs/apps
+export REDDIT_CLIENT_SECRET="xxx"
+export REDDIT_USERNAME="xxx"               # Optional, User-Agent string only
+
+# GitHub (optional, unlocks richer release notes)
 export GITHUB_TOKEN="ghp_xxx"              # PAT (simplest)
 export GH_APP_ID="12345"                   # Or use GitHub App for auto-token
 export GH_APP_INSTALL_ID="67890"
@@ -396,7 +410,7 @@ export GH_APP_KEY_FILE="/path/to/key.pem"
 - **Twitter**: `TWITTERAPI_IO_KEY` preferred ($3-5/mo); `X_BEARER_TOKEN` as fallback; `auto` mode tries twitterapiio first
 - **Web Search**: Tavily (preferred in auto mode) or Brave; optional, fallback to agent web_search if unavailable
 - **GitHub**: Auto-generates token from GitHub App if PAT not set; unauthenticated fallback (60 req/hr)
-- **Reddit**: No API key needed (uses public JSON API)
+- **Reddit**: Disabled by default — Reddit returns 403 to datacenter IPs. Set `REDDIT_CLIENT_ID`/`REDDIT_CLIENT_SECRET` and re-enable the sources to use the OAuth API
 
 ## Cron / Scheduled Task Integration
 
