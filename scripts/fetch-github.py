@@ -30,8 +30,20 @@ MAX_WORKERS = 10
 MAX_RELEASES_PER_REPO = 20
 RETRY_COUNT = 2
 RETRY_DELAY = 2.0  # seconds
-GITHUB_CACHE_PATH = "/tmp/tech-news-digest-github-cache.json"
 GITHUB_CACHE_TTL_HOURS = 24
+LEGACY_GITHUB_CACHE_PATH = "/tmp/tech-news-digest-github-cache.json"
+
+ATOM_NS = "{http://www.w3.org/2005/Atom}"
+
+
+def _github_cache_path() -> str:
+    """Cache lives outside /tmp so conditional requests survive reboots."""
+    try:
+        from config_loader import get_state_path
+    except ImportError:
+        sys.path.append(str(Path(__file__).resolve().parent))
+        from config_loader import get_state_path
+    return str(get_state_path("github-cache.json"))
 
 
 def _b64url(data: bytes) -> str:
@@ -198,9 +210,10 @@ def resolve_github_token() -> Optional[str]:
     except Exception as e:
         logging.info(f"🔍 gh CLI not available: {e}")
     
-    # 4. Unauthenticated
-    logging.warning("⚠️ No GitHub token found — rate limit 60 req/hr (22 repos may fail)")
-    logging.warning("  Set $GITHUB_TOKEN or install GitHub App credentials to fix this")
+    # 4. Unauthenticated — releases are fetched via releases.atom instead, which
+    #    has no quota but omits release bodies' finer detail.
+    logging.info("ℹ️ No GitHub token found — using releases.atom (no quota, slightly coarser summaries)")
+    logging.info("  Set $GITHUB_TOKEN or GitHub App credentials for richer release notes")
     return None
 
 
@@ -219,17 +232,19 @@ def get_repo_name(repo: str) -> str:
 
 def _load_github_cache() -> Dict[str, Any]:
     """Load GitHub ETag/Last-Modified cache."""
-    try:
-        with open(GITHUB_CACHE_PATH, 'r') as f:
-            return json.load(f)
-    except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+    for path in (_github_cache_path(), LEGACY_GITHUB_CACHE_PATH):
+        try:
+            with open(path, 'r') as f:
+                return json.load(f)
+        except (FileNotFoundError, json.JSONDecodeError):
+            continue
+    return {}
 
 
 def _save_github_cache(cache: Dict[str, Any]) -> None:
     """Save GitHub ETag/Last-Modified cache."""
     try:
-        with open(GITHUB_CACHE_PATH, 'w') as f:
+        with open(_github_cache_path(), 'w') as f:
             json.dump(cache, f)
     except Exception as e:
         logging.warning(f"Failed to save GitHub cache: {e}")
@@ -253,6 +268,91 @@ def _flush_github_cache() -> None:
         _github_cache_dirty = False
 
 
+def _html_to_text(html: str) -> str:
+    """Crude HTML → text for Atom release bodies."""
+    import html as _html
+    text = re.sub(r'(?is)<(script|style).*?</\1>', ' ', html)
+    text = re.sub(r'(?i)<li[^>]*>', ' • ', text)
+    text = re.sub(r'(?i)<(br|/p|/h\d|/li)[^>]*>', ' ', text)
+    text = re.sub(r'<[^>]+>', '', text)
+    return re.sub(r'\s+', ' ', _html.unescape(text)).strip()
+
+
+def fetch_releases_atom(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
+    """Fetch releases from `github.com/<repo>/releases.atom`.
+
+    The Atom endpoint needs no authentication and does not consume the REST API
+    quota, so it is used whenever no token is available — otherwise 29 repos
+    exhaust the 60 req/hr unauthenticated limit and the whole layer returns zero.
+    It also surfaces tags for repos that publish tags but no GitHub Releases
+    (e.g. torvalds/linux), which the REST /releases endpoint reports as empty.
+    """
+    import xml.etree.ElementTree as ET
+
+    source_id = source["id"]
+    name = source["name"]
+    repo = source["repo"]
+    repo_name = get_repo_name(repo)
+    url = f"https://github.com/{repo}/releases.atom"
+
+    base = {
+        "source_id": source_id,
+        "source_type": "github",
+        "name": name,
+        "repo": repo,
+        "priority": source["priority"],
+        "topics": source["topics"],
+        "via": "atom",
+    }
+
+    for attempt in range(RETRY_COUNT + 1):
+        try:
+            req = Request(url, headers={"User-Agent": "TechDigest/2.0",
+                                        "Accept": "application/atom+xml"})
+            with urlopen(req, timeout=TIMEOUT) as resp:
+                root = ET.fromstring(resp.read())
+
+            articles = []
+            for entry in root.findall(f"{ATOM_NS}entry")[:MAX_RELEASES_PER_REPO]:
+                updated = entry.findtext(f"{ATOM_NS}updated", "")
+                pub_date = parse_github_date(updated)
+                if not pub_date or pub_date < cutoff:
+                    continue
+
+                tag_name = (entry.findtext(f"{ATOM_NS}title", "") or "").strip()
+                link_el = entry.find(f"{ATOM_NS}link")
+                link = link_el.get("href", "") if link_el is not None else ""
+                content = entry.findtext(f"{ATOM_NS}content", "") or ""
+
+                if not link:
+                    continue
+                articles.append({
+                    "title": f"{repo_name} {tag_name}".strip(),
+                    "link": link,
+                    "date": pub_date.isoformat(),
+                    "summary": truncate_summary(_html_to_text(content), 200),
+                    "topics": source["topics"][:],
+                })
+
+            return {**base, "status": "ok", "attempts": attempt + 1,
+                    "count": len(articles), "articles": articles}
+
+        except Exception as e:
+            if attempt < RETRY_COUNT:
+                time.sleep(RETRY_DELAY * (2 ** attempt))
+                continue
+            return {**base, "status": "error", "attempts": attempt + 1,
+                    "error": str(e)[:100], "count": 0, "articles": []}
+
+
+def _is_rate_limited(error: Exception) -> bool:
+    """Detect GitHub's 403/429 rate-limit responses."""
+    code = getattr(error, "code", None)
+    if code == 429:
+        return True
+    return code == 403 and "rate limit" in str(error).lower()
+
+
 def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_token: Optional[str] = None, no_cache: bool = False) -> Dict[str, Any]:
     """Fetch GitHub releases with retry mechanism and conditional requests."""
     source_id = source["id"]
@@ -263,7 +363,12 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
     
     repo_name = get_repo_name(repo)
     api_url = f"https://api.github.com/repos/{repo}/releases"
-    
+
+    # Without a token the REST quota (60 req/hr) cannot cover the repo list, so
+    # go straight to the unauthenticated Atom endpoint.
+    if not github_token:
+        return fetch_releases_atom(source, cutoff)
+
     # Setup headers
     headers = {
         "User-Agent": "TechDigest/2.0",
@@ -368,7 +473,13 @@ def fetch_releases_with_retry(source: Dict[str, Any], cutoff: datetime, github_t
         except Exception as e:
             error_msg = str(e)[:100]
             logging.debug(f"Attempt {attempt + 1} failed for {name}: {error_msg}")
-            
+
+            # Retrying a rate-limited request just burns the remaining quota;
+            # the Atom endpoint is not quota-bound, so switch to it immediately.
+            if _is_rate_limited(e):
+                logging.warning(f"⚠️ {name}: API rate limited, falling back to releases.atom")
+                return fetch_releases_atom(source, cutoff)
+
             if attempt < RETRY_COUNT:
                 # Exponential backoff with jitter for API rate limits
                 delay = RETRY_DELAY * (2 ** attempt)
