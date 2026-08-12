@@ -1,5 +1,17 @@
 # Changelog
 
+## v3.17.1 — 2026-08-12
+
+### Fixed
+- **GitHub Releases no longer reports CI tags as releases.** `releases.atom` lists every
+  tag, not just published releases, so repos with tag-based CI flooded the digest — a single
+  PyTorch run contributed 20 `trunk/<sha>` and `viable/strict/<epoch>` entries and no actual
+  version. Atom entries are now kept only when the tag carries a `<major>.<minor>` version
+  (`v2.13.0`, `v6.19-rc4`, `langchain-core==0.3.1`), which still covers tag-only repos such
+  as `torvalds/linux`. Filtering runs before the per-repo cap, so CI tags can no longer crowd
+  a real release out of the feed. The authenticated REST path was never affected — it returns
+  published releases only.
+
 ## v3.17.0 — 2026-08-11
 
 ### Fixed

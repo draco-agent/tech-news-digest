@@ -35,6 +35,12 @@ LEGACY_GITHUB_CACHE_PATH = "/tmp/tech-news-digest-github-cache.json"
 
 ATOM_NS = "{http://www.w3.org/2005/Atom}"
 
+# releases.atom lists every tag, not just published releases. Repos with tag-based
+# CI (pytorch pushes `trunk/<sha>` and `viable/strict/<epoch>` on every merge) would
+# otherwise flood the digest with hundreds of non-release entries.
+VERSION_TAG_RE = re.compile(r"\d+\.\d+")
+ATOM_ID_PREFIX_RE = re.compile(r"^tag:github\.com,\d+:Repository/\d+/")
+
 
 def _github_cache_path() -> str:
     """Cache lives outside /tmp so conditional requests survive reboots."""
@@ -278,6 +284,34 @@ def _html_to_text(html: str) -> str:
     return re.sub(r'\s+', ' ', _html.unescape(text)).strip()
 
 
+def atom_entry_tag(entry_id: str, link: str) -> str:
+    """Recover the raw tag name from an Atom entry.
+
+    The `<id>` carries it verbatim (`tag:github.com,2008:Repository/<id>/<tag>`),
+    which is safer than the `<title>` — GitHub prefixes the title with the release
+    name when one exists, and drops the tag entirely for named releases.
+    """
+    if entry_id:
+        stripped = ATOM_ID_PREFIX_RE.sub("", entry_id.strip())
+        if stripped and stripped != entry_id.strip():
+            return stripped
+    marker = "/releases/tag/"
+    if marker in link:
+        from urllib.parse import unquote
+        return unquote(link.split(marker, 1)[1])
+    return ""
+
+
+def is_release_tag(tag: str) -> bool:
+    """Keep version tags (`v2.13.0`, `v6.19-rc4`, `core==0.3.1`), drop CI tags.
+
+    A published version always carries a `<major>.<minor>` pair; CI tags name a
+    commit SHA (`trunk/41645f27…`) or an epoch (`viable/strict/1786490942`) and
+    never do, so that single test separates them without a per-repo blocklist.
+    """
+    return bool(tag) and bool(VERSION_TAG_RE.search(tag))
+
+
 def fetch_releases_atom(source: Dict[str, Any], cutoff: datetime) -> Dict[str, Any]:
     """Fetch releases from `github.com/<repo>/releases.atom`.
 
@@ -313,7 +347,12 @@ def fetch_releases_atom(source: Dict[str, Any], cutoff: datetime) -> Dict[str, A
                 root = ET.fromstring(resp.read())
 
             articles = []
-            for entry in root.findall(f"{ATOM_NS}entry")[:MAX_RELEASES_PER_REPO]:
+            skipped_tags = 0
+            # Filter before capping: a repo with tag-based CI can easily push 20+
+            # non-release tags ahead of its newest real release in the feed.
+            for entry in root.findall(f"{ATOM_NS}entry"):
+                if len(articles) >= MAX_RELEASES_PER_REPO:
+                    break
                 updated = entry.findtext(f"{ATOM_NS}updated", "")
                 pub_date = parse_github_date(updated)
                 if not pub_date or pub_date < cutoff:
@@ -326,6 +365,10 @@ def fetch_releases_atom(source: Dict[str, Any], cutoff: datetime) -> Dict[str, A
 
                 if not link:
                     continue
+                entry_id = entry.findtext(f"{ATOM_NS}id", "") or ""
+                if not is_release_tag(atom_entry_tag(entry_id, link)):
+                    skipped_tags += 1
+                    continue
                 articles.append({
                     "title": f"{repo_name} {tag_name}".strip(),
                     "link": link,
@@ -334,8 +377,12 @@ def fetch_releases_atom(source: Dict[str, Any], cutoff: datetime) -> Dict[str, A
                     "topics": source["topics"][:],
                 })
 
+            if skipped_tags:
+                logging.debug(f"{name}: skipped {skipped_tags} non-release tag(s)")
+
             return {**base, "status": "ok", "attempts": attempt + 1,
-                    "count": len(articles), "articles": articles}
+                    "count": len(articles), "skipped_tags": skipped_tags,
+                    "articles": articles}
 
         except Exception as e:
             if attempt < RETRY_COUNT:

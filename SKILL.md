@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
 description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.17.0"
+version: "3.17.1"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -208,6 +208,9 @@ python3 scripts/fetch-github.py [--defaults DIR] [--config DIR] [--hours 168] [-
 - Auth priority: `$GITHUB_TOKEN` → GitHub App auto-generate → `gh` CLI → `releases.atom`
 - Without a token (or on a 403/429 rate limit) it reads `github.com/<repo>/releases.atom`, which needs no auth,
   consumes no REST quota, and also surfaces tag-only repos such as `torvalds/linux`
+- The Atom feed lists *every* tag, so entries are kept only when the tag carries a `<major>.<minor>`
+  version (`v2.13.0`, `v6.19-rc4`). This drops CI tags such as PyTorch's `trunk/<sha>` and
+  `viable/strict/<epoch>`, which would otherwise crowd out real releases
 
 
 #### `fetch-github.py --trending` - GitHub Trending Repos
