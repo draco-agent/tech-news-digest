@@ -112,11 +112,12 @@ cp config/defaults/topics.json workspace/config/tech-news-digest-topics.json
 
 ## 🔧 环境变量
 
-# Twitter/X 后端（自动优先级：getxapi > twitterapiio > official）
+# Twitter/X 后端（自动优先级：getxapi > xquik > twitterapiio > official）
 export GETX_API_KEY="..."        # GetXAPI
+export XQUIK_API_KEY="..."       # Xquik
 export TWITTERAPI_IO_KEY="..."   # twitterapi.io
 export X_BEARER_TOKEN="..."      # Twitter/X 官方 API v2
-export TWITTER_API_BACKEND="auto"  # auto|getxapi|twitterapiio|official
+export TWITTER_API_BACKEND="auto"  # auto|getxapi|xquik|twitterapiio|official
 # 网页搜索
 export TAVILY_API_KEY="tvly-xxx"   # Tavily Search API
 export BRAVE_API_KEYS="k1,k2,k3"   # Brave Search API 密钥（逗号分隔用于轮换）

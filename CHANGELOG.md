@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+### Added
+- **Xquik backend** for Twitter/X KOL monitoring via `XQUIK_API_KEY`.
+- `--backend xquik` for `fetch-twitter.py` and `--twitter-backend xquik` for `run-pipeline.py`.
+
+### Fixed
+- `--skip trending` now skips GitHub Trending as documented.
+
 ## v3.17.1 — 2026-08-12
 
 ### Fixed
