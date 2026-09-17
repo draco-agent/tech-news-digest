@@ -92,12 +92,20 @@ Read `display_name` and `metrics` (impression_count→👁, reply_count→💬, 
 
 **<EXTRA_SECTIONS>**
 
-**📦 GitHub Releases** — Notable new releases from watched repos. Format:
+**📦 GitHub Releases / GitHub 发布精选** — Consequential releases, not a changelog inventory. Format:
 ```
-• **owner/repo** `vX.Y.Z` — release highlights
+• **owner/repo** `vX.Y.Z` — one key change; why it matters / who should act
   <https://github.com/owner/repo/releases/tag/vX.Y.Z>
 ```
-Filter for `source_type == "github"` from merged JSON. **Show ALL releases — do not filter or reduce.** No 🔥 score prefix for this section. Skip section if no releases in time window.
+Filter candidates for `source_type == "github"` from merged JSON, then apply these rules (they override general quality-score ordering and `<ITEMS_PER_SECTION>` for this section):
+- **Daily: at most 3 repositories. Weekly: at most 5 repositories.** Hard ceilings, not quotas; never pad or append an overflow list.
+- Select and rank by concrete user impact: urgent security/data-loss fixes or breaking changes requiring action first, then meaningful new capabilities/model or hardware support, then measured performance improvements. A high quality_score or version bump alone does not justify inclusion.
+- Skip routine patches, dependency bumps, docs/CI changes, automated builds and prereleases unless they carry an exceptional, clearly evidenced impact. Critical security patches remain eligible.
+- **One bullet per repository per report.** Consolidate multiple versions into the most important change, retaining its exact version and source link. Weekly is a curated recap of the week's most consequential changes, not concatenated daily release lists; previously covered daily changes may qualify as weekly highlights.
+- Each bullet gets one short sentence: what changed + why it matters or who needs to act. For Chinese reports, cap the explanation at 80 characters (excluding repository/version/URL). No nested bullets, commit/PR lists, contributor credits, or vague “several improvements and fixes”. No 🔥 score prefix.
+- Verify the key change against available release notes or the linked official release. If the evidence only provides a tag/title without meaningful detail, omit it rather than inventing benefits or upgrade advice.
+- Do not repeat releases already explained in a topic section. If no qualifying releases remain, omit this section.
+- Before delivery, verify the daily/weekly cap, unique repositories, concise evidence-backed explanations and exact release links. Apply the same selection to Discord, archived Markdown, email and PDF.
 
 **🐙 GitHub Trending** — Top trending repos from the past 24-48h. Format:
 ```
