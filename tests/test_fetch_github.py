@@ -4,7 +4,9 @@
 import datetime
 import importlib.util
 import io
+import json
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
@@ -125,6 +127,27 @@ class TestFetchReleasesAtom(unittest.TestCase):
 
         self.assertEqual(result["count"], 1)
         self.assertEqual(result["articles"][0]["title"], "pytorch v2.13.0")
+
+
+class TestRepositoryDiscovery(unittest.TestCase):
+    def test_search_reports_totals_not_estimated_daily_growth(self):
+        items = [
+            {"full_name": "example/young", "stargazers_count": 100,
+             "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat()},
+            {"full_name": "example/old", "stargazers_count": 100000,
+             "created_at": "2010-01-01T00:00:00Z"},
+        ]
+        payload = json.dumps({"items": items}).encode()
+        with patch.object(fetch_github, "urlopen", side_effect=lambda *a, **k: io.BytesIO(payload)) as network, \
+                patch.object(fetch_github.time, "sleep"):
+            repos = fetch_github.fetch_trending_repos()
+        self.assertEqual(network.call_count, len(fetch_github.TRENDING_QUERIES))
+        self.assertEqual([r["stars"] for r in repos], [100000, 100])
+        self.assertEqual(len(repos), 2)  # Repeated query matches remain deduplicated.
+        for repo in repos:
+            self.assertNotIn("daily_stars_est", repo)
+            self.assertEqual(repo["source_type"], "github_trending")
+            self.assertEqual(repo["discovery_method"], "github_search")
 
 
 if __name__ == "__main__":

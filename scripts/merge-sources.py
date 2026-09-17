@@ -684,7 +684,7 @@ Examples:
                 all_articles.append(article)
         
 
-        # Load GitHub trending repos
+        # Search discoveries keep the legacy source type, not a growth-based score.
         if trending_data:
             for repo in trending_data.get("repos", []):
                 article = {
@@ -696,10 +696,11 @@ Examples:
                     "source_type": "github_trending",
                     "topics": repo.get("topics", []),
                     "stars": repo.get("stars", 0),
-                    "daily_stars_est": repo.get("daily_stars_est", 0),
+                    "discovery_method": "github_search",
                     "forks": repo.get("forks", 0),
                     "language": repo.get("language", ""),
-                    "quality_score": 5 + min(10, repo.get("daily_stars_est", 0) // 10),
+                    # Lifetime popularity and legacy estimates are not daily growth.
+                    "quality_score": 5,
                 }
                 all_articles.append(article)
         total_collected = len(all_articles)

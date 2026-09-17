@@ -114,45 +114,40 @@ def is_safe_url(url: str) -> bool:
 
 
 def _process_inline(text: str) -> str:
-    """Process inline markdown with HTML escaping."""
-    result = escape(text)
+    """Render raw markdown tokens once, escaping every text/attribute value.
 
-    # Bold: **text**
-    result = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', result)
-
-    # Inline code: `text`
-    result = re.sub(
-        r'`(.+?)`',
-        r'<code>\1</code>',
-        result
+    Consume labelled links before angle autolinks so Discord's [label](<url>)
+    cannot be rewritten into HTML and then mistaken for an unsafe URL. Never
+    run markdown substitutions over generated HTML (or over code/URL content).
+    """
+    tokens = re.compile(
+        r'`(?P<code>[^`]+)`'
+        r'|\[(?P<label>[^\]\n]+)\]\('
+        r'(?:<(?P<suppressed>[^<>\n]+)>|(?P<url>(?:[^()\n]|\([^()\n]*\))+))\)'
+        r'|<(?P<angle>https?://[^<>\n]+)>'
+        r'|\*\*(?P<bold>.+?)\*\*'
     )
-
-    # Angle-bracket links: <https://...>
-    def restore_link(m):
-        url = html.unescape(m.group(1))
-        if is_safe_url(url):
-            escaped_url = escape(url)
-            try:
-                domain = urlparse(url).netloc
-                return f'<a href="{escaped_url}">{escape(domain)}</a>'
-            except Exception:
-                return f'<a href="{escaped_url}">{escaped_url}</a>'
-        return escape(url)
-
-    result = re.sub(r'&lt;(https?://[^&]+?)&gt;', restore_link, result)
-
-    # Markdown links: [text](url)
-    def restore_md_link(m):
-        label = html.unescape(m.group(1))
-        url = html.unescape(m.group(2))
-        if is_safe_url(url):
-            return f'<a href="{escape(url)}">{escape(label)}</a>'
-        return escape(label)
-
-    result = re.sub(r'\[([^\]]+?)\]\(([^)]+?)\)', restore_md_link, result)
-
-    result = wrap_emoji_spans(result)
-    return result
+    parts = []
+    position = 0
+    for match in tokens.finditer(text):
+        parts.append(escape(text[position:match.start()]))
+        if match.group('code') is not None:
+            parts.append('<code>' + escape(match.group('code')) + '</code>')
+        elif match.group('bold') is not None:
+            parts.append('<strong>' + _process_inline(match.group('bold')) + '</strong>')
+        else:
+            url = (match.group('suppressed') or match.group('url') or match.group('angle')).strip()
+            label = match.group('label')
+            if is_safe_url(url):
+                if label is None:
+                    label = urlparse(url).netloc or url
+                parts.append(f'<a href="{escape(url)}">{escape(label)}</a>')
+            else:
+                parts.append(escape(label if label is not None else url))
+        position = match.end()
+    parts.append(escape(text[position:]))
+    result = ''.join(parts)
+    return wrap_emoji_spans(result)
 
 
 def markdown_to_html(md_content: str) -> str:

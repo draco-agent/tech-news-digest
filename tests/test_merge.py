@@ -7,7 +7,9 @@ Run: python3 -m pytest tests/ -v
 
 import json
 import sys
+import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 SCRIPTS_DIR = Path(__file__).parent.parent / "scripts"
@@ -284,6 +286,32 @@ class TestMergedOutput(unittest.TestCase):
             self.assertIn("articles", tdata)
             for a in tdata["articles"]:
                 self.assertIn("quality_score", a)
+
+
+class TestDiscoveryScoring(unittest.TestCase):
+    def test_discovery_has_neutral_score_even_for_legacy_growth_input(self):
+        for stars, created, legacy in [
+            (50, "2026-09-01T00:00:00Z", {}),
+            (1000000, "2010-01-01T00:00:00Z", {}),
+            (1000000, "2026-09-01T00:00:00Z", {"daily_stars_est": 100000}),
+        ]:
+            with self.subTest(stars=stars, created=created, legacy=legacy), \
+                    tempfile.TemporaryDirectory() as tmp:
+                repo = {"repo": "example/project", "stars": stars,
+                        "created_at": created, "topics": ["llm"], **legacy}
+                input_path = Path(tmp) / "discovery.json"
+                output_path = Path(tmp) / "merged.json"
+                input_path.write_text(json.dumps({"total": 1, "repos": [repo]}))
+                with patch.object(sys, "argv", ["merge-sources.py", "--trending",
+                                  str(input_path), "--output", str(output_path)]):
+                    self.assertEqual(merge_mod.main(), 0)
+                output = json.loads(output_path.read_text())
+                article = output["topics"]["llm"]["articles"][0]
+                self.assertEqual(article["quality_score"], 5)
+                self.assertNotIn("daily_stars_est", article)
+                self.assertEqual(article["stars"], stars)
+                self.assertEqual(article["source_type"], "github_trending")
+                self.assertEqual(article["discovery_method"], "github_search")
 
 
 if __name__ == "__main__":

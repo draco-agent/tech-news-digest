@@ -1,132 +1,31 @@
 # Tech Digest Email Template
 
-HTML email format optimized for Gmail/Outlook rendering.
+Hard report-body limits: daily ≤2600 characters, weekly ≤4800, excluding URL targets only (not headings, source labels or prose). No filling to the limit. A single concise coverage caveat without raw counts is allowed when missing/failed sources materially limit coverage; detailed failures remain in the operational log. These exceptions/limits apply to the shared canonical content in every format.
 
-## Delivery
+Use `markdown.md` for daily/weekly structure and `../digest-prompt.md` for authoritative editorial policy. Email is a rendering of the validated canonical archive, not a second selection pass.
 
-Send via `gog gmail send` with `--body-html` flag:
-```bash
-gog gmail send --to '<EMAIL>' --subject '<SUBJECT>' --body-html '<HTML_CONTENT>'
-```
+## Editorial Contract
 
-**Important**: Use `--body-html`, NOT `--body`. Plain text markdown will not render properly in email clients.
+- Daily ≤12 unique items: one-line takeaway, normally 3–5 focus, optional actions ≤2, releases ≤3 repositories, discovery ≤1, reading ≤1.
+- Weekly ≤18 unique items: judgment, ≤3 evidence-backed syntheses, releases ≤5 repositories/actions, try ≤2, read ≤2, next-week proposed checks ≤3 (question + minimal test + metric, not performed).
+- These are caps, not quotas. Count supporting events inside syntheses and standalone actions/checks too. Whole-report event/URL dedup; no fixed topic allocation or extra weekly trend summary.
+- Exactly the same selected items, claims and order as Discord, Markdown and PDF. Optional reading includes papers, docs, postmortems and essays.
+- No fixed KOL/community-buzz section, quality scores, social/star metrics, source counts or operational/generator footer. Project discovery is not measured trending; no lifetime-derived growth.
+- Apply the requested language, including Simplified Chinese explanations when configured. Do not dump untranslated titles/snippets.
 
-## Template Structure
+## Safe Rendering and Delivery
 
-The agent should generate an HTML email body. Use inline styles (email clients strip `<style>` blocks).
+1. Validate the archive: `python3 scripts/validate-digest.py --input FILE --mode daily` (or `weekly`). Fix all errors before delivery.
+2. Convert via `sanitize-html.py` to an HTML **file**; do not interpolate fetched text/HTML into shell arguments or send raw Markdown.
+3. Generate the optional PDF from the same archive; send with `send-email.py` as specified in `../digest-prompt.md`. Use static configured recipient, subject and optional sender values only. Do not substitute inline `gog --body-html` commands containing fetched content.
+4. Check rendering preserves selections, links and language. Log missing PDF or delivery errors separately; do not claim unverified success.
 
-```html
-<div style="max-width:640px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.6">
+Use a mobile-friendly width (about 640px), system fonts and inline styles. HTML must be escaped/sanitized, links restricted to HTTP(S). Use heading + list markup, bold item titles and compact inline source anchors, not raw URL rows or tables. No images needed.
 
-  <h1 style="font-size:22px;border-bottom:2px solid #e5e5e5;padding-bottom:8px">
-    🐉 {{TITLE}}
-  </h1>
-
-  <!-- Optional: Executive Summary for weekly -->
-  <p style="color:#555;font-size:14px;background:#f8f9fa;padding:12px;border-radius:6px">
-    {{SUMMARY}}
-  </p>
-
-  <!-- Topic Section -->
-  <h2 style="font-size:17px;margin-top:24px;color:#333">{{emoji}} {{label}}</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>🔥{{quality_score}}</strong> {{title}} — {{description}}
-      <br><a href="{{link}}" style="color:#0969da;font-size:13px">{{link}}</a>
-    </li>
-  </ul>
-
-  <!-- Repeat for each topic -->
-
-  <!-- KOL Section: Read metrics from twitter JSON data (metrics.impression_count, reply_count, retweet_count, like_count). One tweet per <li>. -->
-  <h2 style="font-size:17px;margin-top:24px;color:#333">📢 KOL Updates</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>{{display_name}}</strong> (@{{handle}}) — {{summary}}
-      <br><code style="font-size:12px;color:#888;background:#f4f4f4;padding:2px 6px;border-radius:3px">👁 {{views}} | 💬 {{replies}} | 🔁 {{retweets}} | ❤️ {{likes}}</code>
-      <br><a href="{{tweet_link}}" style="color:#0969da;font-size:13px">{{tweet_link}}</a>
-    </li>
-  </ul>
-
-  <!-- Twitter/X Trending Section: Each entry must include at least one reference link -->
-  <h2 style="font-size:17px;margin-top:24px;color:#333">🔥 Community Buzz</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>{{trending_topic}}</strong> — {{summary}}
-      <br><a href="{{reference_link}}" style="color:#0969da;font-size:13px">{{reference_link}}</a>
-    </li>
-  </ul>
-
-  <!-- Blog / Releases sections -->
-
-  <!-- Footer -->
-  <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0">
-  <p style="font-size:12px;color:#888">
-    📊 Data Sources: RSS {{rss_count}} | Twitter {{twitter_count}} | Reddit {{reddit_count}} | Web {{web_count}} | GitHub {{github_count}} releases | After dedup: {{merged_count}} articles
-    <br>🤖 Generated by <a href="https://github.com/draco-agent/tech-news-digest" style="color:#0969da">tech-news-digest</a> v{{version}} | Powered by <a href="https://openclaw.ai" style="color:#0969da">OpenClaw</a>
-  </p>
-
-</div>
-```
-
-## Style Guidelines
-
-- **Max width**: 640px centered (mobile-friendly)
-- **Fonts**: System font stack (no web fonts in email)
-- **All styles inline**: Email clients strip `<style>` tags
-- **Links**: Use full URLs, styled with `color:#0969da`
-- **Headings**: h1 for title (22px), h2 for topics (17px)
-- **Lists**: `<ul>` with `<li>`, adequate spacing
-- **Footer**: Small gray text with stats
-- **No images**: Pure text/HTML for maximum compatibility
-- **No tables for layout**: Use div + inline styles
-
-## Example Output
+Illustrative sanitized item shape (placeholders only):
 
 ```html
-<div style="max-width:640px;margin:0 auto;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;line-height:1.6">
-
-  <h1 style="font-size:22px;border-bottom:2px solid #e5e5e5;padding-bottom:8px">
-    🐉 Daily Tech Digest — 2026-02-15
-  </h1>
-
-  <h2 style="font-size:17px;margin-top:24px;color:#333">🧠 LLM / Large Models</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>GPT-5.2 achieves first theoretical physics discovery</strong> — Collaboration with IAS, Cambridge, Harvard on gluon interactions
-      <br><a href="https://twitter.com/OpenAI/status/2022390096625078389" style="color:#0969da;font-size:13px">twitter.com/OpenAI</a>
-    </li>
-    <li style="margin-bottom:10px">
-      <strong>ByteDance releases Doubao 2.0</strong> — Full upgrade across Agent, image, and video
-      <br><a href="https://www.jiqizhixin.com/articles/2026-02-14-9" style="color:#0969da;font-size:13px">jiqizhixin.com</a>
-    </li>
-    <li style="margin-bottom:10px">
-      <strong>Dario Amodei: nearing the end of exponential growth</strong> — In-depth Anthropic CEO interview
-      <br><a href="https://www.dwarkesh.com/p/dario-amodei-2" style="color:#0969da;font-size:13px">dwarkesh.com</a>
-    </li>
-  </ul>
-
-  <h2 style="font-size:17px;margin-top:24px;color:#333">🤖 AI Agent</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>Stanford AI Town startup raises $100M</strong> — Backed by Fei-Fei Li, Karpathy
-      <br><a href="https://www.qbitai.com/2026/02/380347.html" style="color:#0969da;font-size:13px">qbitai.com</a>
-    </li>
-  </ul>
-
-  <h2 style="font-size:17px;margin-top:24px;color:#333">💰 Cryptocurrency</h2>
-  <ul style="padding-left:20px">
-    <li style="margin-bottom:10px">
-      <strong>X to launch crypto & stock trading</strong> — Smart Cashtags feature coming soon
-      <br><a href="https://www.theblock.co/post/389952" style="color:#0969da;font-size:13px">theblock.co</a>
-    </li>
-  </ul>
-
-  <hr style="border:none;border-top:1px solid #e5e5e5;margin:24px 0">
-  <p style="font-size:12px;color:#888">
-    📊 Data Sources: RSS 287 | Twitter 71 | Reddit 45 | Web 60 | GitHub 29 releases | After dedup: 140 articles
-    <br>Generated by Tech News Digest
-  </p>
-
-</div>
+<li><strong>{{标题}}</strong> — {{变化与影响}}。<a href="{{HTTP_OR_HTTPS_URL}}">来源</a></li>
 ```
+
+Operational statistics and attribution belong in the final operational log, never the email body or attachment.

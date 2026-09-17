@@ -1,6 +1,6 @@
 ---
 name: tech-news-digest
-description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
+description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X, GitHub releases, project discovery, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
 version: "3.17.1"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
@@ -75,7 +75,20 @@ files:
 
 # Tech News Digest
 
-Automated tech news digest system with unified data source model, quality scoring pipeline, and template-based output generation.
+Evidence-led tech digest with unified collection and one editorial selection shared across formats. Follow `references/digest-prompt.md` as the authoritative mode policy.
+
+## Editorial Contract
+
+- Daily ≤12 unique items: one-line takeaway, normally 3–5 focus (fewer if evidence is thin), optional actions ≤2, releases ≤3 repositories, discovery ≤1, optional reading ≤1.
+- Weekly ≤18 unique items: judgment, ≤3 evidence-backed thematic syntheses (not an expanded daily list), releases ≤5 repositories/actions, try ≤2, read ≤2, proposed next-week checks ≤3 (question + minimal test + metric; explicitly not performed).
+- Caps are not quotas. Count evidence events inside themes and standalone actions/checks. No fixed four-topic allocation. Body limits: daily ≤2600 characters, weekly ≤4800, excluding URL targets; never fill to the limit.
+- Relevance, impact and evidence before internal scores. Exceptional claims need original technical evidence and independent assessment where possible, otherwise exclude/downgrade. No public scores, social metrics, fixed KOL section or operational statistics. A material coverage gap may receive one concise caveat without raw counts; details stay in the final operational log.
+- Deduplicate events and canonical URLs across the whole report. Daily repeats require incremental developments; weekly may synthesize daily coverage. Reading is optional and may include papers, docs, postmortems or essays.
+- Project discovery is not verified trending; no lifetime-derived growth or repeated mature repos without meaningful changes. Preserve the prompt's consequential-release rules, exact versions and official links.
+- Plain bullets with bold titles; concise inline Discord links `[来源](<URL>)`. Section-aware chunks ≤1700 characters including numbering. Apply the requested language, including Simplified Chinese explanations when configured.
+- Validate the canonical archive with `python3 scripts/validate-digest.py --input FILE --mode daily` or `--mode weekly` before delivery; fix all errors. Missing/failing validation blocks delivery. Manually verify evidence and cross-format parity too.
+- Discord, Markdown, email and PDF use identical selections/judgments. Operational stats/runtime attribution belong in the final log, not content.
+- Legacy `ITEMS_PER_SECTION`, `BLOG_PICKS_COUNT` and `EXTRA_SECTIONS` are advisory parameters superseded by mode policy: ignore their counts/extra sections, especially duplicate weekly trends.
 
 ## Quick Start
 
@@ -106,7 +119,7 @@ Automated tech news digest system with unified data source model, quality scorin
      --output /tmp/td-merged.json --verbose --force
    ```
 
-4. **Use Templates**: Apply Discord, email, or PDF templates to merged output
+4. **Select and Validate**: Follow `references/digest-prompt.md`; validate the canonical Markdown before rendering the same selections to Discord, email and PDF.
 
 ## Configuration Files
 
@@ -213,12 +226,12 @@ python3 scripts/fetch-github.py [--defaults DIR] [--config DIR] [--hours 168] [-
   `viable/strict/<epoch>`, which would otherwise crowd out real releases
 
 
-#### `fetch-github.py --trending` - GitHub Trending Repos
+#### `fetch-github.py --trending` - Project Discovery (legacy flag)
 ```bash
 python3 scripts/fetch-github.py --trending [--hours 48] [--output FILE] [--verbose]
 ```
-- Searches GitHub API for trending repos across 4 topics (LLM, AI Agent, Crypto, Frontier Tech)
-- Quality scoring: base 5 + daily_stars_est / 10, max 15
+- Searches GitHub API for discovery candidates; search results do not establish genuine trends.
+- Neutral internal base score 5, not a growth signal. No `daily_stars_est` or lifetime-derived growth. Daily discovery ≤1, weekly ≤2; require a current reason to try the project.
 
 #### `fetch-reddit.py` - Reddit Posts Fetcher
 ```bash
@@ -317,20 +330,19 @@ Place custom configs in `workspace/config/` to override defaults:
 
 ## Templates & Output
 
-### Discord Template (`references/templates/discord.md`)
-- Bullet list format with link suppression (`<link>`)
-- Mobile-optimized, emoji headers
-- 2000 character limit awareness
+### Canonical Markdown (`references/templates/markdown.md`)
+- Daily/weekly structure governed by `references/digest-prompt.md`; one validated selection for all formats.
 
-### Email Template (`references/templates/email.md`) 
-- Rich metadata, technical stats, archive links
-- Executive summary, top articles section
-- HTML-compatible formatting
+### Discord Template (`references/templates/discord.md`)
+- Plain bullets, bold titles, inline `[来源](<URL>)` links; section-aware chunks ≤1700 characters including numbering.
+
+### Email Template (`references/templates/email.md`)
+- Convert validated Markdown with `sanitize-html.py`, send the HTML file with `send-email.py`.
+- Same selections, no extra metadata sections or operational statistics.
 
 ### PDF Template (`references/templates/pdf.md`)
-- A4 layout with Noto Sans CJK SC font for Chinese support
-- Emoji icons, page headers/footers with page numbers
-- Generated via `scripts/generate-pdf.py` (requires `weasyprint`)
+- Same canonical report, A4 Chinese typography and page numbers.
+- Generated via `scripts/generate-pdf.py` (requires `weasyprint`); no PDF-only content.
 
 ## Default Sources (213 enabled)
 
@@ -421,6 +433,8 @@ export GH_APP_KEY_FILE="/path/to/key.pem"
 
 The cron prompt should **NOT** hardcode the pipeline steps. Instead, reference `references/digest-prompt.md` and only pass configuration parameters. This ensures the pipeline logic stays in the skill repo and is consistent across all installations.
 
+Existing cron jobs may still pass `ITEMS_PER_SECTION`, `BLOG_PICKS_COUNT` and `EXTRA_SECTIONS`. Accept them for compatibility but ignore their quotas/extra sections; mode policy supersedes them. New examples omit them.
+
 #### Daily Digest Cron Prompt
 ```
 Read <SKILL_DIR>/references/digest-prompt.md and follow the complete workflow to generate a daily digest.
@@ -430,10 +444,7 @@ Replace placeholders with:
 - TIME_WINDOW = past 1-2 days
 - FRESHNESS = pd
 - RSS_HOURS = 48
-- ITEMS_PER_SECTION = 3-5
 - ENRICH = true
-- BLOG_PICKS_COUNT = 3
-- EXTRA_SECTIONS = (none)
 - SUBJECT = Daily Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
 - SKILL_DIR = <your skill install path>
@@ -454,10 +465,7 @@ Replace placeholders with:
 - TIME_WINDOW = past 7 days
 - FRESHNESS = pw
 - RSS_HOURS = 168
-- ITEMS_PER_SECTION = 10-15
 - ENRICH = true
-- BLOG_PICKS_COUNT = 3-5
-- EXTRA_SECTIONS = 📊 Weekly Trend Summary (2-3 sentences summarizing macro trends)
 - SUBJECT = Weekly Tech Digest - YYYY-MM-DD
 - WORKSPACE = <your workspace path>
 - SKILL_DIR = <your skill install path>

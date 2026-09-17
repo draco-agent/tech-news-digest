@@ -730,7 +730,7 @@ Environment Variables:
         return 1
 
 
-# --- GitHub Trending via Search API ---
+# --- Repository discovery via Search API (legacy trending interface) ---
 
 TRENDING_QUERIES = [
     {"topic": "llm", "q": "llm large-language-model in:topics,name,description"},
@@ -744,10 +744,10 @@ TRENDING_CACHE_PATH = "/tmp/tech-news-digest-trending-cache.json"
 
 def fetch_trending_repos(hours: int = 48, github_token: Optional[str] = None,
                          min_stars: int = 50, per_topic: int = 15) -> List[Dict[str, Any]]:
-    """Fetch trending repos via GitHub Search API (created or pushed recently, sorted by stars).
-    
-    Strategy: search repos pushed within `hours`, with min stars, sorted by stars desc.
-    Then estimate daily star growth from repo age.
+    """Discover recently pushed repositories, sorted by lifetime star totals.
+
+    Search results are not measured trending or daily star growth. The function
+    name and source_type retain the legacy trending interface for compatibility.
     """
     cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
     cutoff_str = cutoff.strftime("%Y-%m-%d")
@@ -777,11 +777,7 @@ def fetch_trending_repos(hours: int = 48, github_token: Optional[str] = None,
                     continue
                 seen_repos.add(full_name)
 
-                # Estimate daily star growth
-                created = parse_github_date(item.get("created_at", ""))
-                age_days = max(1, (datetime.now(timezone.utc) - created).days) if created else 365
                 stars = item.get("stargazers_count", 0)
-                daily_stars = round(stars / age_days)
 
                 all_repos.append({
                     "repo": full_name,
@@ -789,7 +785,7 @@ def fetch_trending_repos(hours: int = 48, github_token: Optional[str] = None,
                     "description": (item.get("description") or "")[:200],
                     "url": item.get("html_url", ""),
                     "stars": stars,
-                    "daily_stars_est": daily_stars,
+                    "discovery_method": "github_search",
                     "forks": item.get("forks_count", 0),
                     "language": item.get("language", ""),
                     "topics": [tq["topic"]],
@@ -806,7 +802,7 @@ def fetch_trending_repos(hours: int = 48, github_token: Optional[str] = None,
         except Exception as e:
             logging.warning(f"GitHub trending search error [{tq['topic']}]: {e}")
 
-    # Sort by stars desc
+    # Sort by lifetime stars, not measured growth.
     all_repos.sort(key=lambda x: -x["stars"])
     logging.info(f"🔥 Trending: {len(all_repos)} repos found across {len(TRENDING_QUERIES)} topics")
     return all_repos
