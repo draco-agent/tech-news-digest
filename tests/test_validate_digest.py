@@ -37,15 +37,15 @@ class DigestValidatorTests(unittest.TestCase):
         self.assertTrue(any(code in error for error in errors), errors)
 
     def test_daily_boundary_both_markers(self):
-        text = "## 今日要闻\n" + "\n".join(item(n, "•" if n % 2 else "-") for n in range(12))
+        text = "## 今日要闻\n" + "\n".join(item(n, "•" if n % 2 else "-") for n in range(30))
         self.valid(text)
-        self.invalid(text + "\n" + item(12), "item-limit")
+        self.invalid(text + "\n" + item(30), "item-limit")
 
     def test_weekly_boundary(self):
         text = "\n".join(item(n) for n in range(18))
         self.valid(text, "weekly")
         self.invalid(text + "\n" + item(18), "item-limit", "weekly")
-        self.invalid(text, "item-limit", "daily")
+        self.valid(text, "daily")
 
     def test_nested_bullets_not_top_level(self):
         text = "\n".join(item(n) + "\n  - 影响说明" for n in range(12))
@@ -88,7 +88,7 @@ class DigestValidatorTests(unittest.TestCase):
     def test_legacy_headings_and_operational_footer(self):
         for heading in ("## 📢 KOL Updates", "**🐙 GitHub Trending**", "## KOL 动态", "## GitHub 趋势"):
             with self.subTest(heading=heading):
-                self.invalid(heading + "\n" + item(1), "legacy-heading")
+                self.invalid(heading + "\n" + item(1), "legacy-heading", "weekly")
         for footer in ("📊 Data Sources: RSS 5 | Twitter 2 | Dedup: 7 articles", "📊 数据源：RSS 5 | GitHub 3"):
             self.invalid(item(1) + "\n---\n" + footer, "operational-footer")
         self.valid("## 行业观察\n" + item(1) + " 讨论 GitHub Trending 数据")
@@ -120,7 +120,7 @@ class DigestValidatorTests(unittest.TestCase):
         self.invalid(text, "duplicate-repo")
 
     def test_chinese_legacy_heading_and_footer(self):
-        self.invalid("## KOL动态\n" + item(1), "legacy-heading")
+        self.valid("## KOL动态\n" + item(1))
         self.invalid(item(1) + "\n📊 数据来源：RSS 10 | GitHub 3", "operational-footer")
 
     def test_invalid_hostname(self):
@@ -145,20 +145,43 @@ class DigestValidatorTests(unittest.TestCase):
             self.valid("## " + title + "\n- 建议对比模型延迟。", "weekly")
         self.valid("## 下周验证（拟议，尚未执行）\n- **延迟是否下降** — 最小测试：固定输入；指标：P95。", "weekly")
         self.invalid("## 下周验证\n- 模型已经发布。", "source-link", "weekly")
-        self.invalid("## 关键人物动态\n" + item(1), "legacy-heading")
+        self.valid("## 关键人物动态\n" + item(1))
 
     def test_canonical_duplicate_urls_preserve_real_query(self):
         self.invalid("- 新闻 [源](https://example.com/a?id=2&utm_source=x#part)\n- 新闻 [源](https://example.com/a?fbclid=z&id=2&gclid=y)", "duplicate-url")
         self.valid("- 新闻 [源](https://example.com/a?id=2)\n- 新闻 [源](https://example.com/a?id=3)")
 
     def test_exact_editorial_section_caps(self):
-        for title, mode, cap in (("值得读", "daily", 1), ("值得读", "weekly", 2),
-                                 ("项目发现", "daily", 1), ("值得试", "weekly", 2),
+        for title, mode, cap in (("值得读", "daily", 3), ("值得读", "weekly", 2),
+                                 ("博客精选", "daily", 3), ("KOL 动态", "daily", 3),
+                                 ("GitHub 项目发现", "daily", 3),
+                                 ("项目发现", "daily", 3), ("值得试", "weekly", 2),
                                  ("可行动", "daily", 2), ("本周主题", "weekly", 3),
                                  ("下周验证清单", "weekly", 3)):
             text = "## " + title + "\n" + "\n".join(item(n) for n in range(cap))
             self.valid(text, mode)
             self.invalid(text + "\n" + item(cap), "section-limit", mode)
+
+    def test_restored_daily_sections_with_substantive_coverage(self):
+        # Synthetic offline fixture, never a publishable news report.
+        sections = ["🧠 LLM / 大模型", "🤖 AI Agent", "💰 Crypto / 加密技术",
+                    "🚀 前沿科技", "📢 KOL 动态", "📦 GitHub 发布精选",
+                    "🐙 GitHub 项目发现", "📝 博客精选"]
+        blocks = ["# 科技日报 — 测试样例\n\n> 多版块离线校验，不是真实新闻。"]
+        for i, section in enumerate(sections):
+            rows = [release(n) if i == 5 else item(i * 10 + n)
+                    for n in range(3)]
+            blocks.append("## " + section + "\n" + "\n".join(rows))
+        self.valid("\n\n".join(blocks))
+        self.valid("\n\n".join(blocks) + "\n## 无更新版块\n本期暂无值得单列的更新。")
+        self.invalid("## GitHub Trending\n" + item(1), "legacy-heading")
+
+    def test_daily_template_preserves_all_section_slots(self):
+        template = (SCRIPT.parents[1] / "references/templates/markdown.md").read_text()
+        daily = template.split("## Weekly", 1)[0]
+        for title in ("LLM / 大模型", "AI Agent", "Crypto / 加密技术", "前沿科技",
+                      "KOL 动态", "GitHub 发布精选", "GitHub 项目发现", "博客精选"):
+            self.assertIn(title, daily)
 
     def test_empty_is_not_deliverable(self):
         self.invalid("# Daily digest\n", "empty-digest")

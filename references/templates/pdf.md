@@ -1,14 +1,14 @@
 # Tech Digest PDF Template
 
-Hard report-body limits: daily ≤2600 characters, weekly ≤4800, excluding URL targets only (not headings, source labels or prose). No filling to the limit. A single concise coverage caveat without raw counts is allowed when missing/failed sources materially limit coverage; detailed failures remain in the operational log. These exceptions/limits apply to the shared canonical content in every format.
+Hard report-body limits: daily ≤6500 characters, weekly ≤4800, excluding URL targets only (not headings, source labels or prose). No filling to the limit. A single concise coverage caveat without raw counts is allowed when missing/failed sources materially limit coverage; detailed failures remain in the operational log. These exceptions/limits apply to the shared canonical content in every format.
 
 Use `markdown.md` for daily/weekly structure and `../digest-prompt.md` for authoritative editorial policy. PDF is a rendering of the same validated canonical report used for Discord and email, never an expanded edition.
 
 ## Editorial Contract
 
-Daily ≤12 unique items: one-line takeaway, normally 3–5 focus, optional actions ≤2, releases ≤3 repositories, discovery ≤1, reading ≤1. Weekly ≤18: judgment, ≤3 evidence-backed syntheses, releases ≤5 repositories/actions, try ≤2, read ≤2, proposed next-week checks ≤3 (question + minimal test + metric, explicitly not performed). Count unique events inside themes and standalone actions/checks. All ceilings are caps, not quotas.
+Daily ≤30 unique items: 2–4 sentence overview; configured topic sections (normally 3–5 items each); KOL viewpoints ≤3; releases ≤3 repositories; project discovery ≤3; blog picks ≤3. Retain all daily headings, using a brief non-bullet coverage note for empty sections. News/blog explanations normally 2–3 sentences; do not reduce the report to headline fragments. Weekly ≤18: judgment, ≤3 evidence-backed syntheses, releases ≤5 repositories/actions, try ≤2, read ≤2, proposed next-week checks ≤3 (question + minimal test + metric, explicitly not performed). Count unique events inside themes and standalone actions/checks. All ceilings are caps, not quotas.
 
-Preserve whole-report event/URL dedup, exact release versions/links, evidence-backed concise explanations and requested language (Simplified Chinese when configured). No fixed topic quotas, extra weekly trend summary, mandatory reading, fixed KOL section, public scores, social/star metrics, source counts or operational/generator footer. Discovery is not verified trending; never derive growth from lifetime stars. Use plain bullets with bold titles and compact inline source links.
+Preserve whole-report event/URL dedup, exact release versions/links, evidence-backed concise explanations and requested language (Simplified Chinese when configured). Daily preserves topic/KOL/blog headings without mandatory item quotas. No extra weekly trend summary, public scores, social/star metrics, source counts or operational/generator footer. Discovery is not verified trending; never derive growth from lifetime stars. Use plain bullets with bold titles and compact inline source links.
 
 ## Generation and Verification
 

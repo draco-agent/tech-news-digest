@@ -133,10 +133,12 @@ def section_gate(title, mode):
     """Exact editorial headings only; don't infer a section from prose."""
     title = re.sub(r"^[^\w\u3400-\u9fff]+", "", title).strip().lower()
     title = re.sub(r"\s*[（(].*$", "", title).strip()
-    if title in ("值得读", "延伸阅读", "阅读", "reading"):
-        return "reading", 1 if mode == "daily" else 2
-    if title in ("项目发现", "值得试", "project discovery", "worth trying"):
-        return "discovery", 1 if mode == "daily" else 2
+    if title in ("值得读", "延伸阅读", "阅读", "reading", "博客精选", "blog picks"):
+        return "reading", 3 if mode == "daily" else 2
+    if title in ("项目发现", "github 项目发现", "值得试", "project discovery", "worth trying"):
+        return "discovery", 3 if mode == "daily" else 2
+    if mode == "daily" and title in ("kol 动态", "kol动态", "kol updates", "关键人物动态"):
+        return "kol", 3
     if mode == "daily" and title in ("可行动", "action", "actions"):
         return "action", 2
     if mode == "weekly" and title in ("本周主题", "themes", "thematic syntheses"):
@@ -207,7 +209,7 @@ def validate(text, mode="daily"):
         if title is not None:
             section = title
             current = None
-            if LEGACY.search(title):
+            if LEGACY.search(title) and not (mode == "daily" and re.search(r"KOL|关键人物动态", title, re.I)):
                 errors.append(f"line {number}: [legacy-heading] remove fixed KOL/Trending section")
             continue
         if re.fullmatch(r"\s*(?:-{3,}|\*{3,}|_{3,})\s*", line):
@@ -219,7 +221,7 @@ def validate(text, mode="daily"):
         elif current is not None and stripped:
             current["text"] += "\n" + stripped
 
-    limit, release_limit = (12, 3) if mode == "daily" else (18, 5)
+    limit, release_limit = (30, 3) if mode == "daily" else (18, 5)
     if not blocks:
         errors.append("[empty-digest] no top-level content bullets")
     if len(blocks) > limit:

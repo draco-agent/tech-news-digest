@@ -36,7 +36,7 @@ Read workspace overrides before defaults:
 1. Sources: `<WORKSPACE>/config/tech-news-digest-sources.json` → fallback `<SKILL_DIR>/config/defaults/sources.json`.
 2. Topics: `<WORKSPACE>/config/tech-news-digest-topics.json` → fallback `<SKILL_DIR>/config/defaults/topics.json`.
 
-Read recent relevant reports in `<WORKSPACE>/archive/tech-news-digest/` (skip if none). Daily repeats require a significant incremental development, stated explicitly. Weekly may synthesize daily coverage from the week; an archive penalty is not a reason to discard useful weekly evidence. Topic configuration guides discovery, not fixed four-topic sections or quotas.
+Read recent relevant reports in `<WORKSPACE>/archive/tech-news-digest/` (skip if none). Daily repeats require a significant incremental development, stated explicitly. Weekly may synthesize daily coverage from the week; an archive penalty is not a reason to discard useful weekly evidence. For daily reports, topic configuration defines the restored topic sections; preserve their order. Weekly retains thematic synthesis.
 
 ## Data Collection Pipeline
 
@@ -73,21 +73,24 @@ Use this output to select articles; do NOT write ad-hoc Python to parse the JSON
 - Exceptional claims (breakthroughs, first discoveries, benchmark dominance, dramatic cost/performance gains) require original technical evidence: paper, methods, evaluation, code or detailed technical report. Seek independent assessment where possible. Without adequate evidence, exclude or downgrade to an explicitly attributed, unverified claim with its limitation; never present promotion as established fact.
 - News and release changes must fall within `<TIME_WINDOW>`. Optional reading/project discovery may be older only with a clear current reason to include it; do not present it as new news.
 - Deduplicate events **and canonical URLs across the whole report**, including focus, releases, actions, discovery, reading and validation. One event has one home; combine authoritative corroborating links there. Normalize tracking parameters/fragments for duplicate checks without altering meaningful URL queries. Never repeat an item just to fill a different section.
-- No fixed KOL section: an author's substantive statement competes on relevance and evidence with every other source. No public quality scores, engagement/social metrics (including stars), source counts, operational statistics or generator/version footers.
+- Daily keeps a KOL Updates section for substantive original viewpoints, not repeated announcements or engagement bait. Weekly integrates such evidence into themes. No public quality scores, engagement/social metrics (including stars), source counts, operational statistics or generator/version footers.
 - Every substantive item needs a source link. Use plain bullet text with **bold titles**, not tables or code-block inventories. Discord links are concise and inline: `[来源](<https://example.com/original>)`. Use multiple source links in the same bullet when needed to support a synthesis.
 
 ### Mode Policy — Caps, Not Quotas
 
-**Hard body-length ceilings:** daily ≤2600 characters; weekly ≤4800 characters, excluding link URL targets only. Count title, headings, bullet text, source labels and any coverage caveat; omit delivery-only chunk numbers from this report-body count. Trim or drop lower-value material rather than exceed the ceiling. These are ceilings, never fill targets; the Discord ≤1700-character chunk limit separately includes full URLs and numbering.
+**Hard body-length ceilings:** daily ≤6500 characters; weekly ≤4800 characters, excluding link URL targets only. Count title, headings, bullet text, source labels and any coverage caveat; omit delivery-only chunk numbers from this report-body count. Trim or drop lower-value material rather than exceed the ceiling. These are ceilings, never fill targets; the Discord ≤1700-character chunk limit separately includes full URLs and numbering.
 
 **Coverage caveat exception:** If missing/failed sources materially limit coverage, allow one concise reader-facing caveat without raw counts. This is not permission for a statistics footer; detailed failures remain in the final operational log.
 
-**Daily: at most 12 unique items across the entire report.**
-1. One-line takeaway, drawing only from selected evidence (not another list of headlines).
-2. **Focus:** normally 3–5 consequential developments, one concise sentence each for change + implication. If fewer qualify, publish fewer; never pad.
-3. **Action:** optional, at most 2 concrete actions for affected readers. Prefer putting upgrade/mitigation advice in the relevant focus/release bullet instead of repeating the event here.
-4. **Tools / releases:** optional; releases at most 3 repositories. Project discovery at most 1, with a concrete reason to try it.
-5. **Reading:** optional, at most 1 paper, documentation page, postmortem or substantive essay; explain the reader benefit briefly. Blogs are eligible, not mandatory.
+**Daily: retain the original sections, at most 30 unique items overall. Do not compress the entire report into one Discord message.**
+1. **Executive summary:** 2–4 sentences summarizing the main developments and uncertainties already supported below.
+2. **Topic sections:** preserve the configured topic headings and order (normally 🧠 LLM / 大模型, 🤖 AI Agent, 💰 Crypto / 加密技术, 🚀 前沿科技). Aim for 3–5 substantive items per topic when evidence supports them, never a mandatory quota. Each item gets 2–3 concise sentences: what changed, the key technical detail/evidence, and why it matters or its limitation. Crypto prioritizes technology, protocols and infrastructure rather than trading chatter.
+3. **📢 KOL 动态:** up to 3 original, consequential viewpoints with author, context and source; distinguish opinion from fact. Do not repeat news already covered in topic sections. No engagement counters.
+4. **📦 GitHub 发布精选:** at most 3 repositories, following the consequential-release rules below. This section remains concise; restoring coverage is not permission to restore a changelog inventory.
+5. **🐙 GitHub 项目发现:** up to 3 projects, explaining use case, current reason to try, and important limitations. This restores the former project/trending slot without claiming search results prove popularity.
+6. **📝 博客精选:** up to 3 substantive personal/technical blog essays or postmortems. Explain the core argument, a concrete insight and who should read it, normally 2–3 sentences. Prefer full text; if unavailable, explicitly limit the claim to the accessible excerpt. Do not replace this entire section with a single generic reading link.
+
+Retain all daily section headings. If no nonduplicative, evidence-backed item qualifies, put a plain non-bullet sentence such as “本期暂无值得单列的更新。” under that heading; if collection failed, state that coverage was limited rather than claiming no news. Never fill with weak items. Optimize information density within sections, not by deleting sections. The 30-item and 6500-character ceilings are safety bounds, not targets; do not add a separate repetitive actions list.
 
 **Weekly: at most 18 unique items across the entire report, not an expanded daily list.**
 1. One concise weekly judgment: what changed in the landscape and what remains uncertain.
@@ -96,7 +99,7 @@ Use this output to select articles; do NOT write ad-hoc Python to parse the JSON
 4. **Worth trying:** optional, at most 2 project discoveries; **reading:** optional, at most 2 papers, docs, postmortems or essays.
 5. **Next-week validation:** optional, at most 3 proposed checks. Each states a question, a minimal test and a measurable metric/decision threshold. Label as proposed/not performed; never invent test results. Put any supporting URL in its single event home and refer to that theme by name rather than repeating it.
 
-**Counting:** The global cap includes all unique developments used as thematic evidence, releases, projects, reading picks, standalone actions and validation proposals — not merely the number of visible headings/bullets. Combining several events into one theme does not hide them from the budget. A takeaway/judgment summarizing already selected evidence adds no new item; neither does action advice integrated into its existing item. A standalone action or validation proposal consumes a slot even if based on an existing theme. Keep an internal selection ledger to verify counts and event/URL uniqueness; do not publish the ledger or totals. Section ceilings are not additive entitlements. Omit empty sections.
+**Counting:** The global cap includes all unique developments used as thematic evidence, releases, projects, reading picks, standalone actions and validation proposals — not merely the number of visible headings/bullets. Combining several events into one theme does not hide them from the budget. A takeaway/judgment summarizing already selected evidence adds no new item; neither does action advice integrated into its existing item. A standalone action or validation proposal consumes a slot even if based on an existing theme. Keep an internal selection ledger to verify counts and event/URL uniqueness; do not publish the ledger or totals. Section ceilings are not additive entitlements. Retain empty daily headings with a brief coverage note; omit empty weekly sections.
 
 ### Consequential GitHub Releases
 
@@ -114,7 +117,7 @@ Example shape (placeholder only):
 
 ### Project Discovery / Worth Trying
 
-The historical `github_trending` source type and `--trending` flag supply **project discovery**, not verified trends. Do not call the section “GitHub Trending” or infer current popularity from search results. Never use lifetime stars divided by repository age, `daily_stars_est`, or other lifetime-derived growth as observed growth. No stars/social metrics in public output. Daily at most 1 project, weekly at most 2, within the global cap. Give the use case and reason to try it; avoid repeatedly recommending mature repositories without a meaningful change or new, documented reason.
+The historical `github_trending` source type and `--trending` flag supply **project discovery**, not verified trends. Do not call the section “GitHub Trending” or infer current popularity from search results. Never use lifetime stars divided by repository age, `daily_stars_est`, or other lifetime-derived growth as observed growth. No stars/social metrics in public output. Daily at most 3 projects, weekly at most 2, within the global cap. Give the use case and reason to try it; avoid repeatedly recommending mature repositories without a meaningful change or new, documented reason.
 
 ## Validation and Archive
 
@@ -145,7 +148,7 @@ The historical `github_trending` source type and `--trending` flag supply **proj
        --html /tmp/td-email.html --attach /tmp/td-digest.pdf --from '<EMAIL_FROM>'
      ```
    - Omit `--from` if unset; omit `--attach` if PDF generation fails and log that failure. Use static configured recipients/subjects only. Log delivery failures honestly; never claim an unverified send succeeded.
-   - All formats must contain the same selected items and judgments; rendering does not permit extra topics, KOLs, trends or reading lists.
+   - All formats must contain the same selected items and judgments; rendering must preserve all sections for the selected mode and does not permit additional selections.
 
 ## Security and Final Operational Log
 

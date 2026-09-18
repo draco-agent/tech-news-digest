@@ -79,11 +79,11 @@ Evidence-led tech digest with unified collection and one editorial selection sha
 
 ## Editorial Contract
 
-- Daily ≤12 unique items: one-line takeaway, normally 3–5 focus (fewer if evidence is thin), optional actions ≤2, releases ≤3 repositories, discovery ≤1, optional reading ≤1.
+- Daily preserves original sections: 2–4 sentence overview; configured topics (normally LLM, AI Agent, Crypto, Frontier Tech; aim for 3–5 qualified items each); KOL viewpoints ≤3; releases ≤3 repositories; project discovery ≤3; blog picks ≤3; ≤30 unique items overall. News/blog explanations normally contain 2–3 concise sentences of change, evidence and implication. Retain empty headings with a coverage note, never filler. Optimize content within sections: a request to shorten GitHub releases must not become a whole-report redesign or one-message digest.
 - Weekly ≤18 unique items: judgment, ≤3 evidence-backed thematic syntheses (not an expanded daily list), releases ≤5 repositories/actions, try ≤2, read ≤2, proposed next-week checks ≤3 (question + minimal test + metric; explicitly not performed).
-- Caps are not quotas. Count evidence events inside themes and standalone actions/checks. No fixed four-topic allocation. Body limits: daily ≤2600 characters, weekly ≤4800, excluding URL targets; never fill to the limit.
-- Relevance, impact and evidence before internal scores. Exceptional claims need original technical evidence and independent assessment where possible, otherwise exclude/downgrade. No public scores, social metrics, fixed KOL section or operational statistics. A material coverage gap may receive one concise caveat without raw counts; details stay in the final operational log.
-- Deduplicate events and canonical URLs across the whole report. Daily repeats require incremental developments; weekly may synthesize daily coverage. Reading is optional and may include papers, docs, postmortems or essays.
+- Caps are not quotas. Count evidence events inside themes and standalone actions/checks. Preserve daily topic sections; weekly uses thematic synthesis. Body limits: daily ≤6500 characters, weekly ≤4800, excluding URL targets; never fill to the limit.
+- Relevance, impact and evidence before internal scores. Exceptional claims need original technical evidence and independent assessment where possible, otherwise exclude/downgrade. No public scores, social metrics or operational statistics. Daily keeps substantive, nonduplicative KOL viewpoints. A material coverage gap may receive one concise caveat without raw counts; details stay in the final operational log.
+- Deduplicate events and canonical URLs across the whole report. Daily repeats require incremental developments; weekly may synthesize daily coverage. Daily keeps blog picks; weekly reading is optional and may include papers, docs, postmortems or essays.
 - Project discovery is not verified trending; no lifetime-derived growth or repeated mature repos without meaningful changes. Preserve the prompt's consequential-release rules, exact versions and official links.
 - Plain bullets with bold titles; concise inline Discord links `[来源](<URL>)`. Section-aware chunks ≤1700 characters including numbering. Apply the requested language, including Simplified Chinese explanations when configured.
 - Validate the canonical archive with `python3 scripts/validate-digest.py --input FILE --mode daily` or `--mode weekly` before delivery; fix all errors. Missing/failing validation blocks delivery. Manually verify evidence and cross-format parity too.
@@ -231,7 +231,7 @@ python3 scripts/fetch-github.py [--defaults DIR] [--config DIR] [--hours 168] [-
 python3 scripts/fetch-github.py --trending [--hours 48] [--output FILE] [--verbose]
 ```
 - Searches GitHub API for discovery candidates; search results do not establish genuine trends.
-- Neutral internal base score 5, not a growth signal. No `daily_stars_est` or lifetime-derived growth. Daily discovery ≤1, weekly ≤2; require a current reason to try the project.
+- Neutral internal base score 5, not a growth signal. No `daily_stars_est` or lifetime-derived growth. Daily discovery ≤3, weekly ≤2; require a current reason to try the project.
 
 #### `fetch-reddit.py` - Reddit Posts Fetcher
 ```bash
