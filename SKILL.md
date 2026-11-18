@@ -1,7 +1,7 @@
 ---
 name: tech-news-digest
-description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, and markdown templates.
-version: "3.16.2"
+description: Generate tech news digests with unified source model, quality scoring, and multi-format output. Six-source data collection from RSS feeds, Twitter/X KOLs, GitHub releases, GitHub Trending, Reddit, and web search. Pipeline-based scripts with retry mechanisms and deduplication. Supports Discord, email, Telegram rich text, and markdown templates.
+version: "3.18.0"
 homepage: https://github.com/draco-agent/tech-news-digest
 source: https://github.com/draco-agent/tech-news-digest
 metadata:
@@ -215,8 +215,22 @@ python3 scripts/fetch-github.py --trending [--hours 48] [--output FILE] [--verbo
 ```bash
 python3 scripts/fetch-reddit.py [--defaults DIR] [--config DIR] [--hours 48] [--output FILE]
 ```
-- Parallel fetching (4 workers), public JSON API (no auth required)
+- Parallel fetching (4 workers), OAuth API (requires `REDDIT_CLIENT_ID` + `REDDIT_CLIENT_SECRET`)
+- Falls back to public JSON API if no credentials set (currently blocked by Reddit, returning 403)
 - 13 subreddits with score filtering
+
+#### `generate-digest-rss.py` - RSS Feed Generator
+```bash
+python3 scripts/generate-digest-rss.py \
+  --input /tmp/td-merged.json \
+  --output /mnt/data/tech-digest/rss.xml \
+  --feed-url https://nas.local/tech-digest/ \
+  --limit 50 [--verbose]
+```
+- Generates RSS 2.0 feed from merged digest JSON for RSS readers (e.g., Lire)
+- Articles sorted by quality_score, limited to top N items
+- Each item includes title with score, link, description with metrics, category, pubDate
+- Served via Caddy at `https://nas.local/tech-digest/rss.xml`
 
 
 #### `enrich-articles.py` - Article Full-Text Enrichment
@@ -234,6 +248,17 @@ python3 scripts/merge-sources.py --rss FILE --twitter FILE --web FILE --github F
 ```
 - Quality scoring, title similarity dedup (85%), previous digest penalty
 - Output: topic-grouped articles sorted by score
+
+#### `validate-links.py` - URL Fidelity Gate (MANDATORY before delivery)
+```bash
+python3 scripts/validate-links.py --report <archive.md> --merged /tmp/td-merged.json [--fix] [--verbose]
+```
+- Diffs every URL in the rendered digest against canonical `link` values in the merged JSON
+- Detects LLM date-path rewriting (`/YYYY/MM/DD/` → `/YYYY-MM-DD/`) which 404s on MacRumors/MIT Tech Review
+- `--fix` rewrites unambiguously mangled URLs in place; unresolved mismatches exit 1 (never deliver)
+- Added in 3.18.0 after the 2026-11-14 incident where 4/5 Apple-section links shipped dead
+- **Validating the archive file is not enough.** The 2026-11-18 incident: the archive file held correct slash-date URLs, but the digest agent retyped them into the Telegram message and silently rewrote `/2026-11-17/` → `/2026-11-17/` again. 9to5mac hides the bug (its dash variant 301-redirects to 200); macrumors.com and technologyreview.com return a hard 404. Always copy URLs byte-for-byte from the validated file into the outgoing message, never retype them.
+- Note: a date slash→dash rewrite also happens in tool/exec output rendering on this host, so a "fixed" URL that still prints with dashes in terminal output may in fact be correct. Verify with a status check (`curl -o /dev/null -w '%{http_code}'`), never by reading the printed URL.
 
 #### `validate-config.py` - Configuration Validator
 ```bash

@@ -214,7 +214,12 @@ def load_merged_topics(defaults_dir: Path, config_dir: Optional[Path] = None) ->
         if topic_id and topic_id not in [t.get("id") for t in default_topics]:
             result.append(merged_topics[topic_id])
     
-    logger.info(f"Merged topics: {len(default_topics)} defaults + {len(user_topics)} user = {len(result)} total topics")
-    return result
+    # Filter out disabled topics
+    enabled_result = [t for t in result if t.get("enabled", True)]
+    disabled_ids = [t.get("id") for t in result if not t.get("enabled", True)]
+    if disabled_ids:
+        logger.info(f"Disabled topics filtered out: {disabled_ids}")
+    logger.info(f"Merged topics: {len(default_topics)} defaults + {len(user_topics)} user = {len(enabled_result)} active topics ({len(result) - len(enabled_result)} disabled)")
+    return enabled_result
 
 

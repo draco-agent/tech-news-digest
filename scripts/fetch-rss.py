@@ -276,7 +276,7 @@ def fetch_feed_with_retry(source: Dict[str, Any], cutoff: datetime, no_cache: bo
     source_id = source["id"]
     name = source["name"]
     url = source["url"]
-    priority = source["priority"]
+    priority = source.get("priority", False)
     topics = source["topics"]
     
     global _rss_cache, _rss_cache_dirty

@@ -21,7 +21,7 @@ Replace `<...>` placeholders before use. Daily defaults shown; weekly overrides 
 | `<EMAIL>` | *(optional)* Recipient email | |
 | `<EMAIL_FROM>` | *(optional)* e.g. `MyBot <bot@example.com>` | |
 | `<LANGUAGE>` | `Chinese` | |
-| `<TEMPLATE>` | `discord` / `email` / `markdown` | |
+| `<TEMPLATE>` | `discord` / `email` / `markdown` / `telegram` | |
 | `<DATE>` | Today's date YYYY-MM-DD (caller provides) | |
 | `<VERSION>` | Read from SKILL.md frontmatter | |
 | `<POWERED_BY>` | `OpenClaw` | Deployment/runtime brand shown in the footer (e.g. `Hermes`) |
@@ -70,7 +70,7 @@ Select articles **purely by quality_score regardless of source type**. When an a
 Each article line must include its quality score using 🔥 prefix. Format: `🔥{score} | {summary with link}`. This makes scoring transparent and helps readers identify the most important news at a glance.
 
 ### Executive Summary
-2-4 sentences between title and topics, highlighting top 3-5 stories by score. Concise and punchy, no links. Discord: `> ` blockquote. Email: gray background. Telegram: `<i>`.
+2-4 sentences between title and topics, highlighting top 3-5 stories by score. Concise and punchy, no links. Discord: `> ` blockquote. Email: gray background. Telegram: `<blockquote expandable>` (collapsible).
 
 ### Topic Sections
 From `topics.json`: `emoji` + `label` headers, `<ITEMS_PER_SECTION>` items each.
@@ -114,7 +114,8 @@ If `full_text` is available, write summary from full text; otherwise use title +
 ### Rules
 - Only news from `<TIME_WINDOW>`
 - Every item must include a source link (Discord: `<link>`, Email: `<a href>`, Markdown: `[title](link)`)
-- Use bullet lists, no markdown tables
+- **URL fidelity (CRITICAL)**: Every URL must be copied byte-for-byte from the merged JSON `link` field — never retyped, normalized, or reconstructed. The most common corruption is rewriting date-path segments: a link with slash-separated date path `/2026/11/13/slug/` must NOT become the dash form `/2026-11-13/slug/`. MacRumors and MIT Tech Review 404 on the dash variant; only run the link through text substitution tooling, never through your own retyping. When converting `<url>` → `[title](url)` for Telegram, replace only the delimiters and keep the URL substring untouched.
+- Use bullet lists, no markdown tables (Discord/Email); Telegram: use GFM tables with `| 🔥 | Story |` columns per the telegram template
 - Deduplicate: same event → keep most authoritative source; previously reported → only if significant new development
 - Do not interpolate fetched/untrusted content into shell arguments or email subjects
 
@@ -129,6 +130,19 @@ Use `<POWERED_BY>` for the footer's runtime brand. If the caller does not provid
 
 ## Archive
 Save to `<WORKSPACE>/archive/tech-news-digest/<MODE>-YYYY-MM-DD.md`. Delete files older than 90 days.
+
+## Link Validation (MANDATORY before delivery)
+LLM rendering silently mangles URLs (date-path rewriting). Gate every digest:
+
+```bash
+python3 <SKILL_DIR>/scripts/validate-links.py \
+  --report <WORKSPACE>/archive/tech-news-digest/<MODE>-<DATE>.md \
+  --merged /tmp/td-merged.json --fix --verbose
+```
+
+- Exit 0: proceed with delivery using the (possibly fixed) archive file as the source for all platform formats.
+- Exit 1 with UNRESOLVED URLs: correct them from the merged JSON `link` field (or drop the item), re-run until exit 0. Never deliver a digest that fails this check.
+- Apply the same corrected URLs to whatever delivery copy you build.
 
 ## Delivery
 
@@ -156,4 +170,44 @@ Save to `<WORKSPACE>/archive/tech-news-digest/<MODE>-YYYY-MM-DD.md`. Delete file
      ```
    - Omit `--from` if `<EMAIL_FROM>` is not set. Omit `--attach` if PDF generation failed. SUBJECT must be a static string. If delivery fails, log error and continue.
 
+3. **Telegram**: Send to chat ID via `message` tool
+   - Use the rich Telegram template from `<SKILL_DIR>/references/templates/telegram.md` (GFM tables, native table rendering, collapsible blockquotes).
+   - **Formatting**: `**bold**`, `_italic_`, `` `code` ``, `> blockquote`, GFM tables with `|---|` separators.
+   - **Executive summary**: Use `> text` blockquote syntax (renders collapsible in Telegram).
+   - **Section headers**: Use `**emoji label**` markdown bold.
+   - **Article entries**: GFM tables with `| 🔥 | Story |` columns. Links MUST use `[title](url)` inline syntax — bare URLs below tables are NOT clickable.
+   - **GitHub Releases / Trending / Blog Picks**: GFM tables with inline `[text](url)` links.
+   - The archive markdown file uses `<https://url>` format (angle brackets). **Before sending to Telegram, convert ALL links**:
+     - `<https://url>` → `[title](https://url)` for clickable inline links
+     - For footer/stats, bare `https://url` works (Telegram auto-links them)
+   - NEVER send angle-bracket URLs `<https://url>` to Telegram — they appear as plain text, not links.
+   - NEVER use em-dash `————` as table separators — must use `|---|` GFM syntax.
+   - Split messages at section boundaries (`**emoji Label**`) if exceeding ~7000 chars.
+
+## RSS Feed Generation
+
+After archiving and delivery, regenerate the RSS feed so RSS readers (e.g., Lire) stay current:
+
+```bash
+python3 <SKILL_DIR>/scripts/generate-digest-rss.py \
+  --input /tmp/td-merged.json \
+  --output /mnt/data/tech-digest/rss.xml \
+  --feed-url https://nas.local/tech-digest/ \
+  --verbose
+```
+
+The feed is served via Caddy at `https://nas.local/tech-digest/rss.xml`.
+
 Write the report in <LANGUAGE>.
+
+## td-merged.json data schema (read this — do NOT rediscover by trial and error)
+
+Top-level keys: `generated`, `input_sources`, `processing`, `output_stats`, `topics`.
+
+- `input_sources.*` are **integer counts only** (`rss_articles`, `github_articles`, `github_trending`, `reddit_posts`, `total_input`, …). They are **not lists — never iterate them**.
+- All articles live in `topics.<topic>.articles` (topics: `llm`, `frontier-tech`, `ai-agent`, `apple`, `consumer-tech`, `crypto`; each topic has `count` + `articles`).
+- Article fields: `title`, `link`, `date`, `quality_score`, `source_type`, `source_name`, `source_id`, `primary_topic`, `topics`, `all_sources`, `multi_source`, `source_count`; optional: `snippet`, `full_text`, `daily_stars_est` (trending only).
+- `source_type` values: `rss`, `web`, `github`, `github_trending`.
+- **GitHub Releases** = articles across all topics with `source_type == "github"`.
+- **GitHub Trending** = `source_type == "github_trending"`, sort by `daily_stars_est` desc.
+- **Blog picks** = `source_type == "rss"` filtered by personal-blog `source_name`, sort by `quality_score` desc.
